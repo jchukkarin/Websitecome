@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,6 +26,9 @@ export default function LoginPage() {
     }
 
     alert("Login success");
+
+    // ✅ Login สำเร็จ → ไป Dashboard
+    router.push("/dashboard");
   }
 
   return (

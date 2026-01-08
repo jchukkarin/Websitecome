@@ -8,15 +8,7 @@ export default defineConfig({
   datasource: {
     url: process.env.DATABASE_URL,
   },
-
-  // 👇 โครงสร้างใหม่ (ใช้กับหลาย datasource)
-  datasources: {
-    db: {
-      provider: "postgresql",
-      url: process.env.DATABASE_URL,
-    },
-  },
-
+  
   migrations: {
     path: "prisma/migrations",
   },

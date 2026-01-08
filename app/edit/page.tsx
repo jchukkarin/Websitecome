@@ -1,8 +1,8 @@
-
+import Settings from "@/components/setting/Settings";
 export default function EditPage() {
     return (
         <div>
-            <h1>Edit Page</h1>
+            <Settings />
         </div>
     );
 }

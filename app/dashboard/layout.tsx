@@ -1,24 +1,25 @@
 import { redirect } from "next/navigation";
 import Navbar from "@/components/navbar/NavBar";
+import { Sidebar } from "@/components/dashboard/Sidebar";
 import { cookies } from "next/headers";
 
 export default async function ProtectedLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    // ✅ ต้อง await
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token"); // หรือ session
+  // ✅ ต้อง await
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token"); // หรือ session
 
-    if (!token) {
-        redirect("/login");
-    }
+  if (!token) {
+    redirect("/login");
+  }
 
-    return (
-        <div className="min-h-screen bg-gray-100">
-            <Navbar />
-            <main className="p-6">{children}</main>
-        </div>
-    );
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <Navbar />
+      <main className="p-6">{children}</main>
+    </div>
+  );
 }

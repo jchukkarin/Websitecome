@@ -14,26 +14,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ ดึงโค้ด
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: "npm"
 
-      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: npm install
 
-      # 4️⃣ Prisma Generate
       - name: Prisma generate
         run: npx prisma generate
 
-      # 5️⃣ Build Next.js
+
       - name: Build application
         run: npm run build
 

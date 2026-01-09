@@ -14,11 +14,11 @@ export default function DashboardPage() {
 
         {/* Main Content */}
         <main className="flex-1 bg-white rounded-xl shadow-sm p-6">
-          <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+          <p className="text-gray-600 text-sm font-medium mb-2">การนำเข้า</p>
+          <h1 className="text-2xl font-bold mb-4">บันทึกการนำเข้า</h1>
           <p className="text-gray-500">
             ยินดีต้อนรับสู่ระบบบันทึกรายรับรายจ่าย
           </p>
-          <Sidebar />
         </main>
 
       </div>

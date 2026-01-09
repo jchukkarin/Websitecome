@@ -9,6 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@heroui/button": "^2.2.29",
+    "@heroui/checkbox": "^2.3.29",
+    "@heroui/input": "^2.4.30",
+    "@heroui/select": "^2.4.30",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "@types/bcryptjs": "^2.4.6",

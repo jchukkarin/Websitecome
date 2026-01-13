@@ -7,31 +7,25 @@ import UserMenu from "./UserMenu";
 export default function Navbar() {
   return (
     <nav className="w-full h-[72px] mx-auto bg-white border-b shadow-sm px-6 flex items-center justify-between">
-      
+
       {/* Logo */}
       <div>
-        <button
-          type="button"
+        <Link
+          href="/dashboard"
           className="text-xl font-bold tracking-wide text-gray-900 bg-transparent border-none outline-none hover:opacity-80 transition"
-          >
-          <Link href="/dashboard">Income</Link>
-  </button>
-</div>
+        >
+          Income
+        </Link>
+      </div>
 
       {/* Menu */}
-     <div className="">
       <div className="">
-        <button className="">
-          <Link href="/dashboard">Dashboard</Link>
-        </button>
-        <button className="">
-          <Link href="/dashboard">Dashboard</Link>
-        </button>
-        <button className="">
-          <Link href="/dashboard">Dashboard</Link>
-        </button>
+        <div className="flex gap-4">
+          <Link href="/dashboard" className="hover:text-blue-600 transition">Dashboard</Link>
+          <Link href="/dashboard" className="hover:text-blue-600 transition">Dashboard</Link>
+          <Link href="/dashboard" className="hover:text-blue-600 transition">Dashboard</Link>
+        </div>
       </div>
-     </div>
 
       {/* User */}
       <UserMenu />

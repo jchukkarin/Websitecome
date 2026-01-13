@@ -15,26 +15,33 @@ model User {
 }
 
 model Consignment {
-  id            String            @id @default(cuid())
+  id            String             @id @default(uuid())
   date          DateTime
   lot           String
   consignorName String
   contactNumber String
   address       String
   totalPrice    Float
+  createdAt     DateTime           @default(now())
+  images        ConsignmentImage[]
   items         ConsignmentItem[]
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+}
+
+model ConsignmentImage {
+  id            String      @id @default(uuid())
+  imageUrl      String
+  consignmentId String
+  consignment   Consignment @relation(fields: [consignmentId], references: [id])
 }
 
 model ConsignmentItem {
-  id             String      @id @default(cuid())
+  id             String      @id @default(uuid())
   productName    String
   category       String
   year           String
   status         String
-  confirmedPrice Float?
-  salesChannel   String?
+  confirmedPrice Float
+  salesChannel   String
   imageUrl       String?
   consignmentId  String
   consignment    Consignment @relation(fields: [consignmentId], references: [id])

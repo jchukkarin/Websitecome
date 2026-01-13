@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     Table,
     TableHeader,
@@ -13,7 +13,7 @@ import {
     Select,
     SelectItem,
     Pagination,
-    User as UserComponent,
+    Spinner,
 } from "@heroui/react";
 import {
     Search,
@@ -23,9 +23,39 @@ import {
     UserCircle,
     MoreHorizontal
 } from "lucide-react";
-import { importHistoryData } from "./mockData";
+import axios from "axios";
 
 export default function History() {
+    const [data, setData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get("/api/consignments");
+            // Flatten the data: each consignment has items
+            const flattened = res.data.flatMap((c: any) =>
+                c.items.map((item: any) => ({
+                    ...item,
+                    lot: c.lot,
+                    date: new Date(c.date).toLocaleDateString("th-TH"),
+                    consignorName: c.consignorName,
+                    // Use item.imageUrl or fallback to first general image or placeholder
+                    displayImage: item.imageUrl || (c.images && c.images.length > 0 ? c.images[0].imageUrl : "https://avatars.githubusercontent.com/u/30373425?v=4")
+                }))
+            );
+            setData(flattened);
+        } catch (error) {
+            console.error("Fetch error:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="p-8 bg-white min-h-screen font-sans text-gray-800">
             <div className="max-w-7xl mx-auto space-y-6">
@@ -38,7 +68,7 @@ export default function History() {
                         <p className="text-sm text-gray-500">แสดงข้อมูลของสินค้านำเข้าทั้งหมด</p>
                     </div>
                     <div className="flex gap-2">
-                        <Button isIconOnly variant="light" radius="full" size="sm">
+                        <Button isIconOnly variant="light" radius="full" size="sm" onClick={() => fetchData()}>
                             <UserCircle size={20} className="text-gray-400" />
                         </Button>
                         <Button isIconOnly variant="light" radius="full" size="sm">
@@ -101,34 +131,36 @@ export default function History() {
                             <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ปี</TableColumn>
                             <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ชื่อสินค้า</TableColumn>
                             <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">สถานะสินค้า</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">สถานะซ่อม</TableColumn>
                             <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">หมวดหมู่</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-right pr-6">ราคาทุน</TableColumn>
+                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-right pr-6">ราคา</TableColumn>
                         </TableHeader>
-                        <TableBody items={importHistoryData}>
+                        <TableBody
+                            items={data}
+                            loadingContent={<Spinner label="Loading..." />}
+                            isLoading={loading}
+                        >
                             {(item) => (
                                 <TableRow key={item.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                                     <TableCell className="py-4">
                                         <div className="w-16 h-12 rounded-lg border border-gray-100 overflow-hidden bg-gray-50">
-                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                            <img src={item.displayImage} alt={item.productName} className="w-full h-full object-cover" />
                                         </div>
                                     </TableCell>
-                                    <TableCell className="font-semibold text-gray-900">{item.id}</TableCell>
+                                    <TableCell className="font-semibold text-gray-900">{item.id.slice(0, 8)}</TableCell>
                                     <TableCell className="text-gray-400">{item.lot}</TableCell>
                                     <TableCell className="text-gray-600">{item.date}</TableCell>
                                     <TableCell className="text-gray-600">{item.year}</TableCell>
-                                    <TableCell className="text-gray-600">{item.name}</TableCell>
+                                    <TableCell className="text-gray-600 font-medium">{item.productName}</TableCell>
                                     <TableCell>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === "พร้อม" ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-600"
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === "ขายได้" ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-600"
                                             }`}>
                                             {item.status}
                                         </span>
                                     </TableCell>
-                                    <TableCell>
-                                        <span className="text-blue-500 font-medium">{item.repair}</span>
-                                    </TableCell>
                                     <TableCell className="text-gray-600">{item.category}</TableCell>
-                                    <TableCell className="text-right font-bold text-gray-900 pr-6">{item.price}</TableCell>
+                                    <TableCell className="text-right font-bold text-gray-900 pr-6">
+                                        {item.confirmedPrice?.toLocaleString()}
+                                    </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -136,22 +168,12 @@ export default function History() {
 
                     {/* Footer / Pagination */}
                     <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 bg-white border-t border-gray-50 gap-4">
-                        <span className="text-sm text-gray-400">0 of 20 row(s) selected.</span>
+                        <span className="text-sm text-gray-400">{data.length} row(s) total.</span>
                         <div className="flex items-center gap-2">
                             <Button isIconOnly variant="bordered" size="sm" className="border-gray-200">
                                 <ChevronLeft size={16} />
                             </Button>
-                            <Button size="sm" variant="bordered" className="border-gray-200">1</Button>
-                            <Button isIconOnly variant="light" size="sm" className="text-gray-400">
-                                <MoreHorizontal size={14} />
-                            </Button>
-                            <Button size="sm" variant="bordered" className="border-gray-200">4</Button>
-                            <Button size="sm" color="danger" className="font-bold">5</Button>
-                            <Button size="sm" variant="bordered" className="border-gray-200">6</Button>
-                            <Button isIconOnly variant="light" size="sm" className="text-gray-400">
-                                <MoreHorizontal size={14} />
-                            </Button>
-                            <Button size="sm" variant="bordered" className="border-gray-200">10</Button>
+                            <Pagination total={1} initialPage={1} size="sm" color="primary" />
                             <Button isIconOnly variant="bordered" size="sm" className="border-gray-200">
                                 <ChevronRight size={16} />
                             </Button>

@@ -42,9 +42,6 @@ export default function UserMenu() {
   return (
     <div className="flex items-center gap-3">
       {/* avatar (วงกลม Profile)*/}
-      <button className="flex items-center gap-3">
-        <Link href="/profile">
-
       <User
         avatarProps={{
           src: "https://avatars.githubusercontent.com/u/30373425?v=4",
@@ -56,8 +53,6 @@ export default function UserMenu() {
         }
         name="Junior Garcia"
       />
-      </Link>
-    </button>
 
 
       {/* logout */}

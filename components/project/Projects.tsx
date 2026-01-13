@@ -45,7 +45,7 @@ export default function Projects() {
 
   const [items, setItems] = useState([
     {
-      id: crypto.randomUUID(),
+      id: "initial-item",
       productName: "",
       category: "",
       year: "",
@@ -93,7 +93,7 @@ export default function Projects() {
       images: [],
     });
     setItems([{
-      id: crypto.randomUUID(),
+      id: "initial-item",
       productName: "",
       category: "",
       year: "",

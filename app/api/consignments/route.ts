@@ -1,11 +1,38 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
+import { promises as fs } from "fs";
+import path from "path";
+import crypto from "crypto";
 
-// No need to instantiate PrismaClient here
+async function saveBase64Image(base64String: string) {
+    if (!base64String || !base64String.startsWith("data:image")) return base64String;
 
-export async function POST(request: Request) {
     try {
-        const body = await request.json();
+        const matches = base64String.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+        if (!matches || matches.length !== 3) return base64String;
+
+        const type = matches[1];
+        const buffer = Buffer.from(matches[2], "base64");
+        const extension = type.split("/")[1].split("+")[0]; // Handle cases like image/svg+xml
+        const filename = `${crypto.randomUUID()}.${extension}`;
+
+        const uploadDir = path.join(process.cwd(), "public", "uploads");
+        await fs.mkdir(uploadDir, { recursive: true });
+
+        const filePath = path.join(uploadDir, filename);
+        await fs.writeFile(filePath, buffer);
+
+        return `/uploads/${filename}`;
+    } catch (error) {
+        console.error("Error saving image:", error);
+        return base64String; // Fallback to base64 if save fails
+    }
+}
+
+export async function POST(req: Request) {
+    try {
+        const body = await req.json();
+
         const {
             date,
             lot,
@@ -13,42 +40,56 @@ export async function POST(request: Request) {
             contactNumber,
             address,
             totalPrice,
-            items
+            images,
+            items,
         } = body;
 
-        const result = await db.$transaction(async (tx) => {
-            const consignment = await tx.consignment.create({
-                data: {
-                    date: new Date(date),
-                    lot,
-                    consignorName,
-                    contactNumber,
-                    address,
-                    totalPrice: parseFloat(totalPrice),
-                    items: {
-                        create: items.map((item: any) => ({
-                            productName: item.productName,
-                            category: item.category,
-                            year: item.year,
-                            status: item.status,
-                            confirmedPrice: item.confirmedPrice ? parseFloat(item.confirmedPrice) : null,
-                            salesChannel: item.salesChannel,
-                            imageUrl: item.imageUrl,
-                        })),
-                    },
+        // Process images
+        const processedImagesUrls = await Promise.all(
+            (images || []).map((img: string) => saveBase64Image(img))
+        );
+
+        const processedItems = await Promise.all(
+            (items || []).map(async (item: any) => ({
+                ...item,
+                imageUrl: item.imageUrl ? await saveBase64Image(item.imageUrl) : null
+            }))
+        );
+
+        const consignment = await prisma.consignment.create({
+            data: {
+                date: new Date(date),
+                lot,
+                consignorName,
+                contactNumber,
+                address,
+                totalPrice: Number(totalPrice),
+
+                images: {
+                    create: processedImagesUrls.map((url: string) => ({
+                        imageUrl: url,
+                    })),
                 },
-                include: {
-                    items: true,
+
+                items: {
+                    create: processedItems.map((item: any) => ({
+                        productName: item.productName,
+                        category: item.category,
+                        year: item.year,
+                        status: item.status,
+                        confirmedPrice: Number(item.confirmedPrice),
+                        salesChannel: item.salesChannel,
+                        imageUrl: item.imageUrl,
+                    })),
                 },
-            });
-            return consignment;
+            },
         });
 
-        return NextResponse.json(result, { status: 201 });
-    } catch (error: any) {
-        console.error("Error creating consignment:", error);
+        return NextResponse.json({ success: true, consignment });
+    } catch (error) {
+        console.error(error);
         return NextResponse.json(
-            { error: "Internal Server Error", details: error.message },
+            { success: false, message: "Save failed" },
             { status: 500 }
         );
     }
@@ -56,16 +97,18 @@ export async function POST(request: Request) {
 
 export async function GET() {
     try {
-        const consignments = await db.consignment.findMany({
+        const consignments = await prisma.consignment.findMany({
             include: {
                 items: true,
+                images: true,
             },
             orderBy: {
                 createdAt: "desc",
             },
         });
         return NextResponse.json(consignments);
-    } catch (error: any) {
+    } catch (error) {
+        console.error(error);
         return NextResponse.json(
             { error: "Internal Server Error" },
             { status: 500 }

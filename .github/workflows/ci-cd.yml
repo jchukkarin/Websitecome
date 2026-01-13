@@ -24,21 +24,19 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Prisma generate
-        run: npx prisma generate
-
-
-      - name: Build application
-        run: npm run build
-
-      - name: Prisma generate
-        run: npx prisma generate
+      - name: Prisma Generate & Build
+        run: |
+          npx prisma generate
+          npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+
   deploy:
     needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -51,9 +49,8 @@ jobs:
           script: |
             cd /var/www/income-app
             git pull origin main
-            npm install
+            npm ci
             npx prisma generate
+            npx prisma db push --accept-data-loss
             npm run build
-            pm2 restart income
-
-
+            pm2 restart income || pm2 start npm --name "income" -- start

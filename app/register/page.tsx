@@ -7,12 +7,12 @@ import {
   CardBody,
   Input,
   Button,
-  Image
 } from "@heroui/react";
-import { Eye, EyeOff, UserPlus } from "lucide-react";
+import { Eye, EyeOff, UserPlus, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isVisible, setIsVisible] = useState(false);
@@ -26,10 +26,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password }),
       });
 
       const data = await res.json();
@@ -39,10 +39,11 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      alert("สมัครสมาชิกสำเร็จ!");
+      router.push("/login");
     } catch (error) {
-      console.error("Login error:", error);
-      alert("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
+      console.error("Registration error:", error);
+      alert("เกิดข้อผิดพลาดในการสมัครสมาชิก");
     } finally {
       setLoading(false);
     }
@@ -51,8 +52,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen w-full bg-white flex items-center justify-center overflow-hidden relative">
 
-      {/* Background Red Accents */}
-      <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[120%] bg-[#d9161a] rounded-full z-0 flex items-center justify-center">
+      {/* Background Red Accents (Consistent with Login) */}
+      <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[120%] bg-[#d9161a] rounded-full z-0 flex items-center justify-center">
         <div className="text-white flex flex-col items-center">
           <img
             src="/naitounoi.png"
@@ -60,30 +61,48 @@ export default function LoginPage() {
             className="w-48 h-48 mb-4 brightness-0 invert"
           />
           <h1 className="text-5xl font-black italic tracking-tighter">NAITOUNOI</h1>
+          <p className="text-xl font-bold opacity-80 mt-2">JOIN OUR COMMUNITY</p>
         </div>
       </div>
 
-      {/* Bottom Red Circles */}
-      <div className="absolute bottom-[-10%] left-[-5%] w-[30%] h-[50%] bg-[#d9161a]/80 rounded-full z-0 blur-xl opacity-50" />
-      <div className="absolute bottom-[-20%] right-[-5%] w-[25%] h-[40%] bg-[#d9161a] rounded-full z-0" />
+      {/* Decorative Elements */}
+      <div className="absolute top-[-5%] left-[-5%] w-[20%] h-[30%] bg-[#d9161a]/10 rounded-full z-0" />
+      <div className="absolute bottom-[-10%] left-[5%] w-[25%] h-[40%] bg-[#d9161a] rounded-full z-0" />
 
-      <div className="max-w-7xl mx-auto w-full flex justify-end px-12 relative z-10">
+      <div className="max-w-7xl mx-auto w-full flex justify-start px-12 relative z-10">
 
-        {/* Login Card */}
+        {/* Register Card */}
         <Card className="w-full max-w-[450px] shadow-2xl border-none p-4" radius="lg">
           <CardBody className="space-y-8 p-8">
             <div className="space-y-2">
-              <h2 className="text-4xl font-bold text-gray-800">เข้าสู่ระบบ</h2>
-              <p className="text-sm text-gray-400 font-medium">กรุณากรอกอีเมลและรหัส</p>
+              <Link href="/login" className="text-[#d01317] flex items-center gap-2 text-xs font-bold hover:underline mb-4">
+                <ArrowLeft size={14} /> กลับไปหน้าเข้าสู่ระบบ
+              </Link>
+              <h2 className="text-4xl font-bold text-gray-800">สร้างบัญชีใหม่</h2>
+              <p className="text-sm text-gray-400 font-medium">กรอกข้อมูลเพื่อเริ่มต้นใช้งานระบบ</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
                 <div className="space-y-1">
+                  <label className="text-sm font-bold text-gray-700">ชื่อ-นามสกุล</label>
+                  <Input
+                    placeholder="ระบุชื่อจริงของคุณ"
+                    variant="bordered"
+                    classNames={{
+                      inputWrapper: "border-gray-200 h-12",
+                    }}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
                   <label className="text-sm font-bold text-gray-700">อีเมล</label>
                   <Input
                     type="email"
-                    placeholder="ใส่ชื่ออีเมล"
+                    placeholder="example@mail.com"
                     variant="bordered"
                     classNames={{
                       inputWrapper: "border-gray-200 h-12",
@@ -98,7 +117,7 @@ export default function LoginPage() {
                   <label className="text-sm font-bold text-gray-700">รหัสผ่าน</label>
                   <Input
                     type={isVisible ? "text" : "password"}
-                    placeholder="รหัสผ่าน"
+                    placeholder="ตั้งรหัสผ่านของคุณ"
                     variant="bordered"
                     classNames={{
                       inputWrapper: "border-gray-200 h-12",
@@ -119,32 +138,15 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end">
-                <button type="button" className="text-[10px] text-gray-400 font-bold hover:underline">
-                  ลืมรหัสผ่าน
-                </button>
-              </div>
-
               <Button
                 type="submit"
                 color="danger"
-                className="w-full bg-[#d01317] text-white font-bold h-12 text-lg shadow-lg"
+                className="w-full bg-[#d01317] text-white font-bold h-12 text-lg shadow-lg mt-4"
                 isLoading={loading}
+                startContent={<UserPlus size={20} />}
               >
-                เข้าสู่ระบบ
+                ลงทะเบียนใช้งาน
               </Button>
-
-              <div className="text-center pt-4">
-                <p className="text-sm text-gray-500">
-                  ยังไม่มีบัญชี?{" "}
-                  <Link
-                    href="/register"
-                    className="text-[#d01317] font-bold hover:underline inline-flex items-center gap-1"
-                  >
-                    สมัครสมาชิกที่นี่ <UserPlus size={16} />
-                  </Link>
-                </p>
-              </div>
             </form>
           </CardBody>
         </Card>

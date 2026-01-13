@@ -1,8 +1,7 @@
-'use client';
-import Settings from "@/components/setting/Settings";
+import SetUpFormProFileShop from "@/components/profile/SetUpFormProFileShop";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 
-export default function EditPage() {
+export default function ShopProfilePage() {
     return (
         <div className="min-h-screen bg-[#F8F9FC] font-sans text-gray-900">
             <div className="max-w-7xl mx-auto flex gap-6 p-4 md:p-6">
@@ -13,8 +12,8 @@ export default function EditPage() {
                 </div>
 
                 {/* Main Content */}
-                <main className="flex-1 bg-white rounded-xl shadow-sm overflow-hidden min-h-[calc(100vh-3rem)]">
-                    <Settings />
+                <main className="flex-1 overflow-hidden min-h-[calc(100vh-3rem)]">
+                    <SetUpFormProFileShop />
                 </main>
 
             </div>

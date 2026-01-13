@@ -47,3 +47,18 @@ model ConsignmentItem {
   consignmentId  String
   consignment    Consignment @relation(fields: [consignmentId], references: [id])
 }
+
+model ShopProfile {
+  id          String   @id @default("default")
+  shopName    String   @default("Naitounai")
+  address     String   @default("-")
+  subDistrict String   @default("-")
+  district    String   @default("-")
+  province    String   @default("-")
+  zipCode     String   @default("-")
+  line        String?
+  shopee      String?
+  facebook    String?
+  phone       String?
+  updatedAt   DateTime @updatedAt
+}

@@ -1,86 +1,88 @@
-'use client'
-import React, { useState } from 'react';
-import { User, Bell, Lock, Globe, Trash2 } from 'lucide-react'; // ใช้ Lucide icons
+"use client";
+
+import React, { useState } from "react";
+import {
+  Tabs,
+  Tab,
+  Button,
+} from "@heroui/react";
+import {
+  UserCircle,
+  LogOut,
+} from "lucide-react";
+
+// Import modular components
+import ImportGoods from "./Import-Goods";
+import PayoutGoods from "./Payout-Goods";
+import RepairGoods from "./Repair-Goods";
+import ConsignmentGoods from "./Consignment-Goods";
+import PawnGoods from "./Pawn-Goods";
 
 export default function Settings() {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [selectedTab, setSelectedTab] = useState("import");
 
-  const menuItems = [
-    { id: 'profile', label: 'บัญชีผู้ใช้', icon: <User size={20} /> },
-    { id: 'notifications', label: 'การแจ้งเตือน', icon: <Bell size={20} /> },
-    { id: 'security', label: 'ความปลอดภัย', icon: <Lock size={20} /> },
-    { id: 'language', label: 'ภาษาและภูมิภาค', icon: <Globe size={20} /> },
-  ];
+  const renderContent = () => {
+    switch (selectedTab) {
+      case "import":
+        return <ImportGoods />;
+      case "payout":
+        return <PayoutGoods />;
+      case "repair":
+        return <RepairGoods />;
+      case "consignment":
+        return <ConsignmentGoods />;
+      case "pawn":
+        return <PawnGoods />;
+      default:
+        return <ImportGoods />;
+    }
+  };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 p-6">
-        <h1 className="text-2xl font-bold mb-8 text-gray-800">Settings</h1>
-        <nav className="space-y-1">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                activeTab === item.id 
-                ? 'bg-blue-50 text-blue-600' 
-                : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              {item.icon}
-              <span className="font-medium">{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 p-10">
-        <div className="max-w-2xl bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-          <h2 className="text-xl font-semibold mb-6">ข้อมูลส่วนตัว</h2>
-          
-          <div className="space-y-6">
-            {/* Input Group */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อแสดงผล</label>
-              <input 
-                type="text" 
-                placeholder="ชื่อของคุณ"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
-              <input 
-                type="email" 
-                placeholder="example@mail.com"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-
-            <hr className="my-8 border-gray-100" />
-
-            {/* Danger Zone */}
-            <div className="pt-4">
-              <h3 className="text-red-600 font-medium flex items-center mb-2">
-                <Trash2 size={18} className="mr-2" /> ลบบัญชี
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">เมื่อลบแล้วข้อมูลทั้งหมดจะหายไปและไม่สามารถกู้คืนได้</p>
-              <button className="bg-red-50 text-red-600 px-4 py-2 rounded-md hover:bg-red-100 transition">
-                ลบบัญชีผู้ใช้
-              </button>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-3 mt-10">
-              <button className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50">ยกเลิก</button>
-              <button className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">บันทึกการเปลี่ยนแปลง</button>
-            </div>
-          </div>
+    <div className="p-8 space-y-6">
+      {/* Header Area */}
+      <div className="flex justify-between items-start">
+        <div className="space-y-1">
+          <p className="text-xs text-gray-500 font-medium">การตั้งค่าหมวดหมู่</p>
+          <h1 className="text-3xl font-bold text-gray-900">จัดการข้อมูลหมวดหมู่</h1>
+          <p className="text-sm text-gray-400">เลือกแท็บเพื่อจัดการสถานะและหมวดหมู่ของแต่ละบริการ</p>
         </div>
-      </main>
+        <div className="flex gap-2">
+          <Button isIconOnly variant="light" radius="full" size="sm">
+            <UserCircle size={24} className="text-gray-400" />
+          </Button>
+          <Button isIconOnly variant="light" radius="full" size="sm">
+            <LogOut size={24} className="text-gray-400" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="border-b border-gray-100">
+        <Tabs
+          aria-label="Category Navigation"
+          variant="underlined"
+          selectedKey={selectedTab}
+          onSelectionChange={(key) => setSelectedTab(key as string)}
+          classNames={{
+            tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
+            cursor: "w-full bg-red-500",
+            tab: "max-w-fit px-0 h-12",
+            tabContent: "group-data-[selected=true]:text-red-500 font-bold"
+          }}
+        >
+          <Tab key="import" title="การนำเข้าสินค้า" />
+          <Tab key="payout" title="การเบิกจ่าย" />
+          <Tab key="repair" title="การฝากซ่อม" />
+          <Tab key="consignment" title="การฝากขาย" />
+          <Tab key="pawn" title="การจำนำ" />
+        </Tabs>
+      </div>
+
+      {/* Rendered Modular Content */}
+      <div className="bg-white rounded-xl">
+        {renderContent()}
+      </div>
     </div>
   );
 }

@@ -9,12 +9,12 @@ import { SidebarSearch } from "./SidebarSearch"; // นำเข้า Component
 const navItems = [
   { id: "dashboard", label: "หน้าหลัก", emoji: "🏠", href: "/dashboard" },
   { id: "reports", label: "สถิติการทำงาน", emoji: "📊", href: "/reports" },
-  {id: "income",label: "การนำเข้า",emoji: "💰",href: "/income",subMenu: [{ label: "ประวัติข้อมูลนำเข้า", href: "/income/history" },{ label: "บันทึกการนำเข้า", href: "/income/FormUsersIncome" },],},
-  { id: "project",label: "การฝากซ่อม",emoji: "💼",href: "/project",subMenu: [{label: "ประวัติการฝากซ่อม", href: "/project/Repair-service-history"},{label: "บันทึกการฝากซ่อม", href: "/project"},],},
-  { id: "expenses", label: "การฝากขาย", emoji: "💸", href: "/", subMenu: [{label: "ประวัติการฝากขาย", href: "/"}, {label: "บันทึกการฝากขาย", href: "/"}] },
-  {id: "", label: "การจำนำ", emoji: "555", href: "/expense", subMenu:[{label: "ประวัติการจำนำ", href: "/expense/ExpenseForm"},{label: "บันทึกการจำนำ", href: "/expense"}]},
-  { id: "", label: "การตั้งค่าร้านค้า", emoji: "📊", href: "/" },
-  { id: "", label: "การตั้งค่าหมวดหมู่", emoji: "⚙️", href: "/edit" },
+  { id: "income", label: "การนำเข้า", emoji: "💰", href: "/income", subMenu: [{ label: "ประวัติข้อมูลนำเข้า", href: "/income/history" }, { label: "บันทึกการนำเข้า", href: "/income/FormUsersIncome" },], },
+  { id: "project", label: "การฝากซ่อม", emoji: "💼", href: "/project", subMenu: [{ label: "ประวัติการฝากซ่อม", href: "/project/Repair-service-history" }, { label: "บันทึกการฝากซ่อม", href: "/project" },], },
+  { id: "expenses", label: "การฝากขาย", emoji: "💸", href: "/", subMenu: [{ label: "ประวัติการฝากขาย", href: "/income/HistoryFormProDuct" }, { label: "บันทึกการฝากขาย", href: "/income/FormProductIncome" }] },
+  { id: "pawn", label: "การจำนำ", emoji: "555", href: "/expense", subMenu: [{ label: "ประวัติการจำนำ", href: "/expense/ExpenseForm" }, { label: "บันทึกการจำนำ", href: "/expense" }] },
+  { id: "shop-profile", label: "การตั้งค่าร้านค้า", emoji: "📊", href: "/profile/SetupFormProFileShop" },
+  { id: "categories", label: "การตั้งค่าหมวดหมู่", emoji: "⚙️", href: "/edit" },
 ];
 
 export function Sidebar() {
@@ -32,7 +32,7 @@ export function Sidebar() {
       return mainMatch || subMatch;
     });
   }, [searchQuery]);
-  
+
   // เก็บสถานะว่าเมนูไหนที่กางออกมา (Open Submenu)
   const [openMenus, setOpenMenus] = useState<string[]>(["income"]);
 
@@ -50,9 +50,9 @@ export function Sidebar() {
       </div>
 
       {/* เรียกใช้งาน Component Search */}
-      <SidebarSearch 
-        value={searchQuery} 
-        onChange={setSearchQuery} 
+      <SidebarSearch
+        value={searchQuery}
+        onChange={setSearchQuery}
       />
 
       {/* Navigation */}
@@ -107,8 +107,8 @@ export function Sidebar() {
                         key={sub.label}
                         onClick={() => router.push(sub.href)}
                         className={`text-left px-4 py-2 text-xs rounded-lg transition
-                          ${pathname === sub.href 
-                            ? "text-yellow-600 font-bold" 
+                          ${pathname === sub.href
+                            ? "text-yellow-600 font-bold"
                             : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"}
                         `}
                       >

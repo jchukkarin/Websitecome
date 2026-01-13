@@ -118,11 +118,13 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
-
               <div className="flex justify-end">
-                <button type="button" className="text-[10px] text-gray-400 font-bold hover:underline">
-                  ลืมรหัสผ่าน
-                </button>
+                <Link
+                  href="/forget-your-password"
+                  className="text-[10px] text-gray-400 font-bold hover:underline"
+                >
+                  ลืมรหัสผ่าน?
+                </Link>
               </div>
 
               <Button

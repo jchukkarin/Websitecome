@@ -36,6 +36,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      - name: Check SSH key lines
+        run: |
+          echo "${{ secrets.SERVER_SSH_KEY }}" | wc -l
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:

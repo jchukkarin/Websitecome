@@ -51,6 +51,6 @@ jobs:
             git pull origin main
             npm ci
             npx prisma generate
-            npx prisma db push --accept-data-loss
+            npx prisma migrate deploy
             npm run build
             pm2 restart income || pm2 start npm --name "income" -- start

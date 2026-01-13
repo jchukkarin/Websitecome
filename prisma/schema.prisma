@@ -62,3 +62,39 @@ model ShopProfile {
   phone       String?
   updatedAt   DateTime @updatedAt
 }
+
+
+model ImportStatus {
+  id        Int       @id @default(autoincrement())
+  name      String
+  products  Product[]
+
+  createdAt DateTime  @default(now())
+}
+
+
+model Product {
+  id              Int           @id @default(autoincrement())
+  name            String
+
+  // สถานะนำเข้า
+  importStatusId  Int
+  importStatus    ImportStatus  @relation(fields: [importStatusId], references: [id])
+
+  // สถานะการเบิกจ่าย
+  payoutStatusId  Int?
+  payoutStatus    PayoutStatus? @relation(fields: [payoutStatusId], references: [id])
+
+  // สถานะขายจริง
+  isSold          Boolean       @default(false)
+  soldAt          DateTime?
+
+  createdAt       DateTime      @default(now())
+}
+
+model PayoutStatus {
+  id        Int       @id @default(autoincrement())
+  name      String
+  products  Product[]
+  createdAt DateTime  @default(now())
+}

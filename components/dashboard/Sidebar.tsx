@@ -13,6 +13,7 @@ const navItems = [
   { id: "project", label: "การฝากซ่อม", emoji: "💼", href: "/project", subMenu: [{ label: "ประวัติการฝากซ่อม", href: "/project/Repair-service-history" }, { label: "บันทึกการฝากซ่อม", href: "/project" },], },
   { id: "expenses", label: "การฝากขาย", emoji: "💸", href: "/", subMenu: [{ label: "ประวัติการฝากขาย", href: "/income/HistoryFormProDuct" }, { label: "บันทึกการฝากขาย", href: "/income/FormProductIncome" }] },
   { id: "pawn", label: "การจำนำ", emoji: "555", href: "/expense", subMenu: [{ label: "ประวัติการจำนำ", href: "/expense/ExpenseForm" }, { label: "บันทึกการจำนำ", href: "/expense" }] },
+  { id: "profile", label: "โปรไฟล์", emoji: "👤", href: "/profile" },
   { id: "shop-profile", label: "การตั้งค่าร้านค้า", emoji: "📊", href: "/profile/SetupFormProFileShop" },
   { id: "categories", label: "การตั้งค่าหมวดหมู่", emoji: "⚙️", href: "/edit" },
 ];

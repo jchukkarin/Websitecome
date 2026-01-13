@@ -1,38 +1,34 @@
 "use client";
 
-import { User, Link } from "@heroui/react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { LayoutDashboard, User, LogOut, ChevronDown } from "lucide-react";
 
 export default function UserMenu() {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  // TODO: เปลี่ยนเป็นเช็ค session จริง (cookie / fetch)
   const isLoggedIn = true;
 
-  async function handleLogout() {
-    const res = await fetch("/api/auth/logout", {
-      method: "POST",
-    });
-
-    if (res.ok) {
-      router.push("/login");
-      router.refresh(); // รีเฟรช server component
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
     }
-  }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (!isLoggedIn) {
     return (
-      <div className="flex gap-3">
-        <Link
-          href="/login"
-          className="text-sm px-4 py-2 border rounded-full hover:bg-gray-100"
-        >
+      <div className="flex items-center gap-2">
+        <Link href="/login" className="text-sm font-medium px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-full transition">
           Login
         </Link>
-        <Link
-          href="/register"
-          className="text-sm px-4 py-2 bg-yellow-400 rounded-full font-medium"
-        >
+        <Link href="/register" className="text-sm font-bold px-5 py-2 bg-yellow-400 hover:bg-yellow-500 rounded-full shadow-sm transition">
           Register
         </Link>
       </div>
@@ -40,28 +36,45 @@ export default function UserMenu() {
   }
 
   return (
-    <div className="flex items-center gap-3">
-      {/* avatar (วงกลม Profile)*/}
-      <User
-        avatarProps={{
-          src: "https://avatars.githubusercontent.com/u/30373425?v=4",
-        }}
-        description={
-          <Link isExternal href="https://x.com/jrgarciadev" size="sm">
-            @jrgarciadev
-          </Link>
-        }
-        name="Junior Garcia"
-      />
-
-
-      {/* logout */}
+    <div className="relative" ref={ref}>
       <button
-        onClick={handleLogout}
-        className="text-sm px-4 py-2 border rounded-full hover:bg-red-100 hover:text-red-600"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 p-1 pr-3 hover:bg-gray-100 rounded-full transition border border-transparent hover:border-gray-200"
       >
-        Logout
+        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-xs shadow-inner">
+          JG
+        </div>
+        <ChevronDown size={14} className={`text-gray-500 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
+
+      {open && (
+        <div className="absolute right-0 mt-3 w-56 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in zoom-in-95 duration-150">
+          <div className="px-4 py-4 bg-gray-50/50 border-b">
+            <p className="font-bold text-gray-900 leading-none">Name</p>
+            <p className="text-xs text-gray-500 mt-1">email</p>
+          </div>
+
+          <div className="p-1">
+            <Link href="/profile" className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 rounded-xl transition">
+              <User size={18} className="text-gray-400" /> โปรไฟล์ของฉัน
+            </Link>
+            <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 rounded-xl transition">
+              <LayoutDashboard size={18} className="text-gray-400" /> Dashboard
+            </Link>
+          </div>
+
+          <div className="h-px bg-gray-100 mx-1" />
+
+          <div className="p-1">
+            <button
+              onClick={() => {}} // ใส่ handleLogout
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition font-medium"
+            >
+              <LogOut size={18} /> ออกจากระบบ
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

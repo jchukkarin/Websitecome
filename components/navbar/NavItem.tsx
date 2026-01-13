@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -13,13 +15,14 @@ export default function NavItem({ href, label }: Props) {
   return (
     <Link
       href={href}
-      className={`text-sm font-medium transition
-        ${isActive
-          ? "text-yellow-500"
-          : "text-gray-600 hover:text-gray-900"}
+      className={`relative py-2 text-sm font-semibold transition-all duration-200 
+        ${isActive ? "text-yellow-600" : "text-gray-500 hover:text-gray-900"}
       `}
     >
       {label}
+      {isActive && (
+        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-yellow-500 rounded-full animate-in fade-in" />
+      )}
     </Link>
   );
 }

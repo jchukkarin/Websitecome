@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { User, Link } from "@heroui/react";
 import { useRouter } from "next/navigation";
 
 export default function UserMenu() {
@@ -41,8 +41,24 @@ export default function UserMenu() {
 
   return (
     <div className="flex items-center gap-3">
-      {/* avatar */}
-      <div className="w-9 h-9 bg-gray-300 rounded-full" />
+      {/* avatar (วงกลม Profile)*/}
+      <button className="flex items-center gap-3">
+        <Link href="/profile">
+
+      <User
+        avatarProps={{
+          src: "https://avatars.githubusercontent.com/u/30373425?v=4",
+        }}
+        description={
+          <Link isExternal href="https://x.com/jrgarciadev" size="sm">
+            @jrgarciadev
+          </Link>
+        }
+        name="Junior Garcia"
+      />
+      </Link>
+    </button>
+
 
       {/* logout */}
       <button

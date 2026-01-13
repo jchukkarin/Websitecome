@@ -1,7 +1,9 @@
-export default function Expense() {
+import Expense from "@/components/expense/Expense";
+
+export default function ExpensePage() {
     return (
         <div>
-            <h1>Expense</h1>
+            <Expense />
         </div>
     );
 }

@@ -155,9 +155,9 @@ export default function Projects() {
         {/* Header */}
         <div className="flex justify-between items-start">
           <div className="space-y-1">
-            <p className="text-xs text-blue-600 font-semibold tracking-wider uppercase">การฝากขาย</p>
-            <h1 className="text-3xl font-bold text-gray-900">บันทึกการฝากขาย</h1>
-            <p className="text-sm text-gray-500">บันทึกข้อมูลการฝากขายสินค้า</p>
+            <p className="text-xs text-blue-600 font-semibold tracking-wider uppercase">การนำเข้า</p>
+            <h1 className="text-3xl font-bold text-gray-900">บันทึกการจำนำ</h1>
+            <p className="text-sm text-gray-500">บันทึกข้อมูลการจำนำ</p>
           </div>
           <div className="flex gap-2">
             <Button isIconOnly variant="light" radius="full" size="sm">

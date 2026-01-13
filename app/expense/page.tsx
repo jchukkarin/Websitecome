@@ -1,9 +1,9 @@
-import Expense from "@/components/expense/Expense";
+import PawnRecording from "@/components/expense/Expense";
 
-export default function ExpensePage() {
+export default function PawnRecordingPage() {
     return (
         <div>
-            <Expense />
+            <PawnRecording />
         </div>
     );
 }

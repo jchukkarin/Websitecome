@@ -29,9 +29,8 @@ import {
   UserCircle
 } from "lucide-react";
 import axios from "axios";
-import UploadForm from "../uploadform/UpLoadForm";
 
-export default function Projects() {
+export default function PawnRecording() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -45,7 +44,7 @@ export default function Projects() {
 
   const [items, setItems] = useState([
     {
-      id: crypto.randomUUID(),
+      id: "initial-item",
       productName: "",
       category: "",
       year: "",
@@ -82,6 +81,17 @@ export default function Projects() {
     setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
+  const handleItemImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        handleItemChange(id, "imageUrl", reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleClear = () => {
     setFormData({
       date: new Date().toISOString().split("T")[0],
@@ -93,7 +103,7 @@ export default function Projects() {
       images: [],
     });
     setItems([{
-      id: crypto.randomUUID(),
+      id: "initial-item",
       productName: "",
       category: "",
       year: "",
@@ -107,7 +117,6 @@ export default function Projects() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newImages: string[] = [];
       Array.from(files).forEach((file) => {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -135,10 +144,11 @@ export default function Projects() {
     try {
       const payload = {
         ...formData,
-        items
+        items,
+        type: "PAWN"
       };
       await axios.post("/api/consignments", payload);
-      alert("บันทึกข้อมูลการฝากขายสำเร็จ!");
+      alert("บันทึกข้อมูลการจำนำสำเร็จ!");
       handleClear();
     } catch (error) {
       console.error("Save error:", error);
@@ -155,9 +165,9 @@ export default function Projects() {
         {/* Header */}
         <div className="flex justify-between items-start">
           <div className="space-y-1">
-            <p className="text-xs text-blue-600 font-semibold tracking-wider uppercase">การนำเข้า</p>
-            <h1 className="text-3xl font-bold text-gray-900">บันทึกการจำนำ</h1>
-            <p className="text-sm text-gray-500">บันทึกข้อมูลการจำนำ</p>
+            <p className="text-xs text-red-600 font-semibold tracking-wider uppercase">การจำนำ</p>
+            <h1 className="text-3xl font-bold text-gray-900">บันทึกการจำนำสินค้า</h1>
+            <p className="text-sm text-gray-500">บันทึกข้อมูลการรับจำนำสินค้า</p>
           </div>
           <div className="flex gap-2">
             <Button isIconOnly variant="light" radius="full" size="sm">
@@ -179,10 +189,10 @@ export default function Projects() {
               {/* Section Title */}
               <div>
                 <h3 className="text-base font-semibold text-gray-900">
-                  ข้อมูลผู้ฝากขาย
+                  ข้อมูลผู้นำมาจำนำ
                 </h3>
                 <p className="text-sm text-gray-500">
-                  กรุณากรอกข้อมูลผู้ฝากขายให้ครบถ้วน
+                  กรุณากรอกข้อมูลผู้นำมาจำนำให้ครบถ้วน
                 </p>
               </div>
 
@@ -191,7 +201,7 @@ export default function Projects() {
 
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-700">
-                    วันที่รับสินค้าฝากขาย
+                    วันที่รับจำนำ
                   </p>
                   <Input
                     type="date"
@@ -225,10 +235,10 @@ export default function Projects() {
 
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-700">
-                    ชื่อผู้ฝากขาย
+                    ชื่อผู้นำมาจำนำ
                   </p>
                   <Input
-                    placeholder="กรอกชื่อผู้ฝากขาย"
+                    placeholder="กรอกชื่อผู้นำมาจำนำ"
                     variant="bordered"
                     value={formData.consignorName}
                     classNames={{
@@ -267,10 +277,10 @@ export default function Projects() {
               {/* Address */}
               <div className="space-y-1">
                 <p className="text-sm font-medium text-gray-700">
-                  ที่อยู่ผู้ฝากขาย
+                  ที่อยู่ผู้นำมาจำนำ
                 </p>
                 <Textarea
-                  placeholder="กรอกที่อยู่ผู้ฝากขาย"
+                  placeholder="กรอกที่อยู่"
                   variant="bordered"
                   minRows={3}
                   classNames={{
@@ -286,10 +296,10 @@ export default function Projects() {
               {/* Total Price */}
               <div className="space-y-1 max-w-xs">
                 <p className="text-sm font-medium text-gray-700">
-                  ราคารวม
+                  ยอดรวมจำนำ
                 </p>
                 <Input
-                  placeholder="กรอกราคารวม"
+                  placeholder="กรอกยอดรวม"
                   type="number"
                   variant="bordered"
                   classNames={{
@@ -324,10 +334,10 @@ export default function Projects() {
                   onChange={handleImageUpload}
                 />
                 <div
-                  className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors"
+                  className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center cursor-pointer hover:bg-red-100 transition-colors"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <PlusCircle className="text-blue-500" size={32} />
+                  <PlusCircle className="text-red-500" size={32} />
                 </div>
 
                 <div className="text-center space-y-1">
@@ -335,7 +345,7 @@ export default function Projects() {
                     เพิ่มรูปภาพสินค้า
                   </p>
                   <p className="text-xs text-gray-400">
-                    คลิกเพื่อเลือก หรือลากไฟล์มาวาง (รองรับหลายไฟล์)
+                    คลิกเพื่อเลือก หรือลากไฟล์มาวาง
                   </p>
                 </div>
               </div>
@@ -371,28 +381,40 @@ export default function Projects() {
 
         {/* Product Items Table */}
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-900">รายการสินค้า</h2>
+          <h2 className="text-xl font-bold text-gray-900">รายการสินค้าจำนำ</h2>
           <Table
-            aria-label="Consignment items table"
+            aria-label="Pawn items table"
             removeWrapper
             className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
           >
             <TableHeader>
-              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">รูปภาพสินค้า</TableColumn>
+              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold w-24">รูปภาพ</TableColumn>
               <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ชื่อสินค้า/รายละเอียด</TableColumn>
               <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">หมวดหมู่</TableColumn>
-              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ปี</TableColumn>
-              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">สถานะการฝากขาย</TableColumn>
-              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ราคาคอนเฟิร์ม</TableColumn>
-              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ช่องทางการขาย</TableColumn>
-              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-center w-10"></TableColumn>
+              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ปี/รุ่น</TableColumn>
+              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">สถานะ</TableColumn>
+              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-right">ยอดจำนำ</TableColumn>
+              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-center w-24">การกระทำ</TableColumn>
             </TableHeader>
             <TableBody items={items}>
               {(item) => (
                 <TableRow key={item.id}>
                   <TableCell>
-                    <div className="flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg w-16 h-12 bg-blue-50/30 cursor-pointer hover:border-blue-400 transition group">
-                      <Plus className="text-blue-400 group-hover:text-blue-600" size={16} />
+                    <div
+                      className="flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg w-16 h-12 bg-red-50/30 cursor-pointer hover:border-red-400 transition group relative overflow-hidden"
+                      onClick={() => document.getElementById(`pawn-file-item-${item.id}`)?.click()}
+                    >
+                      {item.imageUrl && (item.imageUrl.startsWith("data:") || item.imageUrl.startsWith("/")) ? (
+                        <img src={item.imageUrl} className="w-full h-full object-cover" />
+                      ) : (
+                        <Plus className="text-red-400 group-hover:text-red-600" size={16} />
+                      )}
+                      <input
+                        type="file"
+                        id={`pawn-file-item-${item.id}`}
+                        className="hidden"
+                        onChange={(e) => handleItemImageUpload(item.id, e)}
+                      />
                     </div>
                   </TableCell>
                   <TableCell>
@@ -432,28 +454,21 @@ export default function Projects() {
                       selectedKeys={[item.status]}
                       onChange={(e) => handleItemChange(item.id, "status", e.target.value)}
                     >
-                      <SelectItem key="ขายได้">ขายได้</SelectItem>
-                      <SelectItem key="ขายไม่ได้">ขายไม่ได้</SelectItem>
+                      <SelectItem key="ขายได้">ปกติ</SelectItem>
+                      <SelectItem key="ขายไม่ได้">ชำรุด</SelectItem>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell align="right">
                     <Input
-                      placeholder="กรอกข้อมูล..."
+                      placeholder="0.00"
                       variant="underlined"
                       type="number"
                       value={item.confirmedPrice}
                       onChange={(e) => handleItemChange(item.id, "confirmedPrice", e.target.value)}
+                      classNames={{ input: "text-right font-bold text-red-600" }}
                     />
                   </TableCell>
-                  <TableCell>
-                    <Input
-                      placeholder="เช่น Shopee"
-                      variant="underlined"
-                      value={item.salesChannel}
-                      onChange={(e) => handleItemChange(item.id, "salesChannel", e.target.value)}
-                    />
-                  </TableCell>
-                  <TableCell>
+                  <TableCell align="center">
                     <Tooltip content="ลบรายการ" color="danger">
                       <Button
                         isIconOnly
@@ -475,19 +490,19 @@ export default function Projects() {
           <div className="flex justify-between items-center py-4">
             <Button
               variant="flat"
-              color="primary"
+              color="danger"
               startContent={<PlusCircle size={20} />}
               onPress={handleAddItem}
               className="font-semibold"
             >
-              เพิ่มข้อมูลนำเข้า
+              เพิ่มรายการจำนำ
             </Button>
             <div className="flex gap-4">
               <Button
                 variant="light"
                 startContent={<RotateCcw size={20} />}
                 onPress={handleClear}
-                className="font-semibold text-gray-500"
+                className="font-semibold text-gray-500 bg-gray-200"
               >
                 ล้างข้อมูล
               </Button>
@@ -496,9 +511,9 @@ export default function Projects() {
                 startContent={<Save size={20} />}
                 onPress={handleSubmit}
                 isLoading={loading}
-                className="font-bold text-white px-8"
+                className="font-bold text-white px-8 bg-green-700"
               >
-                บันทึก
+                บันทึกจำนำ
               </Button>
             </div>
           </div>

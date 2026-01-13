@@ -36,7 +36,7 @@ export default function History() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await axios.get("/api/consignments");
+            const res = await axios.get("/api/consignments?type=INCOME");
             // Flatten the data: each consignment has items
             const flattened = res.data.flatMap((c: any) =>
                 c.items.map((item: any) => ({

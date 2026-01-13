@@ -42,6 +42,7 @@ export async function POST(req: Request) {
             totalPrice,
             images,
             items,
+            type, // Added type
         } = body;
 
         // Process images
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
                 contactNumber,
                 address,
                 totalPrice: Number(totalPrice),
+                type: type || "INCOME", // Store the type
 
                 images: {
                     create: processedImagesUrls.map((url: string) => ({
@@ -95,9 +97,18 @@ export async function POST(req: Request) {
     }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
+        const { searchParams } = new URL(req.url);
+        const type = searchParams.get("type");
+
+        const where: any = {};
+        if (type) {
+            where.type = type;
+        }
+
         const consignments = await prisma.consignment.findMany({
+            where,
             include: {
                 items: true,
                 images: true,

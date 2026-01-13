@@ -22,6 +22,7 @@ model Consignment {
   contactNumber String
   address       String
   totalPrice    Float
+  type          String             @default("INCOME")
   createdAt     DateTime           @default(now())
   images        ConsignmentImage[]
   items         ConsignmentItem[]

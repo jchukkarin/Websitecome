@@ -82,6 +82,17 @@ export default function Projects() {
     setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
+  const handleItemImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        handleItemChange(id, "imageUrl", reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleClear = () => {
     setFormData({
       date: new Date().toISOString().split("T")[0],
@@ -135,10 +146,11 @@ export default function Projects() {
     try {
       const payload = {
         ...formData,
-        items
+        items,
+        type: "REPAIR"
       };
       await axios.post("/api/consignments", payload);
-      alert("บันทึกข้อมูลการฝากขายสำเร็จ!");
+      alert("บันทึกข้อมูลการฝากซ่อมสำเร็จ!");
       handleClear();
     } catch (error) {
       console.error("Save error:", error);
@@ -155,9 +167,9 @@ export default function Projects() {
         {/* Header */}
         <div className="flex justify-between items-start">
           <div className="space-y-1">
-            <p className="text-xs text-blue-600 font-semibold tracking-wider uppercase">การฝากขาย</p>
-            <h1 className="text-3xl font-bold text-gray-900">บันทึกการฝากขาย</h1>
-            <p className="text-sm text-gray-500">บันทึกข้อมูลการฝากขายสินค้า</p>
+            <p className="text-xs text-blue-600 font-semibold tracking-wider uppercase">การฝากซ่อม</p>
+            <h1 className="text-3xl font-bold text-gray-900">บันทึกการฝากซ่อม</h1>
+            <p className="text-sm text-gray-500">บันทึกข้อมูลการฝากซ่อมสินค้า</p>
           </div>
           <div className="flex gap-2">
             <Button isIconOnly variant="light" radius="full" size="sm">
@@ -179,10 +191,10 @@ export default function Projects() {
               {/* Section Title */}
               <div>
                 <h3 className="text-base font-semibold text-gray-900">
-                  ข้อมูลผู้ฝากขาย
+                  ข้อมูลผู้ฝากซ่อมสินค้า
                 </h3>
                 <p className="text-sm text-gray-500">
-                  กรุณากรอกข้อมูลผู้ฝากขายให้ครบถ้วน
+                  กรุณากรอกข้อมูลผู้ฝากซ่อมให้ครบถ้วน
                 </p>
               </div>
 
@@ -191,7 +203,7 @@ export default function Projects() {
 
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-700">
-                    วันที่รับสินค้าฝากขาย
+                    วันที่รับสินค้าฝากซ่อม
                   </p>
                   <Input
                     type="date"
@@ -225,10 +237,10 @@ export default function Projects() {
 
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-700">
-                    ชื่อผู้ฝากขาย
+                    ชื่อผู้ฝากซ่อม
                   </p>
                   <Input
-                    placeholder="กรอกชื่อผู้ฝากขาย"
+                    placeholder="กรอกชื่อผู้ฝากซ่อม"
                     variant="bordered"
                     value={formData.consignorName}
                     classNames={{
@@ -267,10 +279,10 @@ export default function Projects() {
               {/* Address */}
               <div className="space-y-1">
                 <p className="text-sm font-medium text-gray-700">
-                  ที่อยู่ผู้ฝากขาย
+                  ที่อยู่ผู้ฝากซ่อม
                 </p>
                 <Textarea
-                  placeholder="กรอกที่อยู่ผู้ฝากขาย"
+                  placeholder="กรอกที่อยู่ผู้ฝากซ่อม"
                   variant="bordered"
                   minRows={3}
                   classNames={{
@@ -385,14 +397,27 @@ export default function Projects() {
               <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">สถานะการฝากขาย</TableColumn>
               <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ราคาคอนเฟิร์ม</TableColumn>
               <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ช่องทางการขาย</TableColumn>
-              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-center w-10"></TableColumn>
+              <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-center w-10">การกระทำ</TableColumn>
             </TableHeader>
             <TableBody items={items}>
               {(item) => (
                 <TableRow key={item.id}>
                   <TableCell>
-                    <div className="flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg w-16 h-12 bg-blue-50/30 cursor-pointer hover:border-blue-400 transition group">
-                      <Plus className="text-blue-400 group-hover:text-blue-600" size={16} />
+                    <div
+                      className="flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg w-16 h-12 bg-blue-50/30 cursor-pointer hover:border-blue-400 transition group relative overflow-hidden"
+                      onClick={() => document.getElementById(`file-item-${item.id}`)?.click()}
+                    >
+                      {item.imageUrl && (item.imageUrl.startsWith("data:") || item.imageUrl.startsWith("/")) ? (
+                        <img src={item.imageUrl} className="w-full h-full object-cover" />
+                      ) : (
+                        <Plus className="text-blue-400 group-hover:text-blue-600" size={16} />
+                      )}
+                      <input
+                        type="file"
+                        id={`file-item-${item.id}`}
+                        className="hidden"
+                        onChange={(e) => handleItemImageUpload(item.id, e)}
+                      />
                     </div>
                   </TableCell>
                   <TableCell>
@@ -410,10 +435,14 @@ export default function Projects() {
                       size="sm"
                       selectedKeys={item.category ? [item.category] : []}
                       onChange={(e) => handleItemChange(item.id, "category", e.target.value)}
+                      classNames={{
+                        trigger: "text-sm",
+                        value: "text-sm",
+                      }}
                     >
-                      <SelectItem key="Filing">Filing</SelectItem>
-                      <SelectItem key="Camera">กล้อง</SelectItem>
-                      <SelectItem key="Other">อื่นๆ</SelectItem>
+                      <SelectItem key="Filing" className="text-sm font-normal">Filing</SelectItem>
+                      <SelectItem key="Camera" className="text-sm font-normal">กล้อง</SelectItem>
+                      <SelectItem key="Other" className="text-sm font-normal">อื่นๆ</SelectItem>
                     </Select>
                   </TableCell>
                   <TableCell>
@@ -431,9 +460,13 @@ export default function Projects() {
                       size="sm"
                       selectedKeys={[item.status]}
                       onChange={(e) => handleItemChange(item.id, "status", e.target.value)}
+                      classNames={{
+                        trigger: "text-sm",
+                        value: "text-sm",
+                      }}
                     >
-                      <SelectItem key="ขายได้">ขายได้</SelectItem>
-                      <SelectItem key="ขายไม่ได้">ขายไม่ได้</SelectItem>
+                      <SelectItem key="ขายได้" className="text-sm font-normal">ขายได้</SelectItem>
+                      <SelectItem key="ขายไม่ได้" className="text-sm font-normal">ขายไม่ได้</SelectItem>
                     </Select>
                   </TableCell>
                   <TableCell>
@@ -480,14 +513,14 @@ export default function Projects() {
               onPress={handleAddItem}
               className="font-semibold"
             >
-              เพิ่มข้อมูลนำเข้า
+              เพิ่มข้อมูลฝากซ่อม
             </Button>
             <div className="flex gap-4">
               <Button
                 variant="light"
                 startContent={<RotateCcw size={20} />}
                 onPress={handleClear}
-                className="font-semibold text-gray-500"
+                className="bg-gray-500 font-semibold text-white px-8"
               >
                 ล้างข้อมูล
               </Button>
@@ -496,7 +529,7 @@ export default function Projects() {
                 startContent={<Save size={20} />}
                 onPress={handleSubmit}
                 isLoading={loading}
-                className="font-bold text-white px-8"
+                className="bg-green-700 font-bold text-white px-8"
               >
                 บันทึก
               </Button>

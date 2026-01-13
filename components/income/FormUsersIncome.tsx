@@ -146,7 +146,8 @@ export default function Projects() {
         try {
             const payload = {
                 ...formData,
-                items
+                items,
+                type: "INCOME"
             };
             await axios.post("/api/consignments", payload);
             alert("บันทึกข้อมูลการฝากขายสำเร็จ!");
@@ -396,7 +397,7 @@ export default function Projects() {
                             <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">สถานะการฝากขาย</TableColumn>
                             <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ราคาคอนเฟิร์ม</TableColumn>
                             <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ช่องทางการขาย</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-center w-10"></TableColumn>
+                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-center w-10">การกระทำ</TableColumn>
                         </TableHeader>
                         <TableBody items={items}>
                             {(item) => (

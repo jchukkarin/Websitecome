@@ -4,16 +4,25 @@ import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
 
-async function saveBase64Image(base64String: string) {
+// Helper to check if running on Vercel
+const isVercel = process.env.VERCEL === "1";
+
+async function saveImage(base64String: string) {
     if (!base64String || !base64String.startsWith("data:image")) return base64String;
 
+    // IF ON VERCEL: Return base64 directly (read-only filesystem)
+    if (isVercel) {
+        return base64String;
+    }
+
+    // IF ON LOCAL: Save to public/uploads
     try {
         const matches = base64String.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
         if (!matches || matches.length !== 3) return base64String;
 
         const type = matches[1];
         const buffer = Buffer.from(matches[2], "base64");
-        const extension = type.split("/")[1].split("+")[0]; // Handle cases like image/svg+xml
+        const extension = type.split("/")[1].split("+")[0];
         const filename = `${crypto.randomUUID()}.${extension}`;
 
         const uploadDir = path.join(process.cwd(), "public", "uploads");
@@ -24,7 +33,7 @@ async function saveBase64Image(base64String: string) {
 
         return `/uploads/${filename}`;
     } catch (error) {
-        console.error("Error saving image:", error);
+        console.error("Error saving image locally:", error);
         return base64String; // Fallback to base64 if save fails
     }
 }
@@ -42,18 +51,18 @@ export async function POST(req: Request) {
             totalPrice,
             images,
             items,
-            type, // Added type
+            type,
         } = body;
 
-        // Process images
+        // Process images based on environment
         const processedImagesUrls = await Promise.all(
-            (images || []).map((img: string) => saveBase64Image(img))
+            (images || []).map((img: string) => saveImage(img))
         );
 
         const processedItems = await Promise.all(
             (items || []).map(async (item: any) => ({
                 ...item,
-                imageUrl: item.imageUrl ? await saveBase64Image(item.imageUrl) : null
+                imageUrl: item.imageUrl ? await saveImage(item.imageUrl) : null
             }))
         );
 
@@ -65,7 +74,7 @@ export async function POST(req: Request) {
                 contactNumber,
                 address,
                 totalPrice: Number(totalPrice),
-                type: type || "INCOME", // Store the type
+                type: type || "INCOME",
 
                 images: {
                     create: processedImagesUrls.map((url: string) => ({

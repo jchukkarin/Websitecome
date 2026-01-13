@@ -50,39 +50,49 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-white flex items-center justify-center overflow-hidden relative">
+    <div className="min-h-screen w-full bg-white flex items-center justify-center overflow-hidden relative p-4">
 
-      {/* Background Red Accents (Consistent with Login) */}
-      <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[120%] bg-[#d9161a] rounded-full z-0 flex items-center justify-center">
-        <div className="text-white flex flex-col items-center">
+      {/* Background Red Accents - Hidden on mobile */}
+      <div className="hidden lg:block absolute top-[-10%] right-[-10%] w-[60%] h-[120%] bg-[#d9161a] rounded-full z-0">
+        <div className="text-white flex flex-col items-center justify-center h-full">
           <img
             src="/naitounoi.png"
             alt="Logo"
-            className="w-48 h-48 mb-4 brightness-0 invert"
+            className="w-32 h-32 md:w-48 md:h-48 mb-4 brightness-0 invert"
           />
-          <h1 className="text-5xl font-black italic tracking-tighter">NAITOUNOI</h1>
-          <p className="text-xl font-bold opacity-80 mt-2">JOIN OUR COMMUNITY</p>
+          <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter">NAITOUNOI</h1>
+          <p className="text-lg md:text-xl font-bold opacity-80 mt-2">JOIN OUR COMMUNITY</p>
         </div>
       </div>
 
-      {/* Decorative Elements */}
-      <div className="absolute top-[-5%] left-[-5%] w-[20%] h-[30%] bg-[#d9161a]/10 rounded-full z-0" />
-      <div className="absolute bottom-[-10%] left-[5%] w-[25%] h-[40%] bg-[#d9161a] rounded-full z-0" />
+      {/* Mobile Logo */}
+      <div className="lg:hidden absolute top-8 left-0 right-0 flex flex-col items-center z-10">
+        <img
+          src="/naitounoi.png"
+          alt="Logo"
+          className="w-20 h-20 mb-2"
+        />
+        <h1 className="text-2xl font-black italic tracking-tighter text-[#d9161a]">NAITOUNOI</h1>
+      </div>
 
-      <div className="max-w-7xl mx-auto w-full flex justify-start px-12 relative z-10">
+      {/* Decorative Elements - Hidden on mobile */}
+      <div className="hidden lg:block absolute top-[-5%] left-[-5%] w-[20%] h-[30%] bg-[#d9161a]/10 rounded-full z-0" />
+      <div className="hidden lg:block absolute bottom-[-10%] left-[5%] w-[25%] h-[40%] bg-[#d9161a] rounded-full z-0" />
+
+      <div className="w-full max-w-7xl mx-auto flex justify-center lg:justify-start px-4 md:px-12 relative z-10 mt-32 lg:mt-0">
 
         {/* Register Card */}
-        <Card className="w-full max-w-[450px] shadow-2xl border-none p-4" radius="lg">
-          <CardBody className="space-y-8 p-8">
+        <Card className="w-full max-w-[450px] shadow-2xl border-none p-2 md:p-4" radius="lg">
+          <CardBody className="space-y-6 md:space-y-8 p-6 md:p-8">
             <div className="space-y-2">
               <Link href="/login" className="text-[#d01317] flex items-center gap-2 text-xs font-bold hover:underline mb-4">
                 <ArrowLeft size={14} /> กลับไปหน้าเข้าสู่ระบบ
               </Link>
-              <h2 className="text-4xl font-bold text-gray-800">สร้างบัญชีใหม่</h2>
-              <p className="text-sm text-gray-400 font-medium">กรอกข้อมูลเพื่อเริ่มต้นใช้งานระบบ</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800">สร้างบัญชีใหม่</h2>
+              <p className="text-xs md:text-sm text-gray-400 font-medium">กรอกข้อมูลเพื่อเริ่มต้นใช้งานระบบ</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
               <div className="space-y-4">
                 <div className="space-y-1">
                   <label className="text-sm font-bold text-gray-700">ชื่อ-นามสกุล</label>
@@ -90,7 +100,7 @@ export default function RegisterPage() {
                     placeholder="ระบุชื่อจริงของคุณ"
                     variant="bordered"
                     classNames={{
-                      inputWrapper: "border-gray-200 h-12",
+                      inputWrapper: "border-gray-200 h-11 md:h-12",
                     }}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -105,7 +115,7 @@ export default function RegisterPage() {
                     placeholder="example@mail.com"
                     variant="bordered"
                     classNames={{
-                      inputWrapper: "border-gray-200 h-12",
+                      inputWrapper: "border-gray-200 h-11 md:h-12",
                     }}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -120,7 +130,7 @@ export default function RegisterPage() {
                     placeholder="ตั้งรหัสผ่านของคุณ"
                     variant="bordered"
                     classNames={{
-                      inputWrapper: "border-gray-200 h-12",
+                      inputWrapper: "border-gray-200 h-11 md:h-12",
                     }}
                     endContent={
                       <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
@@ -141,7 +151,7 @@ export default function RegisterPage() {
               <Button
                 type="submit"
                 color="danger"
-                className="w-full bg-[#d01317] text-white font-bold h-12 text-lg shadow-lg mt-4"
+                className="w-full bg-[#d01317] text-white font-bold h-11 md:h-12 text-base md:text-lg shadow-lg mt-4"
                 isLoading={loading}
                 startContent={<UserPlus size={20} />}
               >

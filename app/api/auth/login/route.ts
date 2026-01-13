@@ -17,17 +17,17 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // Set cookie
-    (await cookies()).set("token", "login-success", {
-        httpOnly: true,
-        path: "/",
-    });
-
     const isPasswordValid = await bcrypt.compare(password, existingUserByEmail.password);
 
     if (!isPasswordValid) {
         return NextResponse.json({ message: "Invalid password" }, { status: 401 });
     }
+
+    // Set cookie after successful validation
+    (await cookies()).set("token", "login-success", {
+        httpOnly: true,
+        path: "/",
+    });
 
     return NextResponse.json({ message: "Login successful" }, { status: 200 });
 }

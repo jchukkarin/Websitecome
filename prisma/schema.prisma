@@ -7,11 +7,28 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
+  id        String   @id @default(uuid())
   email     String   @unique
-  password  String
+  name      String?
+  password  String?
+  image     String?
+  username  String?  @unique
   createdAt DateTime @default(now())
+
+  notifications Notification[]
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String // เช่น ORDER, PAYMENT, SYSTEM
+  isSent    Boolean   @default(false)
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Consignment {
@@ -63,33 +80,31 @@ model ShopProfile {
   updatedAt   DateTime @updatedAt
 }
 
-
 model ImportStatus {
-  id        Int       @id @default(autoincrement())
-  name      String
-  products  Product[]
+  id       Int       @id @default(autoincrement())
+  name     String
+  products Product[]
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 }
 
-
 model Product {
-  id              Int           @id @default(autoincrement())
-  name            String
+  id   Int    @id @default(autoincrement())
+  name String
 
   // สถานะนำเข้า
-  importStatusId  Int
-  importStatus    ImportStatus  @relation(fields: [importStatusId], references: [id])
+  importStatusId Int
+  importStatus   ImportStatus @relation(fields: [importStatusId], references: [id])
 
   // สถานะการเบิกจ่าย
-  payoutStatusId  Int?
-  payoutStatus    PayoutStatus? @relation(fields: [payoutStatusId], references: [id])
+  payoutStatusId Int?
+  payoutStatus   PayoutStatus? @relation(fields: [payoutStatusId], references: [id])
 
   // สถานะขายจริง
-  isSold          Boolean       @default(false)
-  soldAt          DateTime?
+  isSold Boolean   @default(false)
+  soldAt DateTime?
 
-  createdAt       DateTime      @default(now())
+  createdAt DateTime @default(now())
 }
 
 model PayoutStatus {

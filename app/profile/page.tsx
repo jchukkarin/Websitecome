@@ -8,6 +8,7 @@ import { Card } from "@heroui/react";
 export default function ProfilePage() {
     const [activeItem, setActiveItem] = useState("profile");
     const [userData, setUserData] = useState({
+        id: "",
         name: "",
         username: "",
         email: "",
@@ -40,18 +41,34 @@ export default function ProfilePage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    id: userData.id,
                     name: tempData.name,
+                    username: tempData.username,
                     email: tempData.email,
-                    image: userData.image, // ส่งรูปภาพจาก userData ไปด้วย
+                    image: userData.image, 
                 })
             });
 
+            const data = await res.json();
+            
             if (res.ok) {
-                setUserData(tempData); // อัปเดตข้อมูลที่แสดงโชว์
+                setUserData(data); // Sync displayed data with response
+                 // Also update tempData to match what was saved (in case of partial updates or sanitization)
+                setTempData({
+                    id: data.id,
+                    name: data.name,
+                    username: data.username || "",
+                    email: data.email,
+                    image: data.image || ""
+                });
                 alert("บันทึกสำเร็จ!");
+            } else {
+                console.error("Save failed:", data);
+                alert(`เกิดข้อผิดพลาด: ${data.message || data.error || "Unknown error"}`);
             }
         } catch (error) {
-            alert("เกิดข้อผิดพลาด");
+            console.error("Network error:", error);
+            alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
         }
     };
 

@@ -5,6 +5,7 @@ import { Camera, Mail, User as UserIcon, Trash2 } from "lucide-react";
 
 // กำหนด Interface ให้ถูกต้องเพื่อแก้ปัญหา ts(2322)
 interface UserDataType {
+    id: string;
     name: string;
     username: string;
     email: string;
@@ -21,7 +22,7 @@ interface ProFileProps {
 }
 
 export default function ProFile({
-    
+
     userData,
     setUserData,
     tempData,

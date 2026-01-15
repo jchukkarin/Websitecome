@@ -8,18 +8,16 @@ export async function GET() {
 
         if (!user) {
             return NextResponse.json({
-                name: "ไม่พบข้อมูล",
-                username: "unknown",
-                email: "-",
-                image: ""
-            });
+                message: "ไม่พบข้อมูล user"
+            }, { status: 404 });
         }
 
         return NextResponse.json({
+            id: user.id,
             name: user.name,
-            username: user.email.split('@')[0],
+            username: user.username || "",
             email: user.email,
-            image: ""
+            image: user.image || ""
         });
     } catch (error) {
         console.error("Database Error:", error);

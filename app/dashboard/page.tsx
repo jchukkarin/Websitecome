@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import DashboardHome from "@/components/dashboard/home";
 
 export default function DashboardPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -61,6 +62,9 @@ export default function DashboardPage() {
           <p className="text-gray-500 text-sm md:text-base">
             ยินดีต้อนรับสู่ระบบบันทึกรายรับรายจ่าย
           </p>
+          <div className="mt-6">
+            <DashboardHome />
+          </div>
         </main>
       </div>
     </div>

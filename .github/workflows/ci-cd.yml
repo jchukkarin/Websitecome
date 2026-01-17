@@ -36,25 +36,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
 
-      - name: Check SSH key lines
-        run: |
-          echo "${{ secrets.SERVER_SSH_KEY }}" | wc -l
+      - name: Deploy via Rsync
+        uses: burnett01/rsync-deployments@v5.2
+        with:
+          switches: -avzr --delete --exclude 'node_modules' --exclude '.git' --exclude '.env' --exclude '.next'
+          path: .
+          remote_path: ${{ secrets.REMOTE_PATH }}
+          remote_host: ${{ secrets.REMOTE_HOST }}
+          remote_port: ${{ secrets.REMOTE_PORT }}
+          remote_user: ${{ secrets.REMOTE_USER }}
+          remote_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
 
-      - name: Deploy via SSH
+      - name: Build & Restart on Server
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 22
-          debug: true
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.REMOTE_PRIVATE_KEY }}
+          port: ${{ secrets.REMOTE_PORT }}
           script: |
-            cd /var/www/websitecome
-            git pull origin main
+            cd ${{ secrets.REMOTE_PATH }}
+            # Ensure .env exists or is preserved
             docker compose up -d
             npm ci
             npx prisma generate
             npx prisma migrate deploy
             npm run build
-            pm2 restart income || pm2 start npm --name "websitecome" -- start
+            pm2 restart websitecome || pm2 start npm --name "websitecome" -- start

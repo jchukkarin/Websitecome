@@ -39,13 +39,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Deploy via Rsync
-        uses: burnett01/rsync-deployments@v8
+        uses: burnett01/rsync-deployments@v5.2
         with:
-          switches: -avzr --delete \
-            --exclude 'node_modules' \
-            --exclude '.git' \
-            --exclude '.env' \
-            --exclude '.next'
+          switches: -avzr --delete --exclude 'node_modules' --exclude '.git' --exclude '.env' --exclude '.next'
           path: .
           remote_path: ${{ secrets.REMOTE_PATH }}
           remote_host: ${{ secrets.REMOTE_HOST }}
@@ -62,6 +58,7 @@ jobs:
           port: ${{ secrets.REMOTE_PORT }}
           script: |
             cd ${{ secrets.REMOTE_PATH }}
+            # Ensure .env exists or is preserved
             docker compose up -d
             npm ci
             npx prisma generate

@@ -64,4 +64,4 @@ jobs:
             npx prisma generate
             npx prisma migrate deploy
             npm run build
-            pm2 restart websitecome || pm2 start npm --name "websitecome" -- start
+            pm2 startOrReload ecosystem.config.js

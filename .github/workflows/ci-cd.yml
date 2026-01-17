@@ -50,8 +50,9 @@ jobs:
           port: 22
           debug: true
           script: |
-            cd /var/www/income-app
+            cd /var/www/websitecome
             git pull origin main
+            docker compose up -d
             npm ci
             npx prisma generate
             npx prisma migrate deploy

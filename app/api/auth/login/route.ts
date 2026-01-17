@@ -17,6 +17,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
+    if (!existingUserByEmail.password) {
+        return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
+    }
+
     const isPasswordValid = await bcrypt.compare(password, existingUserByEmail.password);
 
     if (!isPasswordValid) {

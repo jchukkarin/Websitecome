@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import axios from "axios";
 
+import DownloadExcelButton from "@/components/DownloadExcelButton";
+
 export default function ConsignmentHistory() {
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -76,7 +78,9 @@ export default function ConsignmentHistory() {
                         <h1 className="text-3xl font-bold text-gray-900">ประวัติการฝากขายสินค้า</h1>
                         <p className="text-sm text-gray-500">ข้อมูลรายการฝากขายทั้งหมดในระบบ</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                        <DownloadExcelButton />
+                        <div className="w-px h-8 bg-gray-200 mx-2" />
                         <Button isIconOnly variant="light" radius="full" size="sm" onClick={() => fetchData()}>
                             <RotateCcw size={20} className="text-gray-400" />
                         </Button>

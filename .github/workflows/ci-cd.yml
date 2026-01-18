@@ -1,4 +1,4 @@
-name: CI/CD Next.js Income App
+name: CI - Next.js + Prisma
 
 on:
   push:
@@ -8,13 +8,15 @@ on:
 
 jobs:
   build:
-    name: Build & Test
+    name: Build Check
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -22,46 +24,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Prisma Generate & Build
+      - name: Prisma Generate
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
+        run: npx prisma generate
+
+      - name: Build Next.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-        run: |
-          npx prisma generate
-          npm run build
-
-  deploy:
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy via Rsync
-        uses: burnett01/rsync-deployments@v8
-        with:
-          switches: -avzr --delete --exclude 'node_modules' --exclude '.git' --exclude '.env' --exclude '.next'
-          path: .
-          remote_path: ${{ secrets.REMOTE_PATH }}
-          remote_host: ${{ secrets.REMOTE_HOST }}
-          remote_port: ${{ secrets.REMOTE_PORT }}
-          remote_user: ${{ secrets.REMOTE_USER }}
-          remote_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
-
-      - name: Build & Restart on Server
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.REMOTE_PRIVATE_KEY }}
-          port: ${{ secrets.REMOTE_PORT }}
-          script: |
-            cd ${{ secrets.REMOTE_PATH }}
-            # Ensure .env exists or is preserved
-            docker compose up -d
-            npm ci
-            npx prisma generate
-            npx prisma migrate deploy
-            npm run build
-            pm2 startOrReload ecosystem.config.js
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+        run: npm run build

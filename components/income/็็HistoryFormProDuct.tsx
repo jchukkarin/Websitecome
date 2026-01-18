@@ -19,13 +19,12 @@ import {
     Search,
     ChevronLeft,
     ChevronRight,
-    LogOut,
-    UserCircle,
+
     RotateCcw
 } from "lucide-react";
 import axios from "axios";
 
-import DownloadExcelButton from "@/components/DownloadExcelButton";
+import DownloadExcelButton from "@/components/downloadfile/DownloadExcelButton";
 
 export default function ConsignmentHistory() {
     const [data, setData] = useState<any[]>([]);
@@ -83,12 +82,6 @@ export default function ConsignmentHistory() {
                         <div className="w-px h-8 bg-gray-200 mx-2" />
                         <Button isIconOnly variant="light" radius="full" size="sm" onClick={() => fetchData()}>
                             <RotateCcw size={20} className="text-gray-400" />
-                        </Button>
-                        <Button isIconOnly variant="light" radius="full" size="sm">
-                            <UserCircle size={20} className="text-gray-400" />
-                        </Button>
-                        <Button isIconOnly variant="light" radius="full" size="sm">
-                            <LogOut size={20} className="text-gray-400" />
                         </Button>
                     </div>
                 </div>

@@ -58,7 +58,7 @@ export default function LoginPage() {
             alt="Logo"
             className="w-32 h-32 md:w-48 md:h-48 mb-4 brightness-0 invert"
           />
-          <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter">NAITOUNOI</h1>
+          <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter">Second-Hand Camera Shop Management System</h1>
         </div>
       </div>
 
@@ -69,7 +69,7 @@ export default function LoginPage() {
           alt="Logo"
           className="w-20 h-20 mb-2"
         />
-        <h1 className="text-2xl font-black italic tracking-tighter text-[#d9161a]">NAITOUNOI</h1>
+        <h1 className="text-2xl font-black italic tracking-tighter text-[#d9161a]">Second-Hand Camera Shop Management System</h1>
       </div>
 
       {/* Bottom Red Circles - Hidden on mobile */}

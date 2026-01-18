@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import { MoreVertical, Search, Filter } from "lucide-react"
+import DownloadExcelButton from "../downloadfile/DownloadExcelButton"
+
 
 // Types based on your schema and needs
 type ConsignmentItem = {
@@ -175,6 +177,11 @@ export default function DashboardHome() {
                     <option>ขายแล้ว</option>
                     <option>ยังไม่ขาย</option>
                 </select>
+
+                {/* ===== Download file excel ===== */}
+                <div className="p-3">
+                    <DownloadExcelButton />
+                </div>
             </div>
 
             {/* ===== Table ===== */}

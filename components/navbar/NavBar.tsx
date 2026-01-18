@@ -24,15 +24,10 @@ export default function Navbar() {
           href="/dashboard"
           className="text-2xl font-black tracking-tighter text-gray-900 hover:scale-105 transition-transform"
         >
-          นายตัวน้อย<span className="text-yellow-500">.</span>
+          Second-Hand Camera Shop Management System<span className="text-yellow-500">.</span>
         </Link>
 
-        {/* Desktop Menu (ซ่อนในมือถือ) */}
-        <div className="hidden md:flex items-center gap-8">
-          {menuItems.map((item) => (
-            <NavItem key={item.href} href={item.href} label={item.label} />
-          ))}
-        </div>
+        
       </div>
 
       {/* Right Side: User & Mobile Toggle */}

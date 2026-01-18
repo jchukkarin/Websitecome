@@ -16,9 +16,6 @@ import {
   Area,
 } from "recharts";
 import {
-  ArrowUpRight,
-  LogOut,
-  UserCircle,
   MoreHorizontal,
   RotateCcw
 } from "lucide-react";
@@ -163,12 +160,6 @@ export default function Reports() {
             <Button isIconOnly variant="light" radius="full" size="sm" onClick={fetchData}>
               <RotateCcw size={20} className="text-gray-400" />
             </Button>
-            <Button isIconOnly variant="light" radius="full" size="sm">
-              <UserCircle size={24} className="text-gray-400" />
-            </Button>
-            <Button isIconOnly variant="light" radius="full" size="sm">
-              <LogOut size={24} className="text-gray-400" />
-            </Button>
           </div>
         </div>
 
@@ -186,7 +177,7 @@ export default function Reports() {
           <Card className="md:col-span-3 border-none shadow-sm" radius="lg">
             <CardBody className="p-6 flex flex-col items-center justify-between text-center relative">
               <p className="text-sm font-bold mb-4">อัตราการทำรายการเดือนนี้</p>
-              <div className="w-40 h-24 relative mt-4">
+              <div className="w-40 h-24 relative mt-8">
                 <ResponsiveContainer width="100%" height="200%" className="-mt-16">
                   <PieChart>
                     <Pie
@@ -403,10 +394,10 @@ export default function Reports() {
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <p className="text-xs text-gray-400 uppercase">ไม่มีข้อมูล</p>
+                  <p className="text-xs text-gray-400 uppercase mt-16">ไม่มีข้อมูล</p>
                 )}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">Total</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase mt-2">Total</span>
                   <span className="text-xl font-bold text-gray-900">{stats.total}</span>
                 </div>
               </div>

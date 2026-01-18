@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 /* ================= GET ================= */
 export async function GET() {
   try {
-    /* ================= PERMISSION ================= */
+    /* ===== AUTH ===== */
     const session = await getServerSession(authOptions);
 
     if (!session) {
@@ -19,7 +19,7 @@ export async function GET() {
       );
     }
 
-    /* ================= QUERY ================= */
+    /* ===== QUERY ===== */
     const products = await db.product.findMany({
       include: {
         importStatus: true,
@@ -30,7 +30,7 @@ export async function GET() {
       },
     });
 
-    /* ================= TRANSFORM ================= */
+    /* ===== TRANSFORM ===== */
     const rows = products.map((p) => ({
       "รหัสสินค้า": p.id,
       "ชื่อสินค้า": p.name,
@@ -43,7 +43,7 @@ export async function GET() {
       "วันที่สร้าง": p.createdAt.toLocaleDateString("th-TH"),
     }));
 
-    /* ================= EXCEL ================= */
+    /* ===== EXCEL ===== */
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
@@ -53,7 +53,7 @@ export async function GET() {
       bookType: "xlsx",
     });
 
-    /* ================= RESPONSE ================= */
+    /* ===== RESPONSE ===== */
     return new NextResponse(buffer, {
       headers: {
         "Content-Type":
@@ -63,7 +63,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("EXPORT PRODUCT ERROR:", error);
+    console.error("EXPORT ERROR:", error);
     return NextResponse.json(
       { message: "Export failed" },
       { status: 500 }

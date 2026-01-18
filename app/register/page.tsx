@@ -60,7 +60,7 @@ export default function RegisterPage() {
             alt="Logo"
             className="w-32 h-32 md:w-48 md:h-48 mb-4 brightness-0 invert"
           />
-          <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter">NAITOUNOI</h1>
+          <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter">Second-Hand Camera Shop Management System</h1>
           <p className="text-lg md:text-xl font-bold opacity-80 mt-2">JOIN OUR COMMUNITY</p>
         </div>
       </div>

@@ -19,8 +19,6 @@ import {
     Search,
     ChevronLeft,
     ChevronRight,
-    LogOut,
-    UserCircle,
     MoreHorizontal
 } from "lucide-react";
 import axios from "axios";
@@ -66,14 +64,6 @@ export default function History() {
                         <p className="text-xs text-blue-600 font-semibold tracking-wider uppercase">การนำเข้า</p>
                         <h1 className="text-3xl font-bold text-gray-900">ประวัติข้อมูลการนำเข้า</h1>
                         <p className="text-sm text-gray-500">แสดงข้อมูลของสินค้านำเข้าทั้งหมด</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button isIconOnly variant="light" radius="full" size="sm" onClick={() => fetchData()}>
-                            <UserCircle size={20} className="text-gray-400" />
-                        </Button>
-                        <Button isIconOnly variant="light" radius="full" size="sm">
-                            <LogOut size={20} className="text-gray-400" />
-                        </Button>
                     </div>
                 </div>
 

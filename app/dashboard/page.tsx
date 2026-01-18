@@ -5,7 +5,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardHome from "@/components/dashboard/home";
-import DownloadExcelButton from "@/components/DownloadExcelButton";
+
 
 export default function DashboardPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -58,7 +58,6 @@ export default function DashboardPage() {
 
         {/* Main Content */}
         <main className="flex-1 bg-white rounded-xl shadow-sm p-4 md:p-6">
-          <DownloadExcelButton />
           <p className="text-gray-600 text-xs md:text-sm font-medium mb-2">การนำเข้า</p>
           <h1 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">บันทึกการนำเข้า</h1>
           <p className="text-gray-500 text-sm md:text-base">

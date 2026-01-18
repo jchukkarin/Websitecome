@@ -25,8 +25,7 @@ import {
     Save,
     RotateCcw,
     PlusCircle,
-    LogOut,
-    UserCircle
+
 } from "lucide-react";
 import axios from "axios";
 import UploadForm from "../uploadform/UpLoadForm";
@@ -170,14 +169,6 @@ export default function Projects() {
                         <p className="text-xs text-blue-600 font-semibold tracking-wider uppercase">การนำเข้า</p>
                         <h1 className="text-3xl font-bold text-gray-900">บันทึกการนำเข้า</h1>
                         <p className="text-sm text-gray-500">บันทึกข้อมูลการนำเข้า</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button isIconOnly variant="light" radius="full" size="sm">
-                            <UserCircle size={20} className="text-gray-400" />
-                        </Button>
-                        <Button isIconOnly variant="light" radius="full" size="sm">
-                            <LogOut size={20} className="text-gray-400" />
-                        </Button>
                     </div>
                 </div>
 

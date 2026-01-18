@@ -5,17 +5,90 @@ import { motion, AnimatePresence } from "framer-motion";
 import Footer from "./footer";
 import { ChevronDown, Search, X } from "lucide-react";
 import { SidebarSearch } from "./SidebarSearch"; // นำเข้า Component ที่สร้างใหม่
+import {
+  Home,
+  BarChart2,
+  DollarSign,
+  Briefcase,
+  CreditCard,
+  HandCoins,
+  User,
+  Store,
+  Settings,
+} from "lucide-react";
+
 
 const navItems = [
-  { id: "dashboard", label: "หน้าหลัก", emoji: "🏠", href: "/dashboard" },
-  { id: "reports", label: "สถิติการทำงาน", emoji: "📊", href: "/reports" },
-  { id: "income", label: "การนำเข้า", emoji: "💰", href: "/income", subMenu: [{ label: "ประวัติข้อมูลนำเข้า", href: "/income/history" }, { label: "บันทึกการนำเข้า", href: "/income/FormUsersIncome" },], },
-  { id: "project", label: "การฝากซ่อม", emoji: "💼", href: "/project", subMenu: [{ label: "ประวัติการฝากซ่อม", href: "/project/Repair-service-history" }, { label: "บันทึกการฝากซ่อม", href: "/project" },], },
-  { id: "expenses", label: "การฝากขาย", emoji: "💸", href: "/", subMenu: [{ label: "ประวัติการฝากขาย", href: "/income/HistoryFormProDuct" }, { label: "บันทึกการฝากขาย", href: "/income/FormProductIncome" }] },
-  { id: "pawn", label: "การจำนำ", emoji: "555", href: "/expense", subMenu: [{ label: "ประวัติการจำนำ", href: "/expense/ExpenseForm" }, { label: "บันทึกการจำนำ", href: "/expense" }] },
-  { id: "profile", label: "โปรไฟล์", emoji: "👤", href: "/profile" },
-  { id: "shop-profile", label: "การตั้งค่าร้านค้า", emoji: "📊", href: "/profile/SetupFormProFileShop" },
-  { id: "categories", label: "การตั้งค่าหมวดหมู่", emoji: "⚙️", href: "/edit" },
+  {
+    id: "dashboard",
+    label: "หน้าหลัก",
+    icon: Home,
+    href: "/dashboard",
+  },
+  {
+    id: "reports",
+    label: "สถิติการทำงาน",
+    icon: BarChart2,
+    href: "/reports",
+  },
+  {
+    id: "income",
+    label: "การนำเข้า",
+    icon: DollarSign,
+    href: "/income",
+    subMenu: [
+      { label: "ประวัติข้อมูลนำเข้า", href: "/income/history" },
+      { label: "บันทึกการนำเข้า", href: "/income/FormUsersIncome" },
+    ],
+  },
+  {
+    id: "project",
+    label: "การฝากซ่อม",
+    icon: Briefcase,
+    href: "/project",
+    subMenu: [
+      { label: "ประวัติการฝากซ่อม", href: "/project/Repair-service-history" },
+      { label: "บันทึกการฝากซ่อม", href: "/project" },
+    ],
+  },
+  {
+    id: "expenses",
+    label: "การฝากขาย",
+    icon: CreditCard,
+    href: "/",
+    subMenu: [
+      { label: "ประวัติการฝากขาย", href: "/income/HistoryFormProDuct" },
+      { label: "บันทึกการฝากขาย", href: "/income/FormProductIncome" },
+    ],
+  },
+  {
+    id: "pawn",
+    label: "การจำนำ",
+    icon: HandCoins,
+    href: "/expense",
+    subMenu: [
+      { label: "ประวัติการจำนำ", href: "/expense/ExpenseForm" },
+      { label: "บันทึกการจำนำ", href: "/expense" },
+    ],
+  },
+  {
+    id: "profile",
+    label: "โปรไฟล์",
+    icon: User,
+    href: "/profile",
+  },
+  {
+    id: "shop-profile",
+    label: "การตั้งค่าร้านค้า",
+    icon: Store,
+    href: "/profile/SetupFormProFileShop",
+  },
+  {
+    id: "categories",
+    label: "การตั้งค่าหมวดหมู่",
+    icon: Settings,
+    href: "/edit",
+  },
 ];
 
 export function Sidebar() {
@@ -24,18 +97,17 @@ export function Sidebar() {
   const router = useRouter();
   // Logic การกรองข้อมูล (ยังคงไว้ที่นี่เพื่อให้ Sidebar จัดการเมนูที่จะแสดง)
   const filteredNavItems = useMemo(() => {
-    const query = searchQuery.toLowerCase();
-    if (!query) return navItems;
-
-    return navItems.filter((item) => {
-      const mainMatch = item.label.toLowerCase().includes(query);
-      const subMatch = item.subMenu?.some((sub) => sub.label.toLowerCase().includes(query));
-      return mainMatch || subMatch;
-    });
+    if (!searchQuery) return navItems;
+    const q = searchQuery.toLowerCase();
+    return navItems.filter(
+      (item) =>
+        item.label.toLowerCase().includes(q) ||
+        item.subMenu?.some((sub) => sub.label.toLowerCase().includes(q))
+    );
   }, [searchQuery]);
 
   // เก็บสถานะว่าเมนูไหนที่กางออกมา (Open Submenu)
-  const [openMenus, setOpenMenus] = useState<string[]>(["income"]);
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
 
   const toggleMenu = (id: string) => {
     setOpenMenus((prev) =>
@@ -47,7 +119,7 @@ export function Sidebar() {
     <aside className="w-[280px] h-full bg-white rounded-2xl shadow-sm p-4 flex flex-col">
       {/* Logo */}
       <div className="text-xl font-bold mb-8 px-2 flex items-center gap-2 justify-center italic">
-        <span className="text-yellow-500">NAITOUNOI</span>
+        <span className="text-yellow-500">Second-Hand Camera Shop Management System</span>
       </div>
 
       {/* เรียกใช้งาน Component Search */}
@@ -59,6 +131,7 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex flex-col gap-1 overflow-y-auto flex-grow">
         {filteredNavItems.map((item) => {
+          const Icon = item.icon;
           const hasSubMenu = !!item.subMenu;
           const isMenuOpen = openMenus.includes(item.id);
           const isActive = pathname === item.href || item.subMenu?.some(sub => pathname === sub.href);
@@ -80,10 +153,27 @@ export function Sidebar() {
                   ${isActive ? "bg-yellow-50 text-yellow-700" : "text-gray-600 hover:bg-gray-50"}
                 `}
               >
+                
+              <button
+                key={item.id}
+                onClick={() =>
+                  hasSubMenu ? toggleMenu(item.id) : router.push(item.href)
+                }
+                className={`flex items-center justify-between w-full px-4 py-3 rounded-xl
+                  ${isActive ? "bg-yellow-50 text-yellow-700" : "text-gray-600 hover:bg-gray-50"}
+                `}
+              >
                 <div className="flex items-center gap-3">
-                  <span className="text-lg">{item.emoji}</span>
-                  {item.label}
+                  <Icon
+                    size={20}
+                    className={isActive ? "text-yellow-600" : "text-gray-400"}
+                  />
+                  <span className={isActive ? "font-bold" : ""}>
+                    {item.label}
+                  </span>
                 </div>
+              </button>
+            
                 {hasSubMenu && (
                   <motion.div
                     animate={{ rotate: isMenuOpen ? 180 : 0 }}

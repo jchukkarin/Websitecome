@@ -84,14 +84,14 @@ export async function POST(req: Request) {
 
                 items: {
                     create: processedItems.map((item: any) => ({
-                        productName: item.productName,
-                        category: item.category,
-                        year: item.year,
-                        status: item.status,
-                        confirmedPrice: Number(item.confirmedPrice),
-                        salesChannel: item.salesChannel,
-                        imageUrl: item.imageUrl,
-                    })),
+                        productName: item.productName || "",
+                        category: item.category || "",
+                        year: item.year || "",
+                        status: item.productStatus || "ready", // ✅ แก้ตรงนี้
+                        confirmedPrice: Number(item.confirmedPrice) || 0,
+                        salesChannel: item.salesChannel || "",
+                        imageUrl: item.imageUrl ?? "",
+                    }))
                 },
             },
         });

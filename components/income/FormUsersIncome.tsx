@@ -16,7 +16,8 @@ import {
     Select,
     SelectItem,
     User,
-    Tooltip
+    Tooltip,
+    Checkbox
 } from "@heroui/react";
 import {
     Plus,
@@ -30,7 +31,29 @@ import {
 import axios from "axios";
 import UploadForm from "../uploadform/UpLoadForm";
 
+// เพิ่ม slipImage?: string; เข้าไปในโครงสร้างของคุณ
+interface SoldItem {
+    id: string;
+    productName: string;
+    category: string;
+    year: string;
+    confirmedPrice: string;
+    salesPrice: string;
+    productStatus: string;
+    repairStatus: string;
+    isReserveOpen: string;
+    reserveStartDate: string;
+    reserveDays: string;
+    reserveEndDate: string;
+    imageUrl: string;
+    
+    // ✅ เพิ่มบรรทัดนี้ (เครื่องหมาย ? หมายถึงจะมีค่าหรือไม่มีก็ได้)
+    slipImage?: string; 
+}
+
 export default function Projects() {
+    const [openSlipItemId, setOpenSlipItemId] = useState<string | null>(null);
+    const [openReserveId, setOpenReserveId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split("T")[0],
@@ -48,10 +71,17 @@ export default function Projects() {
             productName: "",
             category: "",
             year: "",
-            status: "ขายได้",
             confirmedPrice: "",
-            salesChannel: "",
-            imageUrl: "https://avatars.githubusercontent.com/u/30373425?v=4" // Placeholder
+            salesPrice: "",
+            productStatus: "ready",   // ✅
+            repairStatus: "",
+            isReserveOpen: "boolean", // ⭐ เพิ่ม
+
+            // 🔥 สำหรับ "ติดจอง"
+            reserveStartDate: "",   // วันที่เริ่มจอง
+            reserveDays: "",        // จำนวนวัน
+            reserveEndDate: "",     // วันที่หมดอายุ (คำนวณ)// ✅
+            imageUrl: ""
         },
     ]);
 
@@ -63,10 +93,18 @@ export default function Projects() {
                 productName: "",
                 category: "",
                 year: "",
-                status: "ขายได้",
+                productStatus: "ready",
+                repairStatus: "",
                 confirmedPrice: "",
-                salesChannel: "",
-                imageUrl: "https://avatars.githubusercontent.com/u/30373425?v=4"
+                salesPrice: "",
+                isReserveOpen: "boolean", // ⭐ เพิ่ม
+
+                // 🔥 สำหรับ "ติดจอง"
+                reserveStartDate: "",   // วันที่เริ่มจอง
+                reserveDays: "",        // จำนวนวัน
+                reserveEndDate: "",     // วันที่หมดอายุ (คำนวณ)
+                imageUrl: ""
+
             },
         ]);
     };
@@ -107,10 +145,18 @@ export default function Projects() {
             productName: "",
             category: "",
             year: "",
-            status: "ขายได้",
+            productStatus: "ready",
+            repairStatus: "",
             confirmedPrice: "",
-            salesChannel: "",
-            imageUrl: "https://avatars.githubusercontent.com/u/30373425?v=4"
+            salesPrice: "",
+            isReserveOpen: "boolean", // ⭐ เพิ่ม
+
+            // 🔥 สำหรับ "ติดจอง"
+            reserveStartDate: "",   // วันที่เริ่มจอง
+            reserveDays: "",        // จำนวนวัน
+            reserveEndDate: "",     // วันที่หมดอายุ (คำนวณ)
+            imageUrl: ""
+
         }]);
     };
 
@@ -159,9 +205,69 @@ export default function Projects() {
         }
     };
 
+    const calculateReserveEndDate = (
+        startDate: string,
+        days: number
+    ): string => {
+        if (!startDate || !days) return "";
+
+        const start = new Date(startDate);
+        start.setDate(start.getDate() + days);
+
+        return start.toISOString().split("T")[0];
+    };
+
+    function calculateDays(start: string, end: string) {
+        if (!start || !end) return "";
+
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+
+        const diffTime = endDate.getTime() - startDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        return diffDays > 0 ? diffDays.toString() : "";
+    }
+
+    const handleSlipUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result as string;
+
+                // ต้องอัปเดต State รวมของคุณที่นี่ (สมมติว่าชื่อ items)
+                setItems((prevItems) =>
+                    prevItems.map((it) =>
+                        it.id === id ? { ...it, slipImage: base64String } : it
+                    )
+                );
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    async function updateSoldItem(item: any) {
+        if (!item.slipImage) {
+            alert("กรุณาอัปโหลดสลิปก่อน");
+            return;
+        }
+
+        await fetch("/api/consignment-items/sold", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                itemId: item.id,
+                slipImage: item.slipImage,
+            }),
+        });
+
+        fetchData(); // refresh table
+    }
+
     return (
-        <div className="p-8 bg-[#F9FAFB] min-h-screen font-sans text-gray-800">
-            <div className="max-w-6xl mx-auto space-y-8">
+        <div className="p-8 bg-[#F9FAFB] min-h-screen rounded-2xl shadow font-sans text-gray-800">
+            <div className="max-w-screen-2xl mx-auto space-y-8">
 
                 {/* Header */}
                 <div className="flex justify-between items-start">
@@ -372,163 +478,404 @@ export default function Projects() {
                     </Card>
                 </div>
 
-                {/* Product Items Table */}
-                <div className="space-y-4">
-                    <h2 className="text-xl font-bold text-gray-900">รายการสินค้า</h2>
+                {/* TABLE */}
+                <div className="w-full overflow-x-auto">
                     <Table
                         aria-label="Consignment items table"
                         removeWrapper
-                        className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+                        className="bg-white rounded-2xl shadow border border-gray-200 text-sm"
                     >
                         <TableHeader>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">รูปภาพสินค้า</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ชื่อสินค้า/รายละเอียด</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">หมวดหมู่</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ปี</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">สถานะการฝากขาย</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ราคาคอนเฟิร์ม</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ช่องทางการขาย</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-center w-10">การกระทำ</TableColumn>
+                            <TableColumn className="bg-gray-50 text-center w-24">
+                                รูปภาพ
+                            </TableColumn>
+                            <TableColumn className="bg-gray-50">ชื่อสินค้า</TableColumn>
+                            <TableColumn className="bg-gray-50 w-36">หมวดหมู่</TableColumn>
+                            <TableColumn className="bg-gray-50 w-24">ปี</TableColumn>
+                            <TableColumn className="bg-gray-50 w-32">ราคาสินค้า</TableColumn>
+                            <TableColumn className="bg-gray-50 w-36">ราคาขาย</TableColumn>
+                            <TableColumn className="bg-gray-50 w-36">สถานะสินค้า</TableColumn>
+                            <TableColumn className="bg-gray-50 w-36">สถานะซ่อม</TableColumn>
+                            <TableColumn className="bg-gray-50 text-center w-20">
+                                ลบ
+                            </TableColumn>
                         </TableHeader>
+
                         <TableBody items={items}>
                             {(item) => (
-                                <TableRow key={item.id}>
-                                    <TableCell>
+                                <TableRow key={item.id} className="h-[64px]">
+                                    {/* IMAGE */}
+                                    <TableCell className="align-middle">
                                         <div
-                                            className="flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg w-16 h-12 bg-blue-50/30 cursor-pointer hover:border-blue-400 transition group relative overflow-hidden"
-                                            onClick={() => document.getElementById(`file-item-${item.id}`)?.click()}
+                                            className="mx-auto w-14 h-14 rounded-lg border border-dashed
+                       border-gray-300 bg-gray-50 flex items-center
+                       justify-center cursor-pointer hover:border-blue-400"
+                                            onClick={() =>
+                                                document.getElementById(`file-${item.id}`)?.click()
+                                            }
                                         >
-                                            {item.imageUrl && (item.imageUrl.startsWith("data:") || item.imageUrl.startsWith("/")) ? (
-                                                <img src={item.imageUrl} className="w-full h-full object-cover" />
+                                            {item.imageUrl ? (
+                                                <img
+                                                    src={item.imageUrl}
+                                                    className="w-full h-full object-cover rounded-lg"
+                                                    alt="product"
+                                                />
                                             ) : (
-                                                <Plus className="text-blue-400 group-hover:text-blue-600" size={16} />
+                                                <Plus className="text-gray-500" size={20} />
                                             )}
+
                                             <input
+                                                id={`file-${item.id}`}
                                                 type="file"
-                                                id={`file-item-${item.id}`}
                                                 className="hidden"
-                                                onChange={(e) => handleItemImageUpload(item.id, e)}
+                                                accept="image/*"
+                                                onChange={(e) =>
+                                                    handleItemImageUpload(item.id, e)
+                                                }
                                             />
                                         </div>
                                     </TableCell>
-                                    <TableCell>
+
+                                    {/* NAME */}
+                                    <TableCell className="w-64 align-middle">
                                         <Input
-                                            placeholder="กรอกชื่อสินค้า..."
-                                            variant="underlined"
+                                            variant="bordered"
+                                            radius="sm"
+                                            size="sm"
                                             value={item.productName}
-                                            onChange={(e) => handleItemChange(item.id, "productName", e.target.value)}
+                                            placeholder="ชื่อสินค้า"
+                                            classNames={{
+                                                input: "text-sm",
+                                                inputWrapper: "min-h-[44px]",
+
+                                            }}
+                                            onChange={(e) =>
+                                                handleItemChange(item.id, "productName", e.target.value)
+                                            }
                                         />
                                     </TableCell>
-                                    <TableCell>
+
+                                    {/* CATEGORY */}
+                                    <TableCell className="align-middle">
                                         <Select
-                                            placeholder="เลือก"
-                                            variant="underlined"
+                                            variant="bordered"
+                                            radius="sm"
                                             size="sm"
-                                            selectedKeys={item.category ? [item.category] : []}
-                                            onChange={(e) => handleItemChange(item.id, "category", e.target.value)}
+                                            selectedKeys={
+                                                item.category ? new Set([item.category]) : new Set()
+                                            }
+                                            onSelectionChange={(keys) =>
+                                                handleItemChange(
+                                                    item.id,
+                                                    "category",
+                                                    Array.from(keys)[0] as string
+                                                )
+                                            }
                                             classNames={{
-                                                trigger: "text-sm",
-                                                value: "text-sm",
+                                                trigger: "min-h-[44px] text-sm",
                                             }}
                                         >
-                                            <SelectItem key="Filing" className="text-sm font-normal">Filing</SelectItem>
-                                            <SelectItem key="Camera" className="text-sm font-normal">กล้อง</SelectItem>
-                                            <SelectItem key="Other" className="text-sm font-normal">อื่นๆ</SelectItem>
+                                            <SelectItem key="Camera" className="bg-white text-center">กล้อง</SelectItem>
+                                            <SelectItem key="Other" className="bg-white text-center">อื่นๆ</SelectItem>
                                         </Select>
                                     </TableCell>
-                                    <TableCell>
+
+                                    {/* YEAR */}
+                                    <TableCell className="w-48 align-middle">
                                         <Input
-                                            placeholder="กรอกข้อมูล..."
-                                            variant="underlined"
+                                            variant="bordered"
+                                            radius="sm"
+                                            size="sm"
+                                            placeholder="ปี"
                                             value={item.year}
-                                            onChange={(e) => handleItemChange(item.id, "year", e.target.value)}
+                                            classNames={{
+                                                inputWrapper: "min-h-[44px]",
+                                            }}
+                                            onChange={(e) =>
+                                                handleItemChange(item.id, "year", e.target.value)
+                                            }
                                         />
                                     </TableCell>
-                                    <TableCell>
-                                        <Select
-                                            placeholder="เลือก"
-                                            variant="underlined"
+
+                                    {/* PRICE */}
+                                    <TableCell className="w-64 align-middle">
+                                        <Input
+                                            type="number"
+                                            variant="bordered"
+                                            radius="sm"
                                             size="sm"
-                                            selectedKeys={[item.status]}
-                                            onChange={(e) => handleItemChange(item.id, "status", e.target.value)}
+                                            placeholder="ราคาสินค้า"
+                                            value={item.confirmedPrice}
                                             classNames={{
-                                                trigger: "text-sm",
-                                                value: "text-sm",
+                                                inputWrapper: "min-h-[44px]",
+                                            }}
+                                            onChange={(e) =>
+                                                handleItemChange(item.id, "confirmedPrice", e.target.value)
+                                            }
+                                        />
+                                    </TableCell>
+
+                                    {/* CHANNEL */}
+                                    <TableCell className="align-middle">
+                                        <Input
+                                            variant="bordered"
+                                            radius="sm"
+                                            size="sm"
+                                            placeholder="ราคาขาย"
+                                            value={item.salesPrice}
+                                            classNames={{
+                                                inputWrapper: "min-h-[44px]",
+                                            }}
+                                            onChange={(e) =>
+                                                handleItemChange(item.id, "salesPrice", e.target.value)
+                                            }
+                                        />
+                                    </TableCell>
+
+
+                                    {/* สภานะสินค้า */}
+                                    <TableCell className="align-middle">
+                                        <Select
+                                            variant="bordered"
+                                            radius="sm"
+                                            size="sm"
+                                            placeholder="สถานะสินค้า"
+                                            selectedKeys={
+                                                item.productStatus ? new Set([item.productStatus]) : new Set()
+                                            }
+                                            onSelectionChange={(keys) => {
+                                                const status = Array.from(keys)[0] as string;
+                                                handleItemChange(item.id, "productStatus", status);
+
+                                                if (status === "reserved") {
+                                                    setOpenReserveId(item.id); // ✅ เปิดฟอร์ม
+                                                } else {
+                                                    setOpenReserveId(null); // ✅ ปิดฟอร์ม
+                                                    handleItemChange(item.id, "reserveStartDate", "");
+                                                    handleItemChange(item.id, "reserveDays", "");
+                                                    handleItemChange(item.id, "reserveEndDate", "");
+                                                }
+
+                                            }}
+                                            classNames={{
+                                                trigger: "min-h-[44px] text-sm",
                                             }}
                                         >
-                                            <SelectItem key="ขายได้" className="text-sm font-normal">ขายได้</SelectItem>
-                                            <SelectItem key="ขายไม่ได้" className="text-sm font-normal">ขายไม่ได้</SelectItem>
+                                            <SelectItem key="ready" className="bg-white text-center">พร้อม</SelectItem>
+                                            <SelectItem key="reserved" className="bg-white text-center">ติดจอง</SelectItem>
+                                            <SelectItem key="sold" className="bg-white text-center">
+                                                ขายแล้ว
+                                            </SelectItem>
+                                        </Select>
+                                        {/* กล่องอัปโหลดที่จะปรากฏขึ้นเมื่อสถานะเป็น final repaired และ ID ตรงกัน */}
+                                        {openSlipItemId === item.id && (
+                                            <div className="absolute z-50 mt-2 w-[280px] bg-white rounded-xl shadow-2xl border p-4 space-y-3 right-0">
+                                                <div className="flex justify-between items-center">
+                                                    <p className="text-sm font-bold text-green-600">
+                                                        🎉 ซ่อมเสร็จแล้ว! กรุณาอัปโหลดสลิป
+                                                    </p>
+                                                </div>
+
+                                                {/* ส่วนแสดงรูป Preview หรือที่คลิกอัปโหลด */}
+                                                <div
+                                                    className="h-40 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-50 transition-colors"
+                                                    onClick={() => document.getElementById(`slip-${item.id}`)?.click()}
+                                                >
+                                                    {(item as any).slipImage ? (
+                                                        <img src={(item as any).slipImage} className="w-full h-full object-contain" alt="preview" />
+                                                    ) : (
+                                                        <>
+                                                            <span className="text-2xl">📸</span>
+                                                            <span className="text-xs mt-1">คลิกเพื่อเลือกรูปสลิป</span>
+                                                        </>
+                                                    )}
+                                                </div>
+
+                                                <input
+                                                    id={`slip-${item.id}`}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) => handleSlipUpload(item.id, e)}
+                                                />
+
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        color="success"
+                                                        className="w-full text-white font-medium"
+                                                        isDisabled={!(item as any).slipImage} // ปุ่มจะกดได้ก็ต่อเมื่ออัปโหลดรูปแล้ว
+                                                        onPress={async () => {
+                                                            try{
+                                                            await updateSoldItem(item); // บันทึกข้อมูล
+                                                            setOpenSlipItemId(null);    // ปิดกล่อง
+                                                            }catch(error){
+                                                                console.log("Final Update",error);
+                                                            }
+                                                        }}
+                                                    >
+                                                        เสร็จสิ้น
+                                                    </Button>
+                                                    {/* ปุ่มของสถานะสินค้า ..ที่บอกข้อความไว้ ภายหลัง */}
+                                                    <Button
+                                                        variant="flat"
+                                                        color="danger"
+                                                        className="w-full"
+                                                        onPress={() => setOpenSlipItemId(null)}
+                                                    >
+                                                        ภายหลัง
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {item.productStatus === "reserved" && openReserveId === item.id && (
+                                            <div className="mt-3 w-[300px] bg-white rounded-xl shadow-lg border border-gray-200 p-4 space-y-4">
+                                                {/* หัวข้อ */}
+                                                <p className="text-sm font-semibold text-gray-800 tracking-wider mb-2">
+                                                    ระยะเวลาจอง
+                                                </p>
+
+                                                {/* วันที่เริ่มจอง */}
+
+                                                <Input
+                                                    type="date"
+                                                    size="sm"
+                                                    label="วันที่เริ่มจอง"
+                                                    value={item.reserveStartDate}
+                                                    onChange={(e) => {
+                                                        const start = e.target.value;
+                                                        handleItemChange(item.id, "reserveStartDate", start);
+
+                                                        const endDate = calculateReserveEndDate(
+                                                            start,
+                                                            Number(item.reserveDays)
+                                                        );
+                                                        handleItemChange(item.id, "reserveEndDate", endDate);
+                                                    }}
+                                                    classNames={{
+                                                        label: "text-xs tracking-wide text-gray-500 mb-5",
+                                                        inputWrapper: "min-h-[44px]",
+                                                        input: "text-sm"
+                                                    }}
+                                                />
+
+                                                {/* ระยะเวลา */}
+                                                <Input
+                                                    type="number"
+                                                    size="sm"
+                                                    label="จำนวนวัน"
+                                                    placeholder="วัน"
+                                                    value={item.reserveDays}
+                                                    onChange={(e) => {
+                                                        const days = e.target.value;
+                                                        handleItemChange(item.id, "reserveDays", days);
+
+                                                        const endDate = calculateReserveEndDate(
+                                                            item.reserveStartDate,
+                                                            Number(days)
+                                                        );
+                                                        handleItemChange(item.id, "reserveEndDate", endDate);
+                                                    }}
+                                                    classNames={{
+                                                        label: "text-xs tracking-wide text-gray-500 mb-5",
+                                                        inputWrapper: "min-h-[44px]",
+                                                        input: "text-sm"
+                                                    }}
+                                                />
+
+                                                {/* ปุ่มปิดฟอร์ม */}
+                                                <button
+                                                    className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-md text-sm"
+                                                    onClick={() => {
+                                                        setOpenReserveId(null); // ✅ ปิด UI
+                                                    }}
+                                                >
+                                                    เสร็จสิ้น
+                                                </button>
+                                            </div>
+                                        )}
+
+
+                                    </TableCell>
+
+                                    {/*สถานะซ่อม */}
+                                    <TableCell className="w-128 align-middle text-black">
+                                        <Select
+                                            variant="bordered"
+                                            radius="sm"
+                                            size="sm"
+                                            placeholder="สถานะซ่อม"
+                                            selectedKeys={
+                                                item.repairStatus ? new Set([item.repairStatus]) : new Set()
+                                            }
+                                            onSelectionChange={(keys) => {
+                                                const selectedValue = Array.from(keys)[0] as string;
+                                                if (selectedValue === "final repaired") {
+                                                    setOpenSlipItemId(item.id);
+                                                } else {
+                                                    handleItemChange(item.id, "repairStatus", selectedValue);
+                                                }
+                                            }}
+                                            classNames={{
+                                                trigger: "min-h-[44px] text-sm",
+                                            }}
+                                        >
+                                            <SelectItem key="not repaired" className="bg-white text-sm">ไม่ซ่อม</SelectItem>
+                                            <SelectItem key="repaired" className="bg-white text-sm">กำลังซ่อม</SelectItem>
+                                            <SelectItem key="final repaired" className="bg-white text-sm">ซ่อมเสร็จสิ้น</SelectItem>
                                         </Select>
                                     </TableCell>
-                                    <TableCell>
-                                        <Input
-                                            placeholder="กรอกข้อมูล..."
-                                            variant="underlined"
-                                            type="number"
-                                            value={item.confirmedPrice}
-                                            onChange={(e) => handleItemChange(item.id, "confirmedPrice", e.target.value)}
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Input
-                                            placeholder="เช่น Shopee"
-                                            variant="underlined"
-                                            value={item.salesChannel}
-                                            onChange={(e) => handleItemChange(item.id, "salesChannel", e.target.value)}
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Tooltip content="ลบรายการ" color="danger">
-                                            <Button
-                                                isIconOnly
-                                                variant="light"
-                                                color="danger"
-                                                size="sm"
-                                                onClick={() => handleRemoveItem(item.id)}
-                                            >
-                                                <Trash2 size={18} />
-                                            </Button>
-                                        </Tooltip>
+
+                                    {/* ACTION */}
+                                    <TableCell className="align-middle text-center">
+                                        <Button
+                                            isIconOnly
+                                            color="danger"
+                                            variant="light"
+                                            onPress={() => handleRemoveItem(item.id)}
+                                        >
+                                            <Trash2 size={18} />
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
                     </Table>
-
-                    {/* Table Actions */}
-                    <div className="flex justify-between items-center py-4">
-                        <Button
-                            variant="flat"
-                            color="primary"
-                            startContent={<PlusCircle size={20} />}
-                            onPress={handleAddItem}
-                            className="font-semibold"
-                        >
-                            เพิ่มข้อมูลนำเข้า
-                        </Button>
-                        <div className="flex gap-4">
-                            <Button
-                                variant="light"
-                                startContent={<RotateCcw size={20} />}
-                                onPress={handleClear}
-                                className="bg-gray-500 font-semibold text-white px-8"
-                            >
-                                ล้างข้อมูล
-                            </Button>
-                            <Button
-                                color="success"
-                                startContent={<Save size={20} />}
-                                onPress={handleSubmit}
-                                isLoading={loading}
-                                className="bg-green-700 font-bold text-white px-8"
-                            >
-                                บันทึก
-                            </Button>
-                        </div>
-                    </div>
                 </div>
+            </div>
 
+            {/* Table Actions */}
+            <div className="flex justify-between items-center py-4">
+                <Button
+                    variant="flat"
+                    color="primary"
+                    startContent={<PlusCircle size={20} />}
+                    onPress={handleAddItem}
+                    className="font-semibold"
+                >
+                    เพิ่มข้อมูลนำเข้า
+                </Button>
+                <div className="flex gap-4">
+                    <Button
+                        variant="light"
+                        startContent={<RotateCcw size={20} />}
+                        onPress={handleClear}
+                        className="bg-gray-500 font-semibold text-white px-8"
+                    >
+                        ล้างข้อมูล
+                    </Button>
+                    <Button
+                        color="success"
+                        startContent={<Save size={20} />}
+                        onPress={handleSubmit}
+                        isLoading={loading}
+                        className="bg-green-700 font-bold text-white px-8"
+                    >
+                        บันทึก
+                    </Button>
+                </div>
             </div>
         </div>
+
     );
 }

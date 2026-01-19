@@ -1,4 +1,4 @@
-import ConsignmentHistory from "@/components/income/็็HistoryFormProDuct";
+import ConsignmentHistory from "@/components/income/FormUsersIncome";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 
 export default function ConsignmentHistoryPage() {

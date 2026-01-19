@@ -61,13 +61,15 @@ model ConsignmentItem {
   confirmedPrice Float
   salesChannel   String
   imageUrl       String?
+  slipImage      String?  // ✅ เพิ่ม
+  soldAt         DateTime?
   consignmentId  String
   consignment    Consignment @relation(fields: [consignmentId], references: [id])
 }
 
 model ShopProfile {
   id          String   @id @default("default")
-  shopName    String   @default("Naitounai")
+  shopName    String   @default("-")
   address     String   @default("-")
   subDistrict String   @default("-")
   district    String   @default("-")

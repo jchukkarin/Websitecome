@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     Input,
     Button,
@@ -10,64 +10,221 @@ import {
     TableBody,
     TableRow,
     TableCell,
+    Tooltip,
+    Modal,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    useDisclosure,
 } from "@heroui/react";
-import { Search, Pencil, Trash2, Plus } from "lucide-react";
+import { Search, Pencil, Trash2, Plus, Info, ArrowUpRight } from "lucide-react";
+import { toast } from "react-hot-toast";
+
+type PayoutStatus = {
+    id: number;
+    name: string;
+    count: number;
+};
 
 export default function PayoutGoods() {
-    const categoriesData = [
-        { id: 1, name: "จ่ายขาด", count: 5 },
-        { id: 2, name: "คืนเงิน", count: 1 },
-    ];
+    const [statuses, setStatuses] = useState<PayoutStatus[]>([]);
+    const [search, setSearch] = useState("");
+    const [loading, setLoading] = useState(true);
+    const { isOpen, onOpen, onOpenChange } = useDisclosure();
+    const [editStatus, setEditStatus] = useState<PayoutStatus | null>(null);
+    const [newName, setNewName] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
+    const fetchStatuses = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/payout-status");
+            const data = await res.json();
+            setStatuses(data);
+        } catch (error) {
+            toast.error("โหลดข้อมูลล้มเหลว");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchStatuses();
+    }, []);
+
+    const handleOpenAdd = () => {
+        setEditStatus(null);
+        setNewName("");
+        onOpen();
+    };
+
+    const handleOpenEdit = (status: PayoutStatus) => {
+        setEditStatus(status);
+        setNewName(status.name);
+        onOpen();
+    };
+
+    const handleSubmit = async () => {
+        if (!newName) return toast.error("กรุณาระบุชื่อ");
+        setSubmitting(true);
+        try {
+            const url = editStatus ? `/api/payout-status/${editStatus.id}` : "/api/payout-status";
+            const method = editStatus ? "PATCH" : "POST";
+            const res = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newName }),
+            });
+            if (res.ok) {
+                toast.success(editStatus ? "แก้ไขสำเร็จ" : "เพิ่มสำเร็จ");
+                onOpenChange();
+                fetchStatuses();
+            } else {
+                toast.error("ดำเนินการไม่สำเร็จ");
+            }
+        } catch (error) {
+            toast.error("เกิดข้อผิดพลาด");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        if (!confirm("คุณต้องการลบหมวดหมู่นี้ใช่หรือไม่?")) return;
+        try {
+            const res = await fetch(`/api/payout-status/${id}`, { method: "DELETE" });
+            if (res.ok) {
+                toast.success("ลบสำเร็จ");
+                fetchStatuses();
+            } else {
+                toast.error("ลบไม่สำเร็จ");
+            }
+        } catch (error) {
+            toast.error("เกิดข้อผิดพลาด");
+        }
+    };
+
+    const filtered = statuses.filter((s) =>
+        s.name.toLowerCase().includes(search.toLowerCase())
+    );
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">สถานะการเบิกจ่าย</h2>
-            </div>
-
-            <div className="flex gap-4 items-center">
-                <div className="flex-1">
+        <div className="space-y-8">
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div className="w-full sm:max-w-md">
                     <Input
-                        placeholder="ค้นหาหมวดหมู่การเบิกจ่าย"
-                        startContent={<Search size={18} className="text-gray-400" />}
-                        variant="bordered"
-                        radius="md"
+                        placeholder="ค้นหาหมวดหมู่การเบิกจ่าย..."
+                        startContent={<Search size={20} className="text-gray-400" />}
+                        variant="flat"
+                        radius="lg"
+                        size="lg"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                         classNames={{
-                            inputWrapper: "border-gray-200 h-10",
+                            inputWrapper: "bg-gray-100/50 hover:bg-gray-100 transition-colors border-none",
+                            input: "text-base",
                         }}
                     />
                 </div>
                 <Button
                     color="danger"
-                    startContent={<Plus size={18} />}
-                    className="font-bold px-6 h-10 bg-red-600"
+                    size="lg"
+                    radius="lg"
+                    startContent={<Plus size={22} strokeWidth={3} />}
+                    className="font-bold px-8 shadow-xl shadow-red-200 bg-red-600 text-white"
+                    onClick={handleOpenAdd}
                 >
-                    เพิ่มหมวดหมู่
+                    เพิ่มหมวดหมู่ใหม่
                 </Button>
             </div>
 
-            <Table aria-label="Payout categories table" removeWrapper className="mt-4">
-                <TableHeader>
-                    <TableColumn className="bg-transparent border-b border-gray-100 py-4 font-bold text-gray-800">ชื่อ</TableColumn>
-                    <TableColumn className="bg-transparent border-b border-gray-100 py-4 font-bold text-gray-800 text-right pr-12">จำนวนรายการ</TableColumn>
-                </TableHeader>
-                <TableBody>
-                    {categoriesData.map((category) => (
-                        <TableRow key={category.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
-                            <TableCell className="py-4 text-gray-600 font-medium">{category.name}</TableCell>
-                            <TableCell className="py-4 text-right pr-8">
-                                <div className="flex items-center justify-end gap-16">
-                                    <span className="text-gray-500 font-medium">{category.count}</span>
-                                    <div className="flex gap-2">
-                                        <Button isIconOnly variant="light" size="sm"><Pencil size={16} className="text-gray-400" /></Button>
-                                        <Button isIconOnly variant="light" size="sm"><Trash2 size={16} className="text-gray-400" /></Button>
+            <div className="flex items-center gap-3 border-l-4 border-red-500 pl-4 py-1">
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">รายการหมวดหมู่การเบิกจ่าย</h2>
+                <Tooltip content="หมวดหมู่ที่ใช้ในการบันทึกการจ่ายเงินออกหรือการคืนสินค้า">
+                    <Info size={18} className="text-gray-300 cursor-help" />
+                </Tooltip>
+            </div>
+
+            <div className="overflow-hidden rounded-3xl border border-gray-100">
+                <Table aria-label="Payout categories table" shadow="none" classNames={{
+                    th: "bg-gray-50/50 text-gray-500 font-bold text-sm py-5 border-b border-gray-100 first:pl-8 last:pr-8",
+                    td: "py-5 px-4 first:pl-8 last:pr-8",
+                    tr: "group hover:bg-gray-50/80 transition-all duration-300 border-b border-gray-50 last:border-0",
+                }}>
+                    <TableHeader>
+                        <TableColumn width={400}>ชื่อหมวดหมู่</TableColumn>
+                        <TableColumn align="center">จำนวนรายการ</TableColumn>
+                        <TableColumn align="end">การจัดการ</TableColumn>
+                    </TableHeader>
+                    <TableBody isLoading={loading} emptyContent={
+                        <div className="flex flex-col items-center justify-center py-20 bg-gray-50/30">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                <ArrowUpRight size={32} className="text-gray-300" />
+                            </div>
+                            <p className="text-gray-500 font-medium">ไม่พบข้อมูลหมวดหมู่</p>
+                        </div>
+                    }>
+                        {filtered.map((category) => (
+                            <TableRow key={category.id}>
+                                <TableCell>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-900 text-lg">{category.name}</span>
+                                        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">ID: PAY-CAT-{category.id.toString().padStart(3, '0')}</span>
                                     </div>
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex justify-center">
+                                        <div className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full font-black text-lg border border-red-100 min-w-[60px] text-center">
+                                            {category.count}
+                                        </div>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex justify-end gap-2">
+                                        <Tooltip content="แก้ไข">
+                                            <Button isIconOnly variant="flat" size="md" className="bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-colors rounded-xl" onClick={() => handleOpenEdit(category)}>
+                                                <Pencil size={18} />
+                                            </Button>
+                                        </Tooltip>
+                                        <Tooltip content="ลบ" color="danger">
+                                            <Button isIconOnly variant="flat" size="md" className="bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 transition-colors rounded-xl" onClick={() => handleDelete(category.id)}>
+                                                <Trash2 size={18} />
+                                            </Button>
+                                        </Tooltip>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+
+            <Modal
+                isOpen={isOpen}
+                onOpenChange={onOpenChange}
+                radius="lg"
+                classNames={{
+                    base: "bg-white",
+                    header: "border-b border-gray-100",
+                    footer: "border-t border-gray-100"
+                }}
+            >
+                <ModalContent className="bg-white">
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">{editStatus ? "แก้ไขหมวดหมู่" : "เพิ่มหมวดหมู่ใหม่"}</ModalHeader>
+                            <ModalBody className="py-6">
+                                <Input label="ชื่อหมวดหมู่" placeholder="กรอกชื่อหมวดหมู่..." variant="bordered" radius="lg" value={newName} onChange={(e) => setNewName(e.target.value)} />
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button variant="light" onPress={onClose} radius="lg">ยกเลิก</Button>
+                                <Button color="danger" onPress={handleSubmit} radius="lg" isLoading={submitting} className="font-bold px-8 bg-red-600">บันทึกข้อมูล</Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
         </div>
     );
 }

@@ -11,24 +11,38 @@ import {
   TableRow,
   TableCell,
   Chip,
+  Tooltip,
 } from "@heroui/react";
-import { Search, Pencil, Trash2, Plus } from "lucide-react";
+import { Search, Pencil, Trash2, Plus, Info, HandCoins } from "lucide-react";
+import { toast } from "react-hot-toast";
 
-type PayoutStatus = {
+type PawnStatus = {
   id: number;
   name: string;
   sold: number;
   unsold: number;
 };
 
-export default function PayoutGoods() {
-  const [data, setData] = useState<PayoutStatus[]>([]);
+export default function PawnGoods() {
+  const [data, setData] = useState<PawnStatus[]>([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/pawn-status");
+      const result = await res.json();
+      setData(result);
+    } catch (error) {
+      toast.error("โหลดข้อมูลจำนำล้มเหลว");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetch("/api/payout-status")
-      .then((res) => res.json())
-      .then(setData);
+    fetchData();
   }, []);
 
   const filtered = data.filter((d) =>
@@ -36,79 +50,92 @@ export default function PayoutGoods() {
   );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">สถานะการเบิกจ่าย</h2>
-      </div>
-
-      {/* Action bar */}
-      <div className="flex gap-4 items-center">
-        <div className="flex-1">
+    <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="w-full sm:max-w-md">
           <Input
-            placeholder="ค้นหาสถานะการเบิกจ่าย"
-            startContent={<Search size={18} className="text-gray-400" />}
+            placeholder="ค้นหาสถานะการจำนำ..."
+            startContent={<Search size={20} className="text-gray-400" />}
+            variant="flat"
+            radius="lg"
+            size="lg"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            variant="bordered"
-            radius="md"
             classNames={{
-              inputWrapper: "border-gray-200 h-10",
+              inputWrapper: "bg-gray-100/50 hover:bg-gray-100 transition-colors border-none",
+              input: "text-base",
             }}
           />
         </div>
-
         <Button
           color="danger"
-          startContent={<Plus size={18} />}
-          className="font-bold px-6 h-10 bg-red-600"
+          size="lg"
+          radius="lg"
+          startContent={<Plus size={22} strokeWidth={3} />}
+          className="font-bold px-8 shadow-xl shadow-red-200 bg-red-600 text-white"
+          onClick={() => toast.info("ระบบจำนำกำลังอยู่ในการพัฒนาทางฐานข้อมูล")}
         >
-          เพิ่มสถานะ
+          เพิ่มสถานะใหม่
         </Button>
       </div>
 
-      {/* Table */}
-      <Table removeWrapper aria-label="Payout status table">
-        <TableHeader>
-          <TableColumn>ชื่อสถานะ</TableColumn>
-          <TableColumn className="text-center">ขายแล้ว</TableColumn>
-          <TableColumn className="text-center">ยังไม่ได้ขาย</TableColumn>
-          <TableColumn className="text-right">จัดการ</TableColumn>
-        </TableHeader>
+      <div className="flex items-center gap-3 border-l-4 border-red-500 pl-4 py-1">
+        <h2 className="text-2xl font-black text-gray-900 tracking-tight">รายการสถานะการจำนำ</h2>
+        <Tooltip content="รายการสถานะที่ใช้ในการจัดการสินค้าที่ลูกค้านำมาเข้าจำนำ">
+          <Info size={18} className="text-gray-300 cursor-help" />
+        </Tooltip>
+      </div>
 
-        <TableBody emptyContent="ไม่มีข้อมูล">
-          {filtered.map((item) => (
-            <TableRow key={item.id} className="hover:bg-gray-50">
-              <TableCell className="font-medium text-gray-700">
-                {item.name}
-              </TableCell>
-
-              <TableCell className="text-center">
-                <Chip color="success" variant="flat">
-                  {item.sold}
-                </Chip>
-              </TableCell>
-
-              <TableCell className="text-center">
-                <Chip color="warning" variant="flat">
-                  {item.unsold}
-                </Chip>
-              </TableCell>
-
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button isIconOnly size="sm" variant="light">
-                    <Pencil size={16} className="text-gray-400" />
-                  </Button>
-                  <Button isIconOnly size="sm" variant="light">
-                    <Trash2 size={16} className="text-gray-400" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="overflow-hidden rounded-3xl border border-gray-100">
+        <Table aria-label="Pawn status table" shadow="none" classNames={{
+          th: "bg-gray-50/50 text-gray-500 font-bold text-sm py-5 border-b border-gray-100 first:pl-8 last:pr-8",
+          td: "py-5 px-4 first:pl-8 last:pr-8",
+          tr: "group hover:bg-gray-50/80 transition-all duration-300 border-b border-gray-50 last:border-0",
+        }}>
+          <TableHeader>
+            <TableColumn width={400}>ชื่อสถานะการจำนำ</TableColumn>
+            <TableColumn align="center">หลุดจำนำ (ขายแล้ว)</TableColumn>
+            <TableColumn align="center">ยังอยู่ในสัญญา</TableColumn>
+            <TableColumn align="end">การจัดการ</TableColumn>
+          </TableHeader>
+          <TableBody isLoading={loading} emptyContent={
+            <div className="flex flex-col items-center justify-center py-20 bg-gray-50/30">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <HandCoins size={32} className="text-gray-300" />
+              </div>
+              <p className="text-gray-500 font-medium">ไม่พบข้อมูลการจำนำ</p>
+            </div>
+          }>
+            {filtered.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-gray-900 text-lg">{item.name}</span>
+                    <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">ID: PAWN-STATUS-{item.id.toString().padStart(3, '0')}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-center">
+                    <Chip color="success" variant="flat" size="lg" className="font-black px-4 bg-green-50 text-green-700 border-green-100">{item.sold}</Chip>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-center">
+                    <Chip color="warning" variant="flat" size="lg" className="font-black px-4 bg-amber-50 text-amber-700 border-amber-100">{item.unsold}</Chip>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-2 text-gray-300">
+                    <Tooltip content="สถานะตัวอย่างสำหรับระบบจำนำ">
+                      <Info size={18} />
+                    </Tooltip>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

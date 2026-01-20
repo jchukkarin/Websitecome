@@ -77,34 +77,28 @@ export default function ProfilePage() {
     };
 
     return (
-        <div className="flex w-full min-h-screen">
-            <div className="hidden md:block w-[300px] flex-shrink-0 bg-white border-r border-slate-100">
-                <Sidebar />
+        <div className="p-4 md:p-8">
+            <div className="mb-8">
+                <h1 className="text-3xl font-extrabold text-gray-900">การตั้งค่าบัญชี</h1>
             </div>
 
-            <main className="flex-1 bg-white p-4 md:p-8">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-extrabold text-gray-900">การตั้งค่าบัญชี</h1>
-                </div>
+            {activeItem === "profile" && (
+                <ProFile
+                    userData={userData}
+                    setUserData={setUserData}
+                    tempData={tempData}
+                    setTempData={setTempData}
+                    handleSave={handleSave}
+                    handleCancel={handleCancel}
+                />
+            )}
 
-                {activeItem === "profile" && (
-                    <ProFile
-                        userData={userData}
-                        setUserData={setUserData}
-                        tempData={tempData}
-                        setTempData={setTempData}
-                        handleSave={handleSave}
-                        handleCancel={handleCancel}
-                    />
-                )}
-
-                {activeItem === "password" && (
-                    <Card className="p-12 text-center bg-white shadow-sm border-none">
-                        <Lock size={48} className="mx-auto mb-4 text-blue-500 opacity-20" />
-                        <h3 className="font-bold text-xl text-gray-400">ระบบเปลี่ยนรหัสผ่าน</h3>
-                    </Card>
-                )}
-            </main>
+            {activeItem === "password" && (
+                <Card className="p-12 text-center bg-white shadow-sm border-none">
+                    <Lock size={48} className="mx-auto mb-4 text-blue-500 opacity-20" />
+                    <h3 className="font-bold text-xl text-gray-400">ระบบเปลี่ยนรหัสผ่าน</h3>
+                </Card>
+            )}
         </div>
     );
 }

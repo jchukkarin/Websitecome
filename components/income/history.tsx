@@ -50,6 +50,7 @@ export default function History() {
                     ...item,
                     lot: c.lot,
                     date: c.date,
+                    createdAt: c.createdAt,
                     consignorName: c.consignorName,
                     // Use item.imageUrl or fallback to first general image or placeholder
                     displayImage: item.imageUrl || (c.images && c.images.length > 0 ? c.images[0].imageUrl : null)
@@ -188,9 +189,22 @@ export default function History() {
                                                 <span className="text-blue-600 font-black text-sm">{item.lot}</span>
                                             </TableCell>
                                             <TableCell>
-                                                <span className="text-slate-900 font-bold whitespace-nowrap">
-                                                    {new Date(item.date).toLocaleDateString("th-TH")}
-                                                </span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-slate-900 font-bold whitespace-nowrap">
+                                                        {new Date(item.createdAt).toLocaleDateString("th-TH", {
+                                                            day: 'numeric',
+                                                            month: 'short',
+                                                            year: 'numeric'
+                                                        })}
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-400 font-medium">
+                                                        {new Date(item.createdAt).toLocaleTimeString("th-TH", {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                            hour12: false
+                                                        })} น.
+                                                    </span>
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <span className="text-slate-900 font-black">{item.productName}</span>

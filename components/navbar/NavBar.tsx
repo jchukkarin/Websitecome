@@ -1,58 +1,64 @@
 "use client";
 
-import { useState } from "react";
+import { useSidebar } from "@/context/SidebarContext";
+import { Menu, LayoutGrid, Search, Bell, Settings } from "lucide-react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react"; // ไอคอน
-import UserMenu from "./UserMenu";
-import NavItem from "./NavItem";
+import { Button, Input, Kbd } from "@heroui/react";
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { toggleSidebar, toggleMobile } = useSidebar();
 
-  const menuItems = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/dashboard/income", label: "Income" },
-    { href: "/dashboard/expenses", label: "Expenses" },
-  ];
+  const handleToggle = () => {
+    if (window.innerWidth < 1024) {
+      toggleMobile();
+    } else {
+      toggleSidebar();
+    }
+  };
 
   return (
-    <nav className="sticky top-0 z-40 w-full h-[72px] bg-white/80 backdrop-blur-md border-b shadow-sm px-4 md:px-8 flex items-center justify-between">
-      
-      {/* Left Side: Logo & Desktop Menu */}
-      <div className="flex items-center gap-10">
-        <Link
-          href="/dashboard"
-          className="text-2xl font-black tracking-tighter text-gray-900 hover:scale-105 transition-transform"
+    <nav className="sticky top-0 z-40 w-full h-[72px] bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 flex items-center justify-between transition-all duration-300">
+
+      {/* Left: Sidebar Toggle & Title */}
+      <div className="flex items-center gap-4">
+        <Button
+          isIconOnly
+          variant="light"
+          radius="full"
+          onPress={handleToggle}
+          className="text-slate-600 hover:bg-slate-100"
         >
-          Second-Hand Camera Shop Management System<span className="text-yellow-500">.</span>
-        </Link>
+          <Menu size={22} />
+        </Button>
 
-        
-      </div>
-
-      {/* Right Side: User & Mobile Toggle */}
-      <div className="flex items-center gap-3">
-        <UserMenu />
-        
-        {/* Mobile Menu Button (แสดงเฉพาะมือถือ) */}
-        <button 
-          onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
-        >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Mobile Menu Dropdown (แสดงเมื่อกด Menu ในมือถือ) */}
-      {isOpen && (
-        <div className="absolute top-[72px] left-0 w-full bg-white border-b shadow-xl p-4 flex flex-col gap-4 md:hidden animate-in slide-in-from-top duration-300">
-          {menuItems.map((item) => (
-            <div key={item.href} onClick={() => setIsOpen(false)}>
-              <NavItem href={item.href} label={item.label} />
-            </div>
-          ))}
+        <div className="hidden sm:flex flex-col">
+          <Link href="/dashboard" className="text-lg font-black text-slate-900 tracking-tight leading-none">
+            SECOND-HAND <span className="text-blue-600">CAMERA</span>
+          </Link>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Management System</span>
         </div>
-      )}
+      </div>
+
+
+      {/* Right: Actions */}
+      <div className="flex items-center gap-2">
+       {/*  <Button
+          isIconOnly
+          variant="light"
+          radius="full"
+          className="text-slate-600 hover:bg-slate-100"
+        >
+          <Bell size={20} />
+        </Button>  */}
+        <Button
+          isIconOnly
+          variant="light"
+          radius="full"
+          className="text-slate-600 hover:bg-slate-100"
+        >
+          <LayoutGrid size={20} />
+        </Button>
+      </div>
     </nav>
   );
 }

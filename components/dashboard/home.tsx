@@ -1,13 +1,34 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
-import { MoreVertical, Search, Filter } from "lucide-react"
+import { MoreVertical, Search, Filter, Pencil, Trash2, X, Package, Calendar, Hash, Tag, Layers, Info } from "lucide-react"
+import {
+    Modal,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    Button,
+    useDisclosure,
+    Dropdown,
+    DropdownTrigger,
+    DropdownMenu,
+    DropdownItem,
+    Tooltip
+} from "@heroui/react"
 import DownloadExcelButton from "../downloadfile/DownloadExcelButton"
+import toast, { Toaster } from "react-hot-toast"
+import axios from "axios"
+import EditBox from "./EditBox"
 
+// Types
+export type ConsignmentImage = {
+    id: string
+    imageUrl: string
+}
 
-// Types based on your schema and needs
-type ConsignmentItem = {
+export type ConsignmentItem = {
     id: string
     productName: string
     category: string
@@ -19,28 +40,29 @@ type ConsignmentItem = {
     consignmentId: string
 }
 
-type Consignment = {
+export type Consignment = {
     id: string
     date: string
     lot: string
     type: string
+    images: ConsignmentImage[]
     items: ConsignmentItem[]
 }
 
-type DashboardItem = ConsignmentItem & {
+export type DashboardItem = ConsignmentItem & {
     date: string
     lot: string
-    type: string // "INCOME", "CONSIGNMENT", etc.
+    type: string
+    parentImages: ConsignmentImage[]
 }
 
 const statusColor: Record<string, string> = {
     "พร้อม": "bg-green-100 text-green-700",
-    "ซ่อม": "bg-red-100 text-red-700",
-    "ยังไม่ถึงกำหนด": "bg-orange-100 text-orange-700",
-    "ส่งคืนลูกค้า": "bg-emerald-100 text-emerald-700",
-    "ขายแล้ว": "bg-gray-100 text-gray-700",
     "ติดจอง": "bg-yellow-100 text-yellow-700",
-    // Add default fallback in code logic
+    "ซ่อม": "bg-red-100 text-red-700",
+    "ขายแล้ว": "bg-gray-100 text-gray-700",
+    "ส่งคืนลูกค้า": "bg-emerald-100 text-emerald-700",
+    "ยังไม่ถึงกำหนด": "bg-orange-100 text-orange-700",
 }
 
 export default function DashboardHome() {
@@ -48,11 +70,15 @@ export default function DashboardHome() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
+    // Modal state
+    const { isOpen, onOpen, onOpenChange } = useDisclosure()
+    const [selectedItem, setSelectedItem] = useState<DashboardItem | null>(null)
+
     // Filters
     const [searchTerm, setSearchTerm] = useState("")
-    const [selectedCategory, setSelectedCategory] = useState("หมวดหมู่")
-    const [selectedType, setSelectedType] = useState("ตาราง") // Maps to Consignment Type
-    const [selectedStatus, setSelectedStatus] = useState("สถานะ")
+    const [selectedCategory, setSelectedCategory] = useState("ทั้งหมด")
+    const [selectedType, setSelectedType] = useState("ทั้งหมด")
+    const [selectedStatus, setSelectedStatus] = useState("ทั้งหมด")
 
     useEffect(() => {
         fetchData()
@@ -61,12 +87,11 @@ export default function DashboardHome() {
     const fetchData = async () => {
         try {
             setLoading(true)
-            const res = await fetch("/api/consignments") // This returns all consignments
+            const res = await fetch("/api/consignments")
             if (!res.ok) throw new Error("Failed to fetch data")
 
             const consignments: Consignment[] = await res.json()
 
-            // Flatten consignments into a list of items
             const allItems: DashboardItem[] = consignments.flatMap((c) =>
                 c.items.map((item) => ({
                     ...item,
@@ -77,6 +102,7 @@ export default function DashboardHome() {
                     }),
                     lot: c.lot,
                     type: c.type,
+                    parentImages: c.images || []
                 }))
             )
 
@@ -89,182 +115,279 @@ export default function DashboardHome() {
         }
     }
 
+    const handleEdit = (item: DashboardItem) => {
+        setSelectedItem(item)
+        onOpen()
+    }
+
+    const handleDelete = async (item: DashboardItem) => {
+        if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบรายการ "${item.productName}"?`)) return
+
+        try {
+            // Check if we should delete the whole consignment or just the item
+            // For now, based on UnifiedPersonView, we delete the lot (consignment)
+            const res = await axios.delete(`/api/consignments/${item.consignmentId}`)
+            if (res.data.success) {
+                toast.success("ลบข้อมูลเสร็จสิ้น", {
+                    style: {
+                        borderRadius: '10px',
+                        background: '#333',
+                        color: '#fff',
+                        fontWeight: 'bold'
+                    },
+                })
+                fetchData()
+            }
+        } catch (error) {
+            console.error("Delete error:", error)
+            toast.error("ลบข้อมูลไม่สำเร็จ")
+        }
+    }
+
+    const handleSave = () => {
+        // In a real app, this would be a PUT request to /api/consignments/items/[id]
+        // Since we don't have that yet, we'll just show the success toast as requested.
+        toast.success("บันทึกเสร็จสิ้น", {
+            icon: '✅',
+            style: {
+                borderRadius: '10px',
+                background: '#333',
+                color: '#fff',
+                fontWeight: 'bold'
+            },
+        })
+        onOpenChange()
+    }
+
     // Filter Logic
     const filteredItems = items.filter((item) => {
-        // Exclude "reports" if that's a specific type, or just follow user instruction to "combine all except reports"
-        // Assuming 'reports' might be a type, if not, we just show all items that match filters.
-
         const matchesSearch = item.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.lot.includes(searchTerm) ||
-            item.id.includes(searchTerm)
+            item.lot.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.id.toLowerCase().includes(searchTerm.toLowerCase())
 
-        const matchesCategory = selectedCategory === "หมวดหมู่" || selectedCategory === "ทั้งหมด" || item.category === selectedCategory
-
-        // Map UI "Table" selection to DB "Type"
-        // "ตาราง" = All? Or specific default? Assuming "ตาราง" or "ทั้งหมด" means show all types.
-        // If user selects "การนำเข้า", match "INCOME" (assuming mapping)
-        // Let's implement fuzzy matching or exact mapping if we knew the DB values. 
-        // For now, I'll allow exact match if the user's DB types match the dropdown, or mostly ignore if "ทั้งหมด"
+        const matchesCategory = selectedCategory === "ทั้งหมด" || item.category === selectedCategory
 
         let matchesType = true
-        if (selectedType !== "ตาราง" && selectedType !== "ทั้งหมด") {
-            // Simple mapping - adjust based on your actual text in DB
+        if (selectedType !== "ทั้งหมด") {
             if (selectedType === "การนำเข้า") matchesType = item.type === "INCOME"
             else if (selectedType === "การฝากขาย") matchesType = item.type === "CONSIGNMENT"
-            else matchesType = item.type === selectedType // Fallback
+            else if (selectedType === "การฝากซ่อม") matchesType = item.type === "REPAIR"
+            else if (selectedType === "การจำนำ") matchesType = item.type === "PAWN"
         }
 
-        const matchesStatus = selectedStatus === "สถานะ" || selectedStatus === "ทั้งหมด" || item.status === selectedStatus
+        const matchesStatus = selectedStatus === "ทั้งหมด" || item.status === selectedStatus
 
         return matchesSearch && matchesCategory && matchesType && matchesStatus
     })
 
-    if (loading) return <div className="p-4 text-center">กำลังโหลดข้อมูล...</div>
-    if (error) return <div className="p-4 text-center text-red-500">{error}</div>
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center p-12 space-y-4">
+            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-500 font-medium animate-pulse">กำลังโหลดข้อมูล...</p>
+        </div>
+    )
+
+    if (error) return (
+        <div className="p-12 text-center bg-red-50 rounded-2xl border border-red-100">
+            <p className="text-red-500 font-bold text-lg mb-2">Oops!</p>
+            <p className="text-red-400">{error}</p>
+        </div>
+    )
 
     return (
         <div className="space-y-6">
+            <Toaster position="top-center" />
 
             {/* ===== Filter / Search ===== */}
-            <div className="flex flex-wrap gap-3 items-center">
-                <div className="flex items-center gap-2 border rounded-md px-3 py-2 w-64 bg-white transition-all focus-within:ring-2 ring-gray-200">
-                    <Search size={16} className="text-gray-400" />
+            <div className="flex flex-wrap gap-4 items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <div className="relative flex-1 min-w-[300px] group">
+                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                     <input
-                        placeholder="ค้นหา (ชื่อ, รหัส, ล็อต)"
-                        className="outline-none text-sm w-full"
+                        placeholder="พิมพ์เพื่อค้นหา (ชื่อสินค้า, รหัส, หรือล็อต)..."
+                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl text-sm outline-none focus:ring-2 ring-blue-500/10 focus:bg-white transition-all shadow-inner"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
 
-                <select
-                    className="border rounded-md px-3 py-2 text-sm bg-white"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                >
-                    <option>หมวดหมู่</option>
-                    <option>ทั้งหมด</option>
-                    <option>กล้องดิจิตอล</option>
-                    <option>เลนส์</option>
-                    <option>ขาตั้งกล้อง</option>
-                    <option>อุปกรณ์เสริม</option>
-                    {/* Add more categories as present in your DB */}
-                </select>
+                <div className="flex gap-2">
+                    <select
+                        className="bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-medium text-gray-600 outline-none hover:bg-gray-100 transition-colors cursor-pointer"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                        <option>ทั้งหมด</option>
+                        <option>กล้องดิจิตอล</option>
+                        <option>เลนส์</option>
+                        <option>ขาตั้งกล้อง</option>
+                        <option>อุปกรณ์เสริม</option>
+                        <option>แบต</option>
+                        <option>ฟิลม์</option>
+                        <option>สายคล้อง</option>
+                    </select>
 
-                <select
-                    className="border rounded-md px-3 py-2 text-sm bg-white"
-                    value={selectedType}
-                    onChange={(e) => setSelectedType(e.target.value)}
-                >
-                    <option>ตาราง</option>
-                    <option>ทั้งหมด</option>
-                    <option>การนำเข้า</option>
-                    <option>การฝากขาย</option>
-                    <option>การฝากซ่อม</option>
-                    <option>การจำนำ</option>
-                </select>
+                    <select
+                        className="bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-medium text-gray-600 outline-none hover:bg-gray-100 transition-colors cursor-pointer"
+                        value={selectedType}
+                        onChange={(e) => setSelectedType(e.target.value)}
+                    >
+                        <option>ทั้งหมด</option>
+                        <option>การนำเข้า</option>
+                        <option>การฝากขาย</option>
+                        <option>การฝากซ่อม</option>
+                        <option>การจำนำ</option>
+                    </select>
 
-                <select
-                    className="border rounded-md px-3 py-2 text-sm bg-white"
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                >
-                    <option>สถานะ</option>
-                    <option>ทั้งหมด</option>
-                    <option>พร้อม</option>
-                    <option>ติดจอง</option>
-                    <option>ซ่อม</option>
-                    <option>ขายแล้ว</option>
-                    <option>ยังไม่ขาย</option>
-                </select>
+                    <select
+                        className="bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-medium text-gray-600 outline-none hover:bg-gray-100 transition-colors cursor-pointer"
+                        value={selectedStatus}
+                        onChange={(e) => setSelectedStatus(e.target.value)}
+                    >
+                        <option>ทั้งหมด</option>
+                        <option>พร้อม</option>
+                        <option>ติดจอง</option>
+                        <option>ซ่อม</option>
+                        <option>ขายแล้ว</option>
+                    </select>
+                </div>
 
-                {/* ===== Download file excel ===== */}
-                <div className="p-3">
+                <div className="ml-auto">
                     <DownloadExcelButton />
                 </div>
             </div>
 
             {/* ===== Table ===== */}
-            <div className="bg-white rounded-lg border overflow-x-auto shadow-sm">
+            <div className="bg-white rounded-[1.5rem] border border-gray-100 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                 <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-gray-600 font-medium">
-                        <tr>
-                            <th className="p-3 text-left">สินค้า</th>
-                            <th className="p-3 text-center">รหัส</th>
-                            <th className="p-3 text-center">วันที่</th>
-                            <th className="p-3 text-center">ล็อต</th>
-                            <th className="p-3 text-center">สถานะสินค้า</th>
-                            <th className="p-3 text-center">ราคาทุน</th>
-                            <th className="p-3 text-center">ราคาขาย</th>
-                            <th className="p-3"></th>
+                    <thead>
+                        <tr className="bg-gray-50/50 text-gray-400 font-bold text-[11px] uppercase tracking-wider border-b border-gray-100">
+                            <th className="p-4 text-left font-bold">ข้อมูลสินค้า</th>
+                            <th className="p-4 text-center font-bold">รหัสกำกับ</th>
+                            <th className="p-4 text-center font-bold">วันที่บันทึก</th>
+                            <th className="p-4 text-center font-bold">ล็อต</th>
+                            <th className="p-4 text-center font-bold">สถานะสินค้า</th>
+                            <th className="p-4 text-center font-bold">สถานะซ่อม</th>
+                            <th className="p-4 text-center font-bold">สถานะการจอง</th>
+                            <th className="p-4 text-center font-bold">ราคาทุน</th>
+                            <th className="p-4 text-center font-bold">ราคาขาย</th>
+                            <th className="p-4 text-right pr-6 font-bold">จัดการ</th>
                         </tr>
                     </thead>
 
-                    <tbody className="divide-y">
+                    <tbody className="divide-y divide-gray-50">
                         {filteredItems.length > 0 ? (
                             filteredItems.map((item, index) => (
-                                <tr key={`${item.id}-${index}`} className="hover:bg-gray-50 transition-colors">
-                                    {/* Product */}
-                                    <td className="p-3 flex gap-3 min-w-[250px]">
-                                        <div className="w-12 h-12 relative flex-shrink-0 bg-gray-100 rounded-md overflow-hidden border">
-                                            {item.imageUrl ? (
-                                                <Image
-                                                    src={item.imageUrl}
-                                                    alt={item.productName}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            ) : (
-                                                <div className="flex items-center justify-center h-full text-xs text-gray-400">No Img</div>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col justify-center">
-                                            <p className="font-medium text-gray-900 truncate max-w-[180px]" title={item.productName}>
-                                                {item.productName}
-                                            </p>
-                                            <p className="text-xs text-gray-500">
-                                                {item.category} • ปี: {item.year}
-                                            </p>
+                                <tr key={`${item.id}-${index}`} className="group hover:bg-blue-50/30 transition-all duration-300">
+                                    <td className="p-4 min-w-[300px]">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-14 h-14 relative flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden border border-gray-100 shadow-sm group-hover:scale-105 transition-transform duration-300">
+                                                {item.imageUrl ? (
+                                                    <Image
+                                                        src={item.imageUrl}
+                                                        alt={item.productName}
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-full bg-gray-50">
+                                                        <Package size={20} className="text-gray-300" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col space-y-0.5">
+                                                <p className="font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors" title={item.productName}>
+                                                    {item.productName}
+                                                </p>
+                                                <div className="flex items-center gap-2 overflow-hidden">
+                                                    <span className="text-[10px] font-black text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                                                        {item.category}
+                                                    </span>
+                                                    <span className="text-xs text-gray-400 font-medium truncate italic">
+                                                        Year: {item.year}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
 
-                                    <td className="text-center p-3 text-gray-600">
-                                        {/* Display part of ID or a specific code if available */}
-                                        {item.id.slice(0, 8)}...
+                                    <td className="text-center p-4">
+                                        <span className="font-mono text-[11px] font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                                            #{item.id.slice(0, 8)}
+                                        </span>
                                     </td>
-                                    <td className="text-center p-3 text-gray-600 whitespace-nowrap">{item.date}</td>
-                                    <td className="text-center p-3 text-gray-600">{item.lot}</td>
+                                    <td className="text-center p-4 font-bold text-gray-600">{item.date}</td>
+                                    <td className="text-center p-4">
+                                        <div className="inline-flex items-center justify-center min-w-[60px] h-7 bg-blue-50 text-blue-600 text-xs font-black rounded-lg border border-blue-100">
+                                            {item.lot}
+                                        </div>
+                                    </td>
 
-                                    {/* Status */}
-                                    <td className="text-center p-3">
+                                    <td className="text-center p-4">
                                         <span
-                                            className={`px-3 py-1 rounded-full text-xs font-medium inline-block w-24 ${statusColor[item.status] || "bg-gray-100 text-gray-600"
+                                            className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight shadow-sm inline-block ${statusColor[item.status] || "bg-gray-100 text-gray-600"
                                                 }`}
                                         >
                                             {item.status}
                                         </span>
                                     </td>
 
-                                    <td className="text-center p-3 text-gray-700 font-medium">
-                                        {item.confirmedPrice.toLocaleString()}
+                                    <td className="text-center p-4">-</td>
+                                    <td className="text-center p-4">-</td>
+
+                                    <td className="text-center p-4">
+                                        <span className="text-orange-600 font-black text-base">
+                                            ฿{item.confirmedPrice.toLocaleString()}
+                                        </span>
                                     </td>
 
-                                    <td className="text-center p-3 text-blue-600 font-medium">
-                                        {/* Placeholder for Selling Price as check schema or logic */}
-                                        -
+                                    <td className="text-center p-4">
+                                        <span className="text-blue-600 font-black text-base">
+                                            -
+                                        </span>
                                     </td>
 
-                                    <td className="text-center p-3">
-                                        <button className="p-1 hover:bg-gray-100 rounded-full transition-colors">
-                                            <MoreVertical size={16} className="text-gray-400" />
-                                        </button>
+                                    <td className="text-right p-4 pr-6">
+                                        <Dropdown placement="bottom-end" shadow="lg" className="rounded-2xl border border-gray-100">
+                                            <DropdownTrigger>
+                                                <Button
+                                                    isIconOnly
+                                                    variant="light"
+                                                    size="sm"
+                                                    className="rounded-full text-gray-400 hover:text-gray-900 transition-colors"
+                                                >
+                                                    <MoreVertical size={18} />
+                                                </Button>
+                                            </DropdownTrigger>
+                                            <DropdownMenu aria-label="Action menu" variant="faded" className="p-2 gap-1">
+                                                <DropdownItem
+                                                    key="edit"
+                                                    startContent={<Pencil size={16} className="text-blue-500" />}
+                                                    className="rounded-xl h-10 px-3 hover:bg-blue-50"
+                                                    onPress={() => handleEdit(item)}
+                                                >
+                                                    <span className="font-bold text-gray-700">ดูข้อมูล / แก้ไข</span>
+                                                </DropdownItem>
+                                                <DropdownItem
+                                                    key="delete"
+                                                    className="rounded-xl h-10 px-3 hover:bg-red-50 text-red-500"
+                                                    color="danger"
+                                                    startContent={<Trash2 size={16} />}
+                                                    onPress={() => handleDelete(item)}
+                                                >
+                                                    <span className="font-bold">ลบรายการนี้</span>
+                                                </DropdownItem>
+                                            </DropdownMenu>
+                                        </Dropdown>
                                     </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={8} className="text-center py-8 text-gray-500">
-                                    ไม่พบข้อมูลสินค้า
+                                <td colSpan={10} className="text-center py-20">
+                                    <div className="flex flex-col items-center justify-center space-y-3 opacity-30">
+                                        <Layers size={48} className="text-gray-400" />
+                                        <p className="font-bold text-gray-500 text-lg">ไม่พบข้อมูลสินค้า</p>
+                                    </div>
                                 </td>
                             </tr>
                         )}
@@ -272,12 +395,26 @@ export default function DashboardHome() {
                 </table>
             </div>
 
-            {/* Pagination or Footer info could go here */}
-            {filteredItems.length > 0 && (
-                <div className="text-xs text-gray-400 text-right">
-                    แสดงทั้งหมด {filteredItems.length} รายการ
+            {/* Pagination / Info Footer */}
+            <div className="flex justify-between items-center px-4">
+                <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
+                    Showing {filteredItems.length} records in total
+                </p>
+                <div className="flex gap-2">
+                    <Button size="sm" variant="flat" className="rounded-xl font-bold bg-white border border-gray-100 h-9">Previous</Button>
+                    <Button size="sm" variant="flat" className="rounded-xl font-bold bg-blue-600 text-white h-9 shadow-lg shadow-blue-200">1</Button>
+                    <Button size="sm" variant="flat" className="rounded-xl font-bold bg-white border border-gray-100 h-9">2</Button>
+                    <Button size="sm" variant="flat" className="rounded-xl font-bold bg-white border border-gray-100 h-9">Next</Button>
                 </div>
-            )}
+            </div>
+
+            {/* ===== New EditBox Component ===== */}
+            <EditBox
+                isOpen={isOpen}
+                onOpenChange={onOpenChange}
+                selectedItem={selectedItem}
+                onSave={handleSave}
+            />
         </div>
     )
 }

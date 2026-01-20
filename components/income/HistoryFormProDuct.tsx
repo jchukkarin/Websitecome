@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
     Table,
     TableHeader,
@@ -14,22 +14,26 @@ import {
     SelectItem,
     Pagination,
     Spinner,
+    Chip,
 } from "@heroui/react";
 import {
     Search,
     ChevronLeft,
     ChevronRight,
-
+    Package,
+    Users,
+    Filter,
+    FileSpreadsheet,
     RotateCcw
 } from "lucide-react";
 import axios from "axios";
-
-import DownloadExcelButton from "@/components/downloadfile/DownloadExcelButton";
+import UnifiedPersonView from "../history/UnifiedPersonView";
 
 export default function ConsignmentHistory() {
+    const [view, setView] = useState<"product" | "consignor">("product");
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filterValue, setFilterValue] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         fetchData();
@@ -44,10 +48,9 @@ export default function ConsignmentHistory() {
                 c.items.map((item: any) => ({
                     ...item,
                     lot: c.lot,
-                    date: new Date(c.date).toLocaleDateString("th-TH"),
+                    date: c.date,
                     consignorName: c.consignorName,
-                    // Use item.imageUrl or fallback to first general image or placeholder
-                    displayImage: item.imageUrl || (c.images && c.images.length > 0 ? c.images[0].imageUrl : "https://avatars.githubusercontent.com/u/30373425?v=4")
+                    displayImage: item.imageUrl || (c.images && c.images.length > 0 ? c.images[0].imageUrl : null)
                 }))
             );
             setData(flattened);
@@ -58,139 +61,190 @@ export default function ConsignmentHistory() {
         }
     };
 
-    const filteredItems = React.useMemo(() => {
+    const filteredData = useMemo(() => {
         return data.filter((item) =>
-            item.productName.toLowerCase().includes(filterValue.toLowerCase()) ||
-            item.consignorName.toLowerCase().includes(filterValue.toLowerCase()) ||
-            item.lot.toLowerCase().includes(filterValue.toLowerCase())
+            item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.lot?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.consignorName?.toLowerCase().includes(searchQuery.toLowerCase())
         );
-    }, [data, filterValue]);
+    }, [data, searchQuery]);
 
     return (
-        <div className="p-8 bg-[#F9FAFB] min-h-screen font-sans text-gray-800">
-            <div className="w-full mx-auto space-y-6">
+        <div className="p-4 sm:p-8 bg-[#FAFBFC] min-h-screen">
+            <div className="w-full mx-auto space-y-8">
 
-                {/* Header */}
-                <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                        <p className="text-xs text-purple-600 font-semibold tracking-wider uppercase">การฝากขาย</p>
-                        <h1 className="text-3xl font-bold text-gray-900">ประวัติการฝากขายสินค้า</h1>
-                        <p className="text-sm text-gray-500">ข้อมูลรายการฝากขายทั้งหมดในระบบ</p>
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <span className="w-8 h-1 bg-purple-600 rounded-full"></span>
+                            <p className="text-sm font-black text-purple-600 uppercase tracking-widest">Consignment History</p>
+                        </div>
+                        <h1 className="text-4xl font-black text-slate-900 tracking-tight">ประวัติการฝากขายสินค้า</h1>
+                        <p className="text-slate-500 font-medium text-lg">จัดการและตรวจสอบรายการฝากขายสินค้าทั้งหมดในระบบ</p>
                     </div>
-                    <div className="flex gap-2 items-center">
-                        <DownloadExcelButton />
-                        <div className="w-px h-8 bg-gray-200 mx-2" />
-                        <Button isIconOnly variant="light" radius="full" size="sm" onClick={() => fetchData()}>
-                            <RotateCcw size={20} className="text-gray-400" />
+
+                    <div className="flex bg-white p-1.5 rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100">
+                        <Button
+                            onPress={() => setView("product")}
+                            className={`rounded-[1.75rem] px-8 h-12 font-black transition-all ${view === "product"
+                                ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
+                                : "bg-transparent text-slate-400 hover:text-slate-600"
+                                }`}
+                            startContent={<Package size={18} />}
+                        >
+                            รายการสินค้า
+                        </Button>
+                        <Button
+                            onPress={() => setView("consignor")}
+                            className={`rounded-[1.75rem] px-8 h-12 font-black transition-all ${view === "consignor"
+                                ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
+                                : "bg-transparent text-slate-400 hover:text-slate-600"
+                                }`}
+                            startContent={<Users size={18} />}
+                        >
+                            ข้อมูลผู้ฝากขาย
                         </Button>
                     </div>
                 </div>
 
-                {/* Filter Bar */}
-                <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <div className="w-full md:max-w-xl">
-                        <Input
-                            isClearable
-                            placeholder="ค้นหาชื่อสินค้า, ชื่อผู้ฝาก หรือล็อต..."
-                            startContent={<Search size={18} className="text-gray-400" />}
-                            variant="bordered"
-                            value={filterValue}
-                            onClear={() => setFilterValue("")}
-                            onValueChange={setFilterValue}
-                            classNames={{
-                                inputWrapper: "h-11 border-gray-200 shadow-sm",
-                            }}
-                        />
-                    </div>
-                    <div className="flex gap-3 w-full md:w-auto">
-                        <Select
-                            placeholder="หมวดหมู่"
-                            variant="bordered"
-                            className="w-full md:w-40"
-                            size="sm"
-                        >
-                            <SelectItem key="Filing">Filing</SelectItem>
-                            <SelectItem key="Camera">กล้อง</SelectItem>
-                            <SelectItem key="Other">อื่นๆ</SelectItem>
-                        </Select>
-                        <Select
-                            placeholder="สถานะ"
-                            variant="bordered"
-                            className="w-full md:w-40"
-                            size="sm"
-                        >
-                            <SelectItem key="ขายได้">ปกติ</SelectItem>
-                            <SelectItem key="ขายไม่ได้">ชำรุด</SelectItem>
-                        </Select>
-                    </div>
-                </div>
+                {view === "product" ? (
+                    <div className="space-y-6 animate-in fade-in duration-500">
+                        {/* Filter Bar */}
+                        <div className="flex flex-col lg:flex-row gap-4 items-center bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
+                            <div className="relative flex-1 group w-full">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    placeholder="ค้นหารหัสสินค้า, ชื่อสินค้า หรือล็อต..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-12 pr-4 h-14 bg-slate-50 border-none rounded-2xl text-slate-900 font-medium focus:ring-4 focus:ring-purple-500/5 focus:bg-white transition-all outline-none"
+                                />
+                            </div>
+                            <div className="flex gap-3 w-full lg:w-auto">
+                                <Select
+                                    placeholder="หมวดหมู่"
+                                    className="w-full lg:w-44"
+                                    classNames={{ trigger: "h-14 bg-slate-50 border-none rounded-2xl" }}
+                                    startContent={<Filter size={18} className="text-slate-400" />}
+                                >
+                                    <SelectItem key="Filing">Filing</SelectItem>
+                                    <SelectItem key="Camera">กล้อง</SelectItem>
+                                    <SelectItem key="Other">อื่นๆ</SelectItem>
+                                </Select>
+                                <Button className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black shadow-lg shadow-slate-200" startContent={<FileSpreadsheet size={18} />}>
+                                    Export Excel
+                                </Button>
+                            </div>
+                        </div>
 
-                {/* Data Table */}
-                <div className="border border-gray-100 rounded-xl shadow-sm overflow-hidden bg-white">
-                    <Table
-                        aria-label="Consignment history table"
-                        removeWrapper
-                        className="min-w-full"
-                    >
-                        <TableHeader>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold py-4">รูปภาพ</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ชื่อสินค้า/รายละเอียด</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold">ผู้ฝากขาย</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-center">วันที่</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-center">ล็อต</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-center">หมวดหมู่</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-center">สถานะ</TableColumn>
-                            <TableColumn className="bg-gray-50/50 text-gray-500 font-semibold text-right pr-6">ราคาคอนเฟิร์ม</TableColumn>
-                        </TableHeader>
-                        <TableBody
-                            items={filteredItems}
-                            emptyContent={loading ? " " : "ไม่พบข้อมูลรายการฝากขาย"}
-                            isLoading={loading}
-                            loadingContent={<Spinner label="กำลังโหลดข้อมูล..." />}
-                        >
-                            {(item: any) => (
-                                <TableRow key={item.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                                    <TableCell className="py-4">
-                                        <div className="w-16 h-12 rounded-lg border border-gray-100 overflow-hidden bg-gray-50">
-                                            <img src={item.displayImage} alt={item.productName} className="w-full h-full object-cover" />
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span className="font-medium text-gray-900">{item.productName}</span>
-                                            <span className="text-xs text-gray-500">{item.year}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-gray-600">{item.consignorName}</TableCell>
-                                    <TableCell align="center" className="text-gray-600">{item.date}</TableCell>
-                                    <TableCell align="center">
-                                        <span className="px-2 py-1 bg-gray-100 rounded text-xs font-medium text-gray-600">
-                                            {item.lot}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell align="center" className="text-gray-600">{item.category}</TableCell>
-                                    <TableCell align="center">
-                                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${item.status === "ขายได้" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                                            }`}>
-                                            {item.status}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell align="right" className="text-right font-bold text-purple-600 pr-6">
-                                        {item.confirmedPrice?.toLocaleString()}.-
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                        {/* Data Table */}
+                        <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden ring-1 ring-slate-200/50">
+                            <Table
+                                aria-label="Consignment product history table"
+                                removeWrapper
+                                className="min-w-full"
+                                classNames={{
+                                    th: "bg-slate-50/50 text-slate-400 font-bold uppercase text-[10px] tracking-widest py-6 border-b border-slate-100 first:pl-10 last:pr-10",
+                                    td: "py-6 text-slate-600 font-medium first:pl-10 last:pr-10 border-b border-slate-50 group-hover:bg-slate-50/30 transition-colors",
+                                }}
+                            >
+                                <TableHeader>
+                                    <TableColumn>รูปภาพ</TableColumn>
+                                    <TableColumn>รหัสสินค้า</TableColumn>
+                                    <TableColumn>ล็อต</TableColumn>
+                                    <TableColumn>วันที่ฝากขาย</TableColumn>
+                                    <TableColumn>ชื่อสินค้า</TableColumn>
+                                    <TableColumn>ผู้ฝากขาย</TableColumn>
+                                    <TableColumn>สถานะ</TableColumn>
+                                    <TableColumn align="end">ราคาคอนเฟิร์ม (บาท)</TableColumn>
+                                </TableHeader>
+                                <TableBody
+                                    items={filteredData}
+                                    loadingContent={<Spinner label="กำลังจัดเตรียมข้อมูล..." color="secondary" />}
+                                    isLoading={loading}
+                                    emptyContent={!loading && "ไม่มีข้อมูลที่ตรงกับการค้นหา"}
+                                >
+                                    {(item) => (
+                                        <TableRow key={item.id} className="group transition-all hover:bg-slate-50/50">
+                                            <TableCell>
+                                                <div className="w-16 h-12 rounded-xl border border-slate-100 overflow-hidden bg-slate-50 shadow-sm">
+                                                    {item.displayImage ? (
+                                                        <img src={item.displayImage} alt={item.productName} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                            <Package size={20} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-tighter bg-slate-100 px-2 py-1 rounded-md">
+                                                    #{item.id.slice(0, 8)}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-blue-600 font-black text-sm">{item.lot}</span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-slate-900 font-bold whitespace-nowrap">
+                                                    {new Date(item.date).toLocaleDateString("th-TH")}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-slate-900 font-black">{item.productName}</span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-slate-500 font-bold italic">{item.consignorName}</span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    variant="flat"
+                                                    size="sm"
+                                                    className="font-black text-[10px] uppercase"
+                                                    color={item.status === "ขายได้" ? "success" : "warning"}
+                                                >
+                                                    {item.status}
+                                                </Chip>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-purple-600 font-black text-lg">
+                                                    {item.confirmedPrice?.toLocaleString()}
+                                                </span>
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
 
-                    {/* Footer / Pagination */}
-                    <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 bg-gray-50/30 border-t border-gray-100 gap-4">
-                        <span className="text-xs text-gray-400 italic">แสดง {filteredItems.length} รายการ</span>
-                        <div className="flex items-center gap-2">
-                            <Pagination total={1} initialPage={1} size="sm" color="secondary" variant="flat" />
+                            {/* Footer */}
+                            <div className="flex flex-col sm:flex-row justify-between items-center px-10 py-8 bg-slate-50/30 border-t border-slate-100 gap-6">
+                                <span className="text-sm font-black text-slate-900/40 uppercase tracking-[0.2em]">
+                                    {filteredData.length} records in total
+                                </span>
+                                <div className="flex items-center gap-4">
+                                    <Button isIconOnly variant="flat" size="md" className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm">
+                                        <ChevronLeft size={20} />
+                                    </Button>
+                                    <Pagination total={1} initialPage={1} size="md" radius="full" classNames={{ cursor: "bg-purple-600 text-white font-black" }} />
+                                    <Button isIconOnly variant="flat" size="md" className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm">
+                                        <ChevronRight size={20} />
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                ) : (
+                    <UnifiedPersonView
+                        type="CONSIGNMENT"
+                        title="ประวัติการฝากขายของผู้ฝากขาย"
+                        subtitle="รายละเอียดและสถานะการบันทึกข้อมูลฝากขายสินค้า"
+                        themeColor="purple-600"
+                        personLabel="ผู้ฝากขาย"
+                        priceLabel="ราคารวม"
+                    />
+                )}
 
             </div>
         </div>

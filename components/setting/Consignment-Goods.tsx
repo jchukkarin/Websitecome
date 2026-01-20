@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     Input,
     Button,
@@ -10,58 +10,126 @@ import {
     TableBody,
     TableRow,
     TableCell,
+    Tooltip,
 } from "@heroui/react";
-import { Search, Pencil, Trash2, Plus } from "lucide-react";
+import { Search, Pencil, Trash2, Plus, Info, BadgeDollarSign } from "lucide-react";
+import { toast } from "react-hot-toast";
+
+type ConsignmentStatus = {
+    id: number;
+    name: string;
+    count: number;
+};
 
 export default function ConsignmentGoods() {
-    const categoriesData = [
-        { id: 1, name: "กำลังวางขาย", count: 8 },
-        { id: 2, name: "ขายแล้ว", count: 12 },
-    ];
+    const [data, setData] = useState<ConsignmentStatus[]>([]);
+    const [search, setSearch] = useState("");
+    const [loading, setLoading] = useState(true);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/consignment-status");
+            const result = await res.json();
+            setData(result);
+        } catch (error) {
+            toast.error("โหลดข้อมูลฝากขายล้มเหลว");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const filtered = data.filter((d) =>
+        d.name.toLowerCase().includes(search.toLowerCase())
+    );
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">สถานะการฝากขาย</h2>
-            </div>
-
-            <div className="flex gap-4 items-center">
-                <div className="flex-1">
+        <div className="space-y-8">
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div className="w-full sm:max-w-md">
                     <Input
-                        placeholder="ค้นหาหมวดหมู่การฝากขาย"
-                        startContent={<Search size={18} className="text-gray-400" />}
-                        variant="bordered"
-                        radius="md"
+                        placeholder="ค้นหาหมวดหมู่การฝากขาย..."
+                        startContent={<Search size={20} className="text-gray-400" />}
+                        variant="flat"
+                        radius="lg"
+                        size="lg"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                         classNames={{
-                            inputWrapper: "border-gray-200 h-10",
+                            inputWrapper: "bg-gray-100/50 hover:bg-gray-100 transition-colors border-none",
+                            input: "text-base",
                         }}
                     />
                 </div>
-                <Button color="danger" startContent={<Plus size={18} />} className="font-bold px-6 h-10 bg-red-600">เพิ่มหมวดหมู่</Button>
+                <Button
+                    color="danger"
+                    size="lg"
+                    radius="lg"
+                    startContent={<Plus size={22} strokeWidth={3} />}
+                    className="font-bold px-8 shadow-xl shadow-red-200 bg-red-600 text-white"
+                    onClick={() => toast.info("ฟีเจอร์นี้ผูกกับสถานะในรายการฝากขายโดยตรง")}
+                >
+                    เพิ่มหมวดหมู่ใหม่
+                </Button>
             </div>
 
-            <Table aria-label="Consignment categories table" removeWrapper className="mt-4">
-                <TableHeader>
-                    <TableColumn className="bg-transparent border-b border-gray-100 py-4 font-bold text-gray-800">ชื่อ</TableColumn>
-                    <TableColumn className="bg-transparent border-b border-gray-100 py-4 font-bold text-gray-800 text-right pr-12">จำนวนรายการ</TableColumn>
-                </TableHeader>
-                <TableBody>
-                    {categoriesData.map((category) => (
-                        <TableRow key={category.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
-                            <TableCell className="py-4 text-gray-600 font-medium">{category.name}</TableCell>
-                            <TableCell className="py-4 text-right pr-8">
-                                <div className="flex items-center justify-end gap-16">
-                                    <span className="text-gray-500 font-medium">{category.count}</span>
-                                    <div className="flex gap-2">
-                                        <Button isIconOnly variant="light" size="sm"><Pencil size={16} className="text-gray-400" /></Button>
-                                        <Button isIconOnly variant="light" size="sm"><Trash2 size={16} className="text-gray-400" /></Button>
+            <div className="flex items-center gap-3 border-l-4 border-red-500 pl-4 py-1">
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">รายการสถานะการฝากขาย</h2>
+                <Tooltip content="หมวดหมู่สถานะที่ใช้ในการจัดการสินค้าที่รับฝากขายในร้าน">
+                    <Info size={18} className="text-gray-300 cursor-help" />
+                </Tooltip>
+            </div>
+
+            <div className="overflow-hidden rounded-3xl border border-gray-100">
+                <Table aria-label="Consignment categories table" shadow="none" classNames={{
+                    th: "bg-gray-50/50 text-gray-500 font-bold text-sm py-5 border-b border-gray-100 first:pl-8 last:pr-8",
+                    td: "py-5 px-4 first:pl-8 last:pr-8",
+                    tr: "group hover:bg-gray-50/80 transition-all duration-300 border-b border-gray-50 last:border-0",
+                }}>
+                    <TableHeader>
+                        <TableColumn width={400}>ชื่อสถานะการฝากขาย</TableColumn>
+                        <TableColumn align="center">จำนวนสินค้า</TableColumn>
+                        <TableColumn align="end">การจัดการ</TableColumn>
+                    </TableHeader>
+                    <TableBody isLoading={loading} emptyContent={
+                        <div className="flex flex-col items-center justify-center py-20 bg-gray-50/30">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                <BadgeDollarSign size={32} className="text-gray-300" />
+                            </div>
+                            <p className="text-gray-500 font-medium">ไม่พบข้อมูลการฝากขาย</p>
+                        </div>
+                    }>
+                        {filtered.map((category) => (
+                            <TableRow key={category.id}>
+                                <TableCell>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-900 text-lg">{category.name}</span>
+                                        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">STATUS CODE: {category.name.toUpperCase()}</span>
                                     </div>
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex justify-center">
+                                        <div className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full font-black text-lg border border-red-100 min-w-[60px] text-center">
+                                            {category.count}
+                                        </div>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex justify-end gap-2 text-gray-300">
+                                        <Tooltip content="สถานะตามฐานข้อมูลจริง">
+                                            <Info size={18} />
+                                        </Tooltip>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
         </div>
     );
 }

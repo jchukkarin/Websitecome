@@ -1,17 +1,9 @@
-// app/(main)/layout.tsx
-import Navbar from "@/components/navbar/NavBar";
+import AppLayout from "@/components/layout/AppLayout";
 
-export default function MainLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      <Navbar />
-      <main className="w-full">
-        {children}
-      </main>
-    </>
-  );
+  return <AppLayout>{children}</AppLayout>;
 }

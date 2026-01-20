@@ -16,14 +16,39 @@ import {
   Area,
 } from "recharts";
 import {
-  MoreHorizontal,
-  RotateCcw
+  RotateCcw,
+  Users,
+  Package,
+  Wrench,
+  HandCoins,
+  BadgeDollarSign,
+  TrendingUp,
+  Target,
+  User as UserIcon,
+  Crown
 } from "lucide-react";
-import { Button, Card, CardBody, Spinner } from "@heroui/react";
+import {
+  Button,
+  Card,
+  CardBody,
+  Spinner,
+  Chip,
+  Avatar,
+  Divider,
+  Progress,
+  Tabs,
+  Tab
+} from "@heroui/react";
 import axios from "axios";
 
 // Constants
-const GAUGE_COLORS = ["#3b82f6", "#e5e7eb"];
+const RED_COLORS = ["#dc2626", "#ef4444", "#f87171", "#fee2e2"];
+const THEME_COLORS = {
+  import: "#dc2626", // Red-600
+  consignment: "#0f172a", // Slate-900
+  repair: "#475569", // Slate-600
+  pawn: "#94a3b8", // Slate-400
+};
 
 export default function Reports() {
   const [data, setData] = useState<any[]>([]);
@@ -45,10 +70,10 @@ export default function Reports() {
     }
   };
 
-  // 1. Process Stats Cards & Donut Chart
+  // 1. Process Stats
   const stats = useMemo(() => {
     const total = data.length;
-    const items = {
+    const counts = {
       INCOME: data.filter(d => d.type === "INCOME").length,
       REPAIR: data.filter(d => d.type === "REPAIR").length,
       PAWN: data.filter(d => d.type === "PAWN").length,
@@ -56,20 +81,20 @@ export default function Reports() {
     };
 
     const donutData = [
-      { name: "การนำเข้า", value: items.INCOME, color: "#10b981" },
-      { name: "การฝากขาย", value: items.CONSIGNMENT, color: "#f59e0b" },
-      { name: "การจำนำ", value: items.PAWN, color: "#6366f1" },
-      { name: "การฝากซ่อม", value: items.REPAIR, color: "#facc15" },
+      { name: "นำเข้า", value: counts.INCOME, color: THEME_COLORS.import },
+      { name: "ฝากขาย", value: counts.CONSIGNMENT, color: THEME_COLORS.consignment },
+      { name: "จำนำ", value: counts.PAWN, color: THEME_COLORS.pawn },
+      { name: "ฝากซ่อม", value: counts.REPAIR, color: THEME_COLORS.repair },
     ].filter(item => item.value > 0);
 
-    return { total, items, donutData };
+    return { total, counts, donutData };
   }, [data]);
 
-  // 2. Process Trend Area Chart (By Year)
+  // 2. Trend Data
   const areaTrendData = useMemo(() => {
     const yearlyMap: Record<string, number> = {};
     data.forEach(d => {
-      const year = new Date(d.date).getFullYear().toString();
+      const year = new Date(d.date).getFullYear() + 543; // Thai Year
       yearlyMap[year] = (yearlyMap[year] || 0) + 1;
     });
 
@@ -78,343 +103,332 @@ export default function Reports() {
       .sort((a, b) => a.year.localeCompare(b.year));
   }, [data]);
 
-  // 3. Process Daily Usage Bar Chart (Last 7 Days)
-  const dailyUsageData = useMemo(() => {
-    const days = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
-    const now = new Date();
-    const result = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(now.getDate() - i);
-      const dayName = days[d.getDay()];
-      const isToday = i === 0;
-
-      const count = data.filter(record => {
-        const recordDate = new Date(record.date);
-        return recordDate.toDateString() === d.toDateString();
-      }).length;
-
-      result.push({
-        name: isToday ? "วันนี้" : dayName,
-        value: count,
-        display: dayName
+  // 3. User Statistics (Personnel)
+  const personnelStats = useMemo(() => {
+    const getTopPersonnel = (type: string) => {
+      const filtered = data.filter(d => d.type === type);
+      const nameMap: Record<string, number> = {};
+      filtered.forEach(d => {
+        const name = d.consignorName || "ไม่ระบุชื่อ";
+        nameMap[name] = (nameMap[name] || 0) + 1;
       });
-    }
-    return result;
+      return Object.entries(nameMap)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+    };
+
+    return {
+      import: getTopPersonnel("INCOME"),
+      repair: getTopPersonnel("REPAIR"),
+      consignment: getTopPersonnel("CONSIGNMENT"),
+      pawn: getTopPersonnel("PAWN"),
+    };
   }, [data]);
 
-  // 4. Process Pawn Sales Stacked Bar Chart
-  const pawnSalesData = useMemo(() => {
-    const days = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
-    const pawnRecords = data.filter(d => d.type === "PAWN");
-
-    return days.map(day => {
-      const recordsForDay = pawnRecords.filter(p => {
-        const d = new Date(p.date);
-        return days[d.getDay()] === day;
-      });
-
-      // Simple status mapping based on mock or simplified logic
-      // In a real app, you'd check p.items[0].status or similar
-      const current = recordsForDay.length * 10; // Scaled for visual
-      const overtime = recordsForDay.filter(r => r.items?.some((i: any) => i.status === "ชำรุด")).length * 5;
-      const completed = recordsForDay.filter(r => r.items?.some((i: any) => i.status === "ปกติ")).length * 8;
-
-      return { day, current, overtime, completed };
-    });
-  }, [data]);
-
-  // 5. Gauge Data (Based on this month's goal of 100 records)
-  const gaugeInfo = useMemo(() => {
+  // 4. Monthly Target
+  const monthlyProgress = useMemo(() => {
     const thisMonth = new Date().getMonth();
     const count = data.filter(d => new Date(d.date).getMonth() === thisMonth).length;
     const target = 100;
-    const percent = Math.min(Math.round((count / target) * 100), 100);
-
-    return [
-      { name: "Used", value: percent },
-      { name: "Remaining", value: 100 - percent },
-    ];
+    return Math.min(Math.round((count / target) * 100), 100);
   }, [data]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Spinner label="กำลังโหลดข้อมูลสถิติ..." size="lg" />
+      <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
+        <Spinner size="lg" color="danger" />
+        <p className="text-gray-500 font-bold animate-pulse">กำลังประมวลผลข้อมูลสถิติทางธุรกิจ...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-8">
-      <div className="space-y-8">
+    <div className="max-w-[1600px] mx-auto p-4 md:p-8 space-y-10 animate-in fade-in duration-700">
 
-        {/* Header */}
-        <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-gray-900">สถิติการทำงาน</h1>
-            <p className="text-sm text-gray-500">แสดงผลสถิติการทำงานจริงภายในระบบ</p>
+      {/* Premium Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Chip variant="flat" color="danger" size="sm" className="font-bold uppercase tracking-widest px-2">
+              Business Intelligence
+            </Chip>
+            <div className="flex items-center gap-1 text-green-500 text-xs font-bold">
+              <TrendingUp size={14} />
+              <span>Real-time Update</span>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button isIconOnly variant="light" radius="full" size="sm" onClick={fetchData}>
-              <RotateCcw size={20} className="text-gray-400" />
+          <h1 className="text-5xl font-black text-gray-900 tracking-tighter">
+            สถิติการทำงาน <span className="text-red-600">Reports</span>
+          </h1>
+          <p className="text-gray-500 font-medium text-lg">วิเคราะห์และวางแผนการจัดการข้อมูลผ่านแดชบอร์ดอัจฉริยะ</p>
+        </div>
+
+        <div className="flex gap-4">
+          <div className="bg-white p-2 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 px-6 h-16">
+            <div className="text-right">
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">วันที่ปัจจุบัน</p>
+              <p className="text-sm font-bold text-gray-900">
+                {new Date().toLocaleDateString("th-TH", { day: '2-digit', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+            <Divider orientation="vertical" className="h-8" />
+            <Button isIconOnly variant="flat" color="danger" radius="lg" onClick={fetchData} className="bg-red-50 text-red-600">
+              <RotateCcw size={20} />
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Dashboard Title & Date */}
-        <div className="space-y-1">
-          <p className="text-sm font-bold text-gray-900">
-            {new Date().toLocaleDateString("th-TH", { day: '2-digit', month: '2-digit', year: 'numeric' })}
-          </p>
-          <p className="text-xs text-gray-400 font-semibold tracking-wider uppercase">Live Dashboard</p>
-        </div>
+      {/* Overview Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          icon={<Package size={24} />}
+          label="รายการนำเข้า"
+          value={stats.counts.INCOME}
+          color="danger"
+          desc="จำนวนการรับสินค้าเข้าคลัง"
+        />
+        <StatCard
+          icon={<BadgeDollarSign size={24} />}
+          label="รายการฝากขาย"
+          value={stats.counts.CONSIGNMENT}
+          color="default"
+          desc="สินค้าประเภครับฝากขาย"
+        />
+        <StatCard
+          icon={<Wrench size={24} />}
+          label="รายการฝากซ่อม"
+          value={stats.counts.REPAIR}
+          color="warning"
+          desc="สินค้าที่อยู่ระหว่างการซ่อม"
+        />
+        <StatCard
+          icon={<HandCoins size={24} />}
+          label="รายการจำนำ"
+          value={stats.counts.PAWN}
+          color="danger"
+          desc="สถิติการรับจำนำทั้งหมด"
+        />
+      </div>
 
-        {/* Top Row Charts */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Gauge Chart */}
-          <Card className="md:col-span-3 border-none shadow-sm" radius="lg">
-            <CardBody className="p-6 flex flex-col items-center justify-between text-center relative">
-              <p className="text-sm font-bold mb-4">อัตราการทำรายการเดือนนี้</p>
-              <div className="w-40 h-24 relative mt-8">
-                <ResponsiveContainer width="100%" height="200%" className="-mt-16">
-                  <PieChart>
-                    <Pie
-                      data={gaugeInfo}
-                      cx="50%"
-                      cy="50%"
-                      startAngle={180}
-                      endAngle={0}
-                      innerRadius={50}
-                      outerRadius={70}
-                      paddingAngle={0}
-                      dataKey="value"
-                    >
-                      {gaugeInfo.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={GAUGE_COLORS[index]} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pt-8">
-                  <span className="text-3xl font-bold text-gray-900">{gaugeInfo[0].value}%</span>
-                  <span className="text-[10px] text-gray-400 uppercase">ของเป้าหมาย</span>
+      {/* Main Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Sales Trend Chart */}
+        <Card className="lg:col-span-8 bg-white border-none shadow-xl shadow-gray-100/50 rounded-[3rem] overflow-hidden">
+          <CardBody className="p-8 md:p-12">
+            <div className="flex justify-between items-center mb-10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-200">
+                  <TrendingUp size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-900 uppercase">Trend Analysis</h3>
+                  <p className="text-sm text-gray-400 font-medium">สถิติการสะสมข้อมูลแยกตามปีงบประมาณ</p>
                 </div>
               </div>
-              <Button color="primary" size="sm" className="w-full mt-10 h-8 text-xs font-bold rounded-lg py-1">
-                รายละเอียด
-              </Button>
-            </CardBody>
-          </Card>
-
-          {/* Daily Bar Chart */}
-          <Card className="md:col-span-3 border-none shadow-sm" radius="lg">
-            <CardBody className="p-6 text-center md:text-left">
-              <div className="flex justify-between items-center mb-1">
-                <p className="text-sm font-bold">{data.length} รายการ <span className="text-green-500">✦</span></p>
+              <div className="flex gap-2">
+                <Chip variant="flat" color="danger" className="font-bold">Annual</Chip>
               </div>
-              <p className="text-[10px] text-gray-400 font-medium mb-4">จำนวนการเพิ่มข้อมูลใน 7 วันล่าสุด</p>
-              <div className="h-40 w-full mt-4">
+            </div>
+
+            <div className="h-72 w-full">
+              {areaTrendData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dailyUsageData}>
-                    <Bar
-                      dataKey="value"
-                      fill="#3b82f6"
-                      radius={[4, 4, 4, 4]}
-                      barSize={12}
-                    >
-                      {dailyUsageData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.name === "วันนี้" ? "#3b82f6" : "#e5e7eb"} />
-                      ))}
-                    </Bar>
+                  <AreaChart data={areaTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#dc2626" stopOpacity={0.1} />
+                        <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="5 5" vertical={false} stroke="#f1f5f9" />
                     <XAxis
-                      dataKey="name"
+                      dataKey="year"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fontSize: 8, fill: '#9ca3af', fontWeight: 600 }}
-                      interval={0}
-                      dy={8}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardBody>
-          </Card>
-
-          {/* Trend Area Chart */}
-          <Card className="md:col-span-6 border-none shadow-sm" radius="lg">
-            <CardBody className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <p className="text-sm font-bold">เทรนด์การสะสมข้อมูล</p>
-                <div className="flex items-center gap-1 border border-gray-100 rounded-md px-2 py-1 cursor-pointer">
-                  <span className="text-[10px] font-bold">รายปี</span>
-                  <MoreHorizontal size={12} className="rotate-90 text-gray-400" />
-                </div>
-              </div>
-              <div className="h-40 w-full text-center">
-                {areaTrendData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={areaTrendData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                      <XAxis
-                        dataKey="year"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
-                        dy={10}
-                      />
-                      <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
-                      />
-                      <Tooltip />
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#10b981"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#colorValue)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <p className="text-xs text-gray-400 pt-16">ยังไม่มีข้อมูลรายปี</p>
-                )}
-              </div>
-            </CardBody>
-          </Card>
-        </div>
-
-        {/* Stats Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { label: "จำนวนนำเข้า", value: stats.items.INCOME, color: "text-green-600" },
-            { label: "จำนวนฝากขาย", value: stats.items.CONSIGNMENT, color: "text-purple-600" },
-            { label: "จำนวนฝากซ่อม", value: stats.items.REPAIR, color: "text-blue-600" },
-            { label: "จำนวนจำนำ", value: stats.items.PAWN, color: "text-red-600" },
-          ].map((stat, idx) => (
-            <Card key={idx} className="border-none shadow-sm" radius="lg">
-              <CardBody className="p-5 space-y-2">
-                <p className="text-xs font-bold text-gray-900">{stat.label}</p>
-                <p className="text-[8px] text-gray-400 font-medium">ข้อมูลทั้งหมดในระบบ</p>
-                <div className="flex items-end gap-2">
-                  <span className={`text-3xl font-bold ${stat.color}`}>{stat.value}</span>
-                  <span className="text-xs text-gray-400 mb-1">รายการ</span>
-                </div>
-                <p className="text-[8px] text-yellow-500 font-bold flex items-center gap-1 group cursor-pointer hover:underline underline-offset-2 decoration-yellow-500">
-                  ดูรายงานฉบับเต็ม <span className="group-hover:translate-x-0.5 transition-transform">→</span>
-                </p>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
-
-        {/* Bottom Row Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Stacked Horizontal Bar Chart */}
-          <Card className="lg:col-span-8 border-none shadow-sm" radius="lg">
-            <CardBody className="p-8">
-              <h3 className="text-sm font-bold mb-8">ความเคลื่อนไหวของการจำนำ</h3>
-              <div className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={pawnSalesData}
-                    layout="vertical"
-                    margin={{ left: 20, right: 30 }}
-                  >
-                    <CartesianGrid strokeDasharray="0 0" horizontal={false} vertical={true} stroke="#f0f0f0" />
-                    <XAxis
-                      type="number"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 600 }}
-                      dy={10}
+                      tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }}
+                      dy={15}
                     />
                     <YAxis
-                      type="category"
-                      dataKey="day"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fontSize: 11, fill: '#9ca3af', fontWeight: 600 }}
-                      dx={-10}
+                      tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }}
                     />
-                    <Tooltip cursor={{ fill: 'transparent' }} />
-                    <Bar dataKey="current" stackId="a" fill="#3b82f6" barSize={12} />
-                    <Bar dataKey="overtime" stackId="a" fill="#ef4444" barSize={12} />
-                    <Bar dataKey="completed" stackId="a" fill="#2dd4bf" barSize={12} radius={[0, 2, 2, 0]} />
-                  </BarChart>
+                    <Tooltip
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      labelStyle={{ fontWeight: 'bold', color: '#111827' }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#dc2626"
+                      strokeWidth={4}
+                      fillOpacity={1}
+                      fill="url(#colorValue)"
+                      animationDuration={2000}
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
-              </div>
-              <div className="flex justify-end gap-6 mt-6 px-10">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">ปกติ</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-sm"></div>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">ชำรุด</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-teal-400 rounded-sm"></div>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">รวม</span>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-400 font-bold">ยังไม่มีข้อมูลเพียงพอสำหรับการพล็อตกราฟ</div>
+              )}
+            </div>
+          </CardBody>
+        </Card>
 
-          {/* Donut Chart */}
-          <Card className="lg:col-span-4 border-none shadow-sm" radius="lg">
-            <CardBody className="p-8 space-y-8">
-              <h3 className="text-sm font-bold mb-4">สัดส่วนประเภทข้อมูล</h3>
-              <div className="h-64 w-full relative flex flex-col items-center justify-center">
-                {stats.donutData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={stats.donutData}
-                        innerRadius={80}
-                        outerRadius={105}
-                        paddingAngle={5}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {stats.donutData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <p className="text-xs text-gray-400 uppercase mt-16">ไม่มีข้อมูล</p>
-                )}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase mt-2">Total</span>
-                  <span className="text-xl font-bold text-gray-900">{stats.total}</span>
+        {/* Target Progress Card */}
+        <Card className="lg:col-span-4 bg-slate-900 border-none shadow-xl shadow-slate-200 rounded-[3rem] overflow-hidden text-white relative">
+          <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
+            <Target size={200} />
+          </div>
+          <CardBody className="p-10 flex flex-col justify-between relative z-10">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                  <Target size={20} className="text-red-400" />
                 </div>
+                <h3 className="text-lg font-black uppercase tracking-wider">KPI Target</h3>
               </div>
+              <div className="space-y-4">
+                <p className="text-4xl font-black">{monthlyProgress}%</p>
+                <p className="text-sm text-slate-400 font-medium">เป้าหมายการทำรายการในเดือนปัจจุบัน (Goal: 100 txn)</p>
+              </div>
+              <Progress
+                value={monthlyProgress}
+                color="danger"
+                size="md"
+                radius="full"
+                className="max-w-md shadow-2xl"
+                classNames={{
+                  indicator: "bg-red-500",
+                  track: "bg-white/10"
+                }}
+              />
+            </div>
 
-              <div className="grid grid-cols-2 gap-y-4 gap-x-2 pt-6">
-                {stats.donutData.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
-                    <span className="text-[10px] font-bold text-gray-500 truncate">{item.name}</span>
+            <div className="pt-8 border-t border-white/10 mt-8">
+              <p className="text-xs text-slate-400 font-bold uppercase mb-4 tracking-widest">Top Distribution</p>
+              <div className="space-y-4">
+                {stats.donutData.slice(0, 3).map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-xs font-bold text-slate-300">{item.name}</span>
+                    </div>
+                    <span className="text-xs font-black">{Math.round((item.value / stats.total) * 100)}%</span>
                   </div>
                 ))}
               </div>
-            </CardBody>
-          </Card>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Personnel Statistics (The New Requested Section) */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-4 border-l-8 border-red-600 pl-6 py-2">
+          <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600">
+            <Users size={24} />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">รายงานสถิรายชื่อผู้ติดต่อตามบริการ</h2>
+            <p className="text-gray-500 font-medium italic">ข้อมูลสรุปจำนวนครั้งที่ผู้ติดต่อแต่ละรายมาทำรายการในระบบ (ไม่รวมสินค้า)</p>
+          </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+          <PersonnelCard title="ผู้ติดต่อเบิกสินค้า" data={personnelStats.import} icon={<Package size={18} />} color="bg-red-600" />
+          <PersonnelCard title="ผู้ฝากขายสินค้า" data={personnelStats.consignment} icon={<BadgeDollarSign size={18} />} color="bg-slate-900" />
+          <PersonnelCard title="ผู้ฝากซ่อมสินค้า" data={personnelStats.repair} icon={<Wrench size={18} />} color="bg-slate-600" />
+          <PersonnelCard title="ผู้มาจำนำสินค้า" data={personnelStats.pawn} icon={<HandCoins size={18} />} color="bg-slate-400" />
+        </div>
       </div>
     </div>
+  );
+}
+
+// Sub-components
+function StatCard({ icon, label, value, color, desc }: any) {
+  return (
+    <Card className="bg-white border-none shadow-lg shadow-gray-100 rounded-3xl group hover:-translate-y-1 transition-all duration-300 overflow-hidden relative">
+      <CardBody className="p-6">
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 duration-500
+          ${color === "danger" ? "bg-red-50 text-red-600" :
+            color === "warning" ? "bg-amber-50 text-amber-600" :
+              "bg-slate-50 text-slate-700"}
+        `}>
+          {icon}
+        </div>
+        <div className="space-y-1">
+          <p className="text-xs font-black text-gray-400 uppercase tracking-widest">{label}</p>
+          <div className="flex items-baseline gap-2">
+            <h4 className="text-4xl font-black text-gray-900">{value}</h4>
+            <span className="text-xs text-gray-400 font-bold uppercase">Txn</span>
+          </div>
+          <p className="text-[10px] text-gray-400 font-medium pt-2 italic">{desc}</p>
+        </div>
+      </CardBody>
+      <div className={`absolute bottom-0 right-0 p-4 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity`}>
+        {icon}
+      </div>
+    </Card>
+  );
+}
+
+function PersonnelCard({ title, data, icon, color }: any) {
+  return (
+    <Card className="bg-white border-none shadow-xl shadow-gray-100/50 rounded-[2.5rem] overflow-hidden group hover:shadow-2xl transition-all duration-500">
+      <div className={`h-2 w-full ${color}`} />
+      <CardBody className="p-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 ${color} rounded-lg flex items-center justify-center text-white`}>
+              {icon}
+            </div>
+            <h4 className="text-base font-black text-slate-900">{title}</h4>
+          </div>
+          <Users size={16} className="text-slate-200" />
+        </div>
+
+        <div className="space-y-4">
+          {data.length > 0 ? data.map((person: any, idx: number) => (
+            <div key={idx} className="flex items-center justify-between group/item p-2 hover:bg-slate-50 rounded-xl transition-colors">
+              <div className="flex items-center gap-3">
+                <Avatar
+                  name={person.name}
+                  size="sm"
+                  radius="lg"
+                  className="bg-slate-100 text-slate-600 font-black text-[10px]"
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-slate-700 truncate max-w-[120px]">{person.name}</span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">ประจำปี 2568</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                {idx === 0 && <Crown size={12} className="text-amber-500" />}
+                <div className="bg-slate-100 px-3 py-1 rounded-full text-[10px] font-black text-slate-600">
+                  {person.count} <span className="text-[8px] opacity-70">ครั้ง</span>
+                </div>
+              </div>
+            </div>
+          )) : (
+            <div className="py-10 text-center space-y-3">
+              <UserIcon size={32} className="mx-auto text-slate-100" />
+              <p className="text-xs text-slate-300 font-bold uppercase tracking-widest">ยังไม่มีข้อมูล</p>
+            </div>
+          )}
+        </div>
+
+        <Button
+          variant="light"
+          size="sm"
+          className="w-full mt-6 font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-red-500"
+        >
+          View Full Report
+        </Button>
+      </CardBody>
+    </Card>
   );
 }

@@ -34,38 +34,40 @@ export default function NotificationsPage() {
     };
 
     return (
-        <div className="p-8 max-w-md mx-auto space-y-4">
-            <h1 className="text-2xl font-bold">🔔 Send Notification</h1>
-            <p className="text-gray-500 text-sm">Test the notification system by sending an email.</p>
+        <div className="w-full min-h-screen bg-white">
+            <div className="p-8 max-w-4xl mx-auto space-y-4">
+                <h1 className="text-2xl font-bold">🔔 Send Notification</h1>
+                <p className="text-gray-500 text-sm">Test the notification system by sending an email.</p>
 
-            <Input
-                label="User ID"
-                placeholder="Enter target user UUID"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-            />
-            <Input
-                label="Title"
-                placeholder="Notification Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-            />
-            <Input
-                label="Message"
-                placeholder="Notification Message"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-            />
+                <Input
+                    label="User ID"
+                    placeholder="Enter target user UUID"
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                />
+                <Input
+                    label="Title"
+                    placeholder="Notification Title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                />
+                <Input
+                    label="Message"
+                    placeholder="Notification Message"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                />
 
-            <Button color="primary" onPress={sendNotification}>
-                Send Notification
-            </Button>
+                <Button color="primary" onPress={sendNotification}>
+                    Send Notification
+                </Button>
 
-            {status && (
-                <div className={`p-2 rounded mt-2 ${status.startsWith('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                    {status}
-                </div>
-            )}
+                {status && (
+                    <div className={`p-2 rounded mt-2 ${status.startsWith('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                        {status}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

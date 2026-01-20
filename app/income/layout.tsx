@@ -9,7 +9,7 @@ export default function MainLayout({
   return (
     <>
       <Navbar />
-      <main className="container mx-auto p-4">
+      <main className="w-full">
         {children}
       </main>
     </>

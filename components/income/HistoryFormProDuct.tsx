@@ -68,7 +68,7 @@ export default function ConsignmentHistory() {
 
     return (
         <div className="p-8 bg-[#F9FAFB] min-h-screen font-sans text-gray-800">
-            <div className="max-w-7xl mx-auto space-y-6">
+            <div className="w-full mx-auto space-y-6">
 
                 {/* Header */}
                 <div className="flex justify-between items-start">

@@ -159,7 +159,7 @@ export default function ConsignmentForm() {
 
     return (
         <div className="p-8 bg-[#F9FAFB] min-h-screen font-sans text-gray-800">
-            <div className="max-w-6xl mx-auto space-y-8">
+            <div className="w-full mx-auto space-y-8">
 
                 {/* Header */}
                 <div className="flex justify-between items-start">

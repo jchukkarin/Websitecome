@@ -149,17 +149,7 @@ export function Sidebar() {
                     router.push(item.href);
                   }
                 }}
-                className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium transition
-                  ${isActive ? "bg-yellow-50 text-yellow-700" : "text-gray-600 hover:bg-gray-50"}
-                `}
-              >
-                
-              <button
-                key={item.id}
-                onClick={() =>
-                  hasSubMenu ? toggleMenu(item.id) : router.push(item.href)
-                }
-                className={`flex items-center justify-between w-full px-4 py-3 rounded-xl
+                className={`flex items-center justify-between w-full gap-3 px-4 py-3 rounded-xl text-sm font-medium transition
                   ${isActive ? "bg-yellow-50 text-yellow-700" : "text-gray-600 hover:bg-gray-50"}
                 `}
               >
@@ -172,8 +162,7 @@ export function Sidebar() {
                     {item.label}
                   </span>
                 </div>
-              </button>
-            
+
                 {hasSubMenu && (
                   <motion.div
                     animate={{ rotate: isMenuOpen ? 180 : 0 }}

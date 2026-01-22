@@ -38,8 +38,16 @@ async function saveImage(base64String: string) {
     }
 }
 
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]/route";
+
 export async function POST(req: Request) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const body = await req.json();
 
         const {
@@ -75,6 +83,7 @@ export async function POST(req: Request) {
                 address,
                 totalPrice: Number(totalPrice),
                 type: type || "INCOME",
+                userId: (session.user as any).id, // ✅ Store owner
 
                 images: {
                     create: processedImagesUrls.map((url: string) => ({
@@ -87,7 +96,7 @@ export async function POST(req: Request) {
                         productName: item.productName || "",
                         category: item.category || "",
                         year: item.year || "",
-                        status: item.productStatus || "ready", // ✅ แก้ตรงนี้
+                        status: item.productStatus || "ready",
                         confirmedPrice: Number(item.confirmedPrice) || 0,
                         salesChannel: item.salesChannel || "",
                         imageUrl: item.imageUrl ?? "",
@@ -121,6 +130,13 @@ export async function GET(req: Request) {
             include: {
                 items: true,
                 images: true,
+                user: { // ✅ Include user info if needed
+                    select: {
+                        id: true,
+                        name: true,
+                        role: true,
+                    }
+                }
             },
             orderBy: {
                 createdAt: "desc",

@@ -1,9 +1,10 @@
 "use client";
 
 import { useSidebar } from "@/context/SidebarContext";
-import { Menu, LayoutGrid, Search, Bell, Settings } from "lucide-react";
+import { Menu, LayoutGrid, Search, Bell, Settings, LogOut } from "lucide-react";
 import Link from "next/link";
 import { Button, Input, Kbd } from "@heroui/react";
+import { signOut } from "next-auth/react";
 
 export default function Navbar() {
   const { toggleSidebar, toggleMobile } = useSidebar();
@@ -42,14 +43,6 @@ export default function Navbar() {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
-       {/*  <Button
-          isIconOnly
-          variant="light"
-          radius="full"
-          className="text-slate-600 hover:bg-slate-100"
-        >
-          <Bell size={20} />
-        </Button>  */}
         <Button
           isIconOnly
           variant="light"
@@ -57,6 +50,18 @@ export default function Navbar() {
           className="text-slate-600 hover:bg-slate-100"
         >
           <LayoutGrid size={20} />
+        </Button>
+
+        <Button
+          isIconOnly
+          variant="flat"
+          color="danger"
+          radius="full"
+          onPress={() => signOut({ callbackUrl: "/login" })}
+          className="text-red-500 bg-red-50 hover:bg-red-100 ml-2"
+          title="Sign Out"
+        >
+          <LogOut size={20} />
         </Button>
       </div>
     </nav>

@@ -16,6 +16,7 @@ import {
     Selection,
 } from "@nextui-org/react";
 import { ChevronLeft, ChevronRight, Trash2, Edit3, Eye, Search } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 // Consignment Interface based on Prisma schema
 interface ConsignmentImage {
@@ -32,15 +33,20 @@ interface Consignment {
     address: string;
     totalPrice: number;
     type: string;
+    userId: string; // ✅ Add userId
     images: ConsignmentImage[];
 }
 
 export default function HistoryForm() {
+    const { data: session } = useSession();
     const [loading, setLoading] = useState(true);
     const [consignments, setConsignments] = useState<Consignment[]>([]);
     const [page, setPage] = useState(1);
     const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
     const rowsPerPage = 10;
+
+    const user = session?.user as any;
+    const isManager = user?.role === "MANAGER";
 
     useEffect(() => {
         const fetchConsignments = async () => {
@@ -224,28 +230,33 @@ export default function HistoryForm() {
                                                     <Eye className="w-5 h-5" />
                                                 </Button>
                                             </Tooltip>
-                                            <Tooltip content="แก้ไข" size="sm">
-                                                <Button
-                                                    isIconOnly
-                                                    variant="light"
-                                                    size="sm"
-                                                    className="text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-xl"
-                                                >
-                                                    <Edit3 className="w-5 h-5" />
-                                                </Button>
-                                            </Tooltip>
-                                            <Tooltip content="ลบ" color="danger" size="sm">
-                                                <Button
-                                                    isIconOnly
-                                                    variant="light"
-                                                    size="sm"
-                                                    color="danger"
-                                                    className="text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"
-                                                    onClick={() => handleDelete(item.id)}
-                                                >
-                                                    <Trash2 className="w-5 h-5" />
-                                                </Button>
-                                            </Tooltip>
+
+                                            {(isManager || item.userId === user?.id) && (
+                                                <>
+                                                    <Tooltip content="แก้ไข" size="sm">
+                                                        <Button
+                                                            isIconOnly
+                                                            variant="light"
+                                                            size="sm"
+                                                            className="text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-xl"
+                                                        >
+                                                            <Edit3 className="w-5 h-5" />
+                                                        </Button>
+                                                    </Tooltip>
+                                                    <Tooltip content="ลบ" color="danger" size="sm">
+                                                        <Button
+                                                            isIconOnly
+                                                            variant="light"
+                                                            size="sm"
+                                                            color="danger"
+                                                            className="text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"
+                                                            onClick={() => handleDelete(item.id)}
+                                                        >
+                                                            <Trash2 className="w-5 h-5" />
+                                                        </Button>
+                                                    </Tooltip>
+                                                </>
+                                            )}
                                         </div>
                                     </TableCell>
                                 </TableRow>

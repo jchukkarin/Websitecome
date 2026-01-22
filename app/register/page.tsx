@@ -72,7 +72,6 @@ export default function RegisterPage() {
           alt="Logo"
           className="w-20 h-20 mb-2"
         />
-        <h1 className="text-2xl font-black italic tracking-tighter text-[#d9161a]">NAITOUNOI</h1>
       </div>
 
       {/* Decorative Elements - Hidden on mobile */}

@@ -29,27 +29,41 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import HistoryForm from "./HistoryForm";
+import { useSession } from "next-auth/react";
 
 export default function History() {
+    const { data: session } = useSession();
     const [view, setView] = useState<"product" | "importer">("product");
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
 
+    const user = session?.user as any;
+    const isManager = user?.role === "MANAGER";
+
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [session]);
 
     const fetchData = async () => {
+        if (!session) return;
         setLoading(true);
         try {
             const res = await axios.get("/api/consignments?type=INCOME");
+            let consignments = res.data;
+
+            // ✅ Filter for Employee (Limited view)
+            if (user?.role === "EMPLOYEE") {
+                consignments = consignments.filter((c: any) => c.userId === user.id);
+            }
+
             // Flatten the data: each consignment has items
-            const flattened = res.data.flatMap((c: any) =>
+            const flattened = consignments.flatMap((c: any) =>
                 c.items.map((item: any) => ({
                     ...item,
                     lot: c.lot,
                     date: c.date,
+                    userId: c.userId, // ✅ Added for check
                     createdAt: c.createdAt,
                     consignorName: c.consignorName,
                     // Use item.imageUrl or fallback to first general image or placeholder
@@ -224,7 +238,7 @@ export default function History() {
                                             </TableCell>
                                             <TableCell>
                                                 <span className="text-slate-900 font-black text-lg">
-                                                    {item.confirmedPrice?.toLocaleString()}
+                                                    {isManager || item.userId === user?.id ? item.confirmedPrice?.toLocaleString() : '***'}
                                                 </span>
                                             </TableCell>
                                         </TableRow>

@@ -20,6 +20,7 @@ import {
 import DownloadExcelButton from "../downloadfile/DownloadExcelButton"
 import toast, { Toaster } from "react-hot-toast"
 import axios from "axios"
+import { useSession } from "next-auth/react"
 import EditBox from "./EditBox"
 
 // Types
@@ -45,6 +46,7 @@ export type Consignment = {
     date: string
     lot: string
     type: string
+    userId: string // ✅ Added
     images: ConsignmentImage[]
     items: ConsignmentItem[]
 }
@@ -53,6 +55,7 @@ export type DashboardItem = ConsignmentItem & {
     date: string
     lot: string
     type: string
+    userId: string // ✅ Added
     parentImages: ConsignmentImage[]
 }
 
@@ -66,9 +69,13 @@ const statusColor: Record<string, string> = {
 }
 
 export default function DashboardHome() {
+    const { data: session } = useSession()
     const [items, setItems] = useState<DashboardItem[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+
+    const user = session?.user as any;
+    const isManager = user?.role === "MANAGER";
 
     // Modal state
     const { isOpen, onOpen, onOpenChange } = useDisclosure()
@@ -90,7 +97,12 @@ export default function DashboardHome() {
             const res = await fetch("/api/consignments")
             if (!res.ok) throw new Error("Failed to fetch data")
 
-            const consignments: Consignment[] = await res.json()
+            let consignments: Consignment[] = await res.json()
+
+            // ✅ Filter for Employee (Limited view)
+            if (user?.role === "EMPLOYEE") {
+                consignments = consignments.filter(c => c.userId === user.id)
+            }
 
             const allItems: DashboardItem[] = consignments.flatMap((c) =>
                 c.items.map((item) => ({
@@ -102,6 +114,7 @@ export default function DashboardHome() {
                     }),
                     lot: c.lot,
                     type: c.type,
+                    userId: c.userId, // ✅ Keep userId for check
                     parentImages: c.images || []
                 }))
             )
@@ -336,7 +349,7 @@ export default function DashboardHome() {
 
                                     <td className="text-center p-4">
                                         <span className="text-orange-600 font-black text-base">
-                                            ฿{item.confirmedPrice.toLocaleString()}
+                                            {isManager || item.userId === user?.id ? `฿${item.confirmedPrice.toLocaleString()}` : '***'}
                                         </span>
                                     </td>
 
@@ -347,37 +360,39 @@ export default function DashboardHome() {
                                     </td>
 
                                     <td className="text-right p-4 pr-6">
-                                        <Dropdown placement="bottom-end" shadow="lg" className="rounded-2xl border border-gray-100">
-                                            <DropdownTrigger>
-                                                <Button
-                                                    isIconOnly
-                                                    variant="light"
-                                                    size="sm"
-                                                    className="rounded-full text-gray-400 hover:text-gray-900 transition-colors"
-                                                >
-                                                    <MoreVertical size={18} />
-                                                </Button>
-                                            </DropdownTrigger>
-                                            <DropdownMenu aria-label="Action menu" variant="faded" className="p-2 gap-1">
-                                                <DropdownItem
-                                                    key="edit"
-                                                    startContent={<Pencil size={16} className="text-blue-500" />}
-                                                    className="rounded-xl h-10 px-3 hover:bg-blue-50"
-                                                    onPress={() => handleEdit(item)}
-                                                >
-                                                    <span className="font-bold text-gray-700">ดูข้อมูล / แก้ไข</span>
-                                                </DropdownItem>
-                                                <DropdownItem
-                                                    key="delete"
-                                                    className="rounded-xl h-10 px-3 hover:bg-red-50 text-red-500"
-                                                    color="danger"
-                                                    startContent={<Trash2 size={16} />}
-                                                    onPress={() => handleDelete(item)}
-                                                >
-                                                    <span className="font-bold">ลบรายการนี้</span>
-                                                </DropdownItem>
-                                            </DropdownMenu>
-                                        </Dropdown>
+                                        {(isManager || item.userId === user?.id) && (
+                                            <Dropdown placement="bottom-end" shadow="lg" className="rounded-2xl border border-gray-100">
+                                                <DropdownTrigger>
+                                                    <Button
+                                                        isIconOnly
+                                                        variant="light"
+                                                        size="sm"
+                                                        className="rounded-full text-gray-400 hover:text-gray-900 transition-colors"
+                                                    >
+                                                        <MoreVertical size={18} />
+                                                    </Button>
+                                                </DropdownTrigger>
+                                                <DropdownMenu aria-label="Action menu" variant="faded" className="p-2 gap-1">
+                                                    <DropdownItem
+                                                        key="edit"
+                                                        startContent={<Pencil size={16} className="text-blue-500" />}
+                                                        className="rounded-xl h-10 px-3 hover:bg-blue-50"
+                                                        onPress={() => handleEdit(item)}
+                                                    >
+                                                        <span className="font-bold text-gray-700">ดูข้อมูล / แก้ไข</span>
+                                                    </DropdownItem>
+                                                    <DropdownItem
+                                                        key="delete"
+                                                        className="rounded-xl h-10 px-3 hover:bg-red-50 text-red-500"
+                                                        color="danger"
+                                                        startContent={<Trash2 size={16} />}
+                                                        onPress={() => handleDelete(item)}
+                                                    >
+                                                        <span className="font-bold">ลบรายการนี้</span>
+                                                    </DropdownItem>
+                                                </DropdownMenu>
+                                            </Dropdown>
+                                        )}
                                     </td>
                                 </tr>
                             ))

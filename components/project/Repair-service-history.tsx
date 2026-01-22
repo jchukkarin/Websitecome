@@ -28,27 +28,41 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import UnifiedPersonView from "../history/UnifiedPersonView";
+import { useSession } from "next-auth/react";
 
 export default function RepairServiceHistory() {
+    const { data: session } = useSession();
     const [view, setView] = useState<"product" | "repair_person">("product");
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
 
+    const user = session?.user as any;
+    const isManager = user?.role === "MANAGER";
+
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [session]);
 
     const fetchData = async () => {
+        if (!session) return;
         setLoading(true);
         try {
             const res = await axios.get("/api/consignments?type=REPAIR");
+            let consignments = res.data;
+
+            // ✅ Filter for Employee (Limited view)
+            if (user?.role === "EMPLOYEE") {
+                consignments = consignments.filter((c: any) => c.userId === user.id);
+            }
+
             // Flatten the data: each record has items
-            const flattened = res.data.flatMap((c: any) =>
+            const flattened = consignments.flatMap((c: any) =>
                 c.items.map((item: any) => ({
                     ...item,
                     lot: c.lot,
                     date: c.date,
+                    userId: c.userId, // ✅ Added for check
                     consignorName: c.consignorName,
                     displayImage: item.imageUrl || (c.images && c.images.length > 0 ? c.images[0].imageUrl : null)
                 }))
@@ -210,7 +224,7 @@ export default function RepairServiceHistory() {
                                             </TableCell>
                                             <TableCell>
                                                 <span className="text-blue-700 font-black text-lg">
-                                                    {item.confirmedPrice?.toLocaleString()}
+                                                    {isManager || item.userId === user?.id ? item.confirmedPrice?.toLocaleString() : '***'}
                                                 </span>
                                             </TableCell>
                                         </TableRow>

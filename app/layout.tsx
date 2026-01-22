@@ -15,7 +15,7 @@ export const metadata = {
   description: "Dashboard และระบบของนายตัวน้อย",
 };
 
-import { SidebarProvider } from "@/context/SidebarContext";
+import { Providers } from "@/components/providers/Providers";
 
 export default function RootLayout({
   children,
@@ -25,12 +25,9 @@ export default function RootLayout({
   return (
     <html lang="th" className={kanit.className}>
       <body className="antialiased min-h-screen">
-        <SidebarProvider>
+        <Providers>
           {children}
-        </SidebarProvider>
-
-        {/* Toast */}
-        <Toaster position="top-right" />
+        </Providers>
       </body>
     </html>
   );

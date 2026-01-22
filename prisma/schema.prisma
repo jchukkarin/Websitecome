@@ -6,16 +6,23 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  MANAGER
+  EMPLOYEE
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
   password  String?
+  role      Role     @default(EMPLOYEE)
   image     String?
   username  String?  @unique
   createdAt DateTime @default(now())
 
   notifications Notification[]
+  consignments  Consignment[]
 }
 
 model Notification {
@@ -32,17 +39,21 @@ model Notification {
 }
 
 model Consignment {
-  id            String             @id @default(uuid())
+  id            String   @id @default(uuid())
   date          DateTime
   lot           String
   consignorName String
   contactNumber String
   address       String
   totalPrice    Float
-  type          String             @default("INCOME")
-  createdAt     DateTime           @default(now())
-  images        ConsignmentImage[]
-  items         ConsignmentItem[]
+  type          String   @default("INCOME")
+  createdAt     DateTime @default(now())
+
+  userId String? // ✅ Tracking owner
+  user   User?   @relation(fields: [userId], references: [id])
+
+  images ConsignmentImage[]
+  items  ConsignmentItem[]
 }
 
 model ConsignmentImage {
@@ -61,7 +72,7 @@ model ConsignmentItem {
   confirmedPrice Float
   salesChannel   String
   imageUrl       String?
-  slipImage      String?  // ✅ เพิ่ม
+  slipImage      String? // ✅ เพิ่ม
   soldAt         DateTime?
   consignmentId  String
   consignment    Consignment @relation(fields: [consignmentId], references: [id])

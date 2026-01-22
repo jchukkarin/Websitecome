@@ -22,6 +22,7 @@ import {
   X
 } from "lucide-react";
 import { Tooltip, Button } from "@heroui/react";
+import { useSession, signOut } from "next-auth/react";
 
 const navItems = [
   {
@@ -29,12 +30,14 @@ const navItems = [
     label: "หน้าหลัก",
     icon: Home,
     href: "/dashboard",
+    roles: ["MANAGER", "EMPLOYEE"],
   },
   {
     id: "reports",
     label: "สถิติการทำงาน",
     icon: BarChart2,
     href: "/reports",
+    roles: ["MANAGER"],
   },
   {
     id: "income",
@@ -45,6 +48,7 @@ const navItems = [
       { label: "ประวัติข้อมูลนำเข้า", href: "/income/history" },
       { label: "บันทึกการนำเข้า", href: "/income/FormUsersIncome" },
     ],
+    roles: ["MANAGER", "EMPLOYEE"],
   },
   {
     id: "project",
@@ -55,6 +59,7 @@ const navItems = [
       { label: "ประวัติการฝากซ่อม", href: "/project/Repair-service-history" },
       { label: "บันทึกการฝากซ่อม", href: "/project" },
     ],
+    roles: ["MANAGER", "EMPLOYEE"],
   },
   {
     id: "expenses",
@@ -65,6 +70,7 @@ const navItems = [
       { label: "ประวัติการฝากขาย", href: "/income/HistoryFormProDuct" },
       { label: "บันทึกการฝากขาย", href: "/income/FormProductIncome" },
     ],
+    roles: ["MANAGER", "EMPLOYEE"],
   },
   {
     id: "pawn",
@@ -75,32 +81,36 @@ const navItems = [
       { label: "ประวัติการจำนำ", href: "/expense/ExpenseForm" },
       { label: "บันทึกการจำนำ", href: "/expense" },
     ],
-  },
-  {
-    id: "profile",
-    label: "โปรไฟล์",
-    icon: User,
-    href: "/profile",
+    roles: ["MANAGER", "EMPLOYEE"],
   },
   {
     id: "shop-profile",
     label: "การตั้งค่าร้านค้า",
     icon: Store,
     href: "/profile/SetupFormProFileShop",
+    roles: ["MANAGER"],
   },
   {
     id: "categories",
     label: "การตั้งค่าหมวดหมู่",
     icon: Settings,
     href: "/edit",
+    roles: ["MANAGER"],
   },
 ];
 
 export function Sidebar() {
   const { isCollapsed, isMobileOpen, toggleMobile, setIsMobileOpen } = useSidebar();
+  const { data: session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+
+  const userRole = (session?.user as any)?.role || "EMPLOYEE";
+
+  const filteredNavItems = useMemo(() => {
+    return navItems.filter((item) => item.roles.includes(userRole));
+  }, [userRole]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -183,7 +193,7 @@ export function Sidebar() {
 
         {/* Navigation Items */}
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto no-scrollbar">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const Icon = item.icon;
             const hasSubMenu = !!item.subMenu;
             const isMenuOpen = openMenus.includes(item.id);
@@ -285,12 +295,12 @@ export function Sidebar() {
 
                 <div className="flex items-center gap-3 relative z-10">
                   <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center font-bold text-xs ring-2 ring-white/20">
-                    AD
+                    {session?.user?.name?.[0] || session?.user?.email?.[0] || 'U'}
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-xs font-black truncate uppercase tracking-tighter">Administrator</p>
+                    <p className="text-xs font-black truncate uppercase tracking-tighter">{session?.user?.name || "User"}</p>
                     <p className="text-[10px] text-blue-300 font-bold flex items-center gap-1">
-                      <Clock size={10} /> Online
+                      <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /> {userRole}
                     </p>
                   </div>
                 </div>
@@ -298,6 +308,7 @@ export function Sidebar() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={() => signOut({ callbackUrl: "/login" })}
                   className="mt-4 w-full h-8 bg-white/10 hover:bg-white/20 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all border border-white/5 shadow-xl"
                 >
                   <LogOut size={12} /> Sign Out
@@ -315,6 +326,7 @@ export function Sidebar() {
                 radius="lg"
                 size="md"
                 className="w-full h-12"
+                onPress={() => signOut({ callbackUrl: "/login" })}
               >
                 <LogOut size={18} />
               </Button>

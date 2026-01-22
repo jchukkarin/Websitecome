@@ -11,6 +11,8 @@ import {
 import { Eye, EyeOff, UserPlus } from "lucide-react";
 import Link from "next/link";
 
+import { signIn } from "next-auth/react";
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,20 +27,29 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.message);
+      if (res?.error) {
+        alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
         return;
       }
 
-      router.push("/dashboard");
+      // Successful login, get session to check role for redirection
+      const sessionRes = await fetch("/api/auth/session");
+      const session = await sessionRes.json();
+      const userRole = session?.user?.role;
+
+      if (userRole === "MANAGER") {
+        router.push("/dashboard"); // Or a specific manager page if it exists
+      } else {
+        router.push("/dashboard");
+      }
+
+      router.refresh();
     } catch (error) {
       console.error("Login error:", error);
       alert("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");

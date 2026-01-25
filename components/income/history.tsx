@@ -168,12 +168,14 @@ export default function History() {
                                 <TableHeader>
                                     <TableColumn>รูปภาพ</TableColumn>
                                     <TableColumn>รหัสสินค้า</TableColumn>
-                                    <TableColumn>ล็อต</TableColumn>
+                                    <TableColumn>ล็อตสินค้า</TableColumn>
+                                    <TableColumn>ปีที่ผลิต</TableColumn>
                                     <TableColumn>วันที่นำเข้า</TableColumn>
                                     <TableColumn>ชื่อสินค้า</TableColumn>
-                                    <TableColumn>สถานะ</TableColumn>
+                                    <TableColumn>สถานะสินค้า</TableColumn>
+                                    <TableColumn>สถานะการซ่อมแซม</TableColumn>
                                     <TableColumn>หมวดหมู่</TableColumn>
-                                    <TableColumn align="end">ราคา (บาท)</TableColumn>
+                                    <TableColumn align="end">ราคาทุน (บาท)</TableColumn>
                                 </TableHeader>
                                 <TableBody
                                     items={filteredData}
@@ -183,6 +185,7 @@ export default function History() {
                                 >
                                     {(item) => (
                                         <TableRow key={item.id} className="group transition-all hover:bg-slate-50/50">
+                                            {/* 1. Image */}
                                             <TableCell>
                                                 <div className="w-16 h-12 rounded-xl border border-slate-100 overflow-hidden bg-slate-50 shadow-sm">
                                                     {item.displayImage ? (
@@ -194,14 +197,25 @@ export default function History() {
                                                     )}
                                                 </div>
                                             </TableCell>
+
+                                            {/* 2. ID */}
                                             <TableCell>
                                                 <span className="text-[11px] font-black text-slate-400 uppercase tracking-tighter bg-slate-100 px-2 py-1 rounded-md">
                                                     #{item.id.slice(0, 8)}
                                                 </span>
                                             </TableCell>
+
+                                            {/* 3. Lot */}
                                             <TableCell>
                                                 <span className="text-blue-600 font-black text-sm">{item.lot}</span>
                                             </TableCell>
+
+                                            {/* 4. Year */}
+                                            <TableCell>
+                                                <span className="text-slate-900 font-bold">{item.year || '-'}</span>
+                                            </TableCell>
+
+                                            {/* 5. Import Date */}
                                             <TableCell>
                                                 <div className="flex flex-col">
                                                     <span className="text-slate-900 font-bold whitespace-nowrap">
@@ -220,25 +234,53 @@ export default function History() {
                                                     </span>
                                                 </div>
                                             </TableCell>
+
+                                            {/* 6. Product Name */}
                                             <TableCell>
                                                 <span className="text-slate-900 font-black">{item.productName}</span>
                                             </TableCell>
+
+                                            {/* 7. Product Status */}
                                             <TableCell>
                                                 <Chip
                                                     variant="flat"
                                                     size="sm"
                                                     className="font-black text-[10px] uppercase"
-                                                    color={item.status === "ขายได้" ? "success" : "warning"}
+                                                    color={
+                                                        item.productStatus === "ready" ? "success" :
+                                                            item.productStatus === "reserved" ? "warning" : "danger"
+                                                    }
                                                 >
-                                                    {item.status}
+                                                    {item.productStatus === "ready" ? "พร้อมขาย" :
+                                                        item.productStatus === "reserved" ? "ติดจอง" : "ขายแล้ว"}
                                                 </Chip>
                                             </TableCell>
+
+                                            {/* 8. Repair Status */}
+                                            <TableCell>
+                                                <Chip
+                                                    variant="flat"
+                                                    size="sm"
+                                                    className="font-black text-[10px]"
+                                                    color={
+                                                        item.repairStatus === "repairing" ? "warning" :
+                                                            item.repairStatus === "completed" ? "primary" : "default"
+                                                    }
+                                                >
+                                                    {item.repairStatus === "not_repair" ? "ไม่ซ่อม" :
+                                                        item.repairStatus === "repairing" ? "กำลังซ่อม" : "ซ่อมเสร็จแล้ว"}
+                                                </Chip>
+                                            </TableCell>
+
+                                            {/* 9. Category */}
                                             <TableCell>
                                                 <span className="text-slate-500 font-bold italic">{item.category}</span>
                                             </TableCell>
-                                            <TableCell>
+
+                                            {/* 10. Cost Price */}
+                                            <TableCell align="right">
                                                 <span className="text-slate-900 font-black text-lg">
-                                                    {isManager || item.userId === user?.id ? item.confirmedPrice?.toLocaleString() : '***'}
+                                                    ฿{isManager || item.userId === user?.id ? Number(item.confirmedPrice || 0).toLocaleString() : '***'}
                                                 </span>
                                             </TableCell>
                                         </TableRow>

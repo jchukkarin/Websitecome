@@ -35,6 +35,7 @@ import {
   Clock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import PawnStatusCell from "./PawnStatusCell";
 
 export default function PawnRecording() {
   const [loading, setLoading] = useState(false);
@@ -57,8 +58,9 @@ export default function PawnRecording() {
       productName: "",
       category: "",
       year: "",
-      status: "ขายได้",
+      status: "active",
       confirmedPrice: "",
+      redemptionPrice: "",
       salesChannel: "",
       imageUrl: "",
     },
@@ -72,8 +74,9 @@ export default function PawnRecording() {
         productName: "",
         category: "",
         year: "",
-        status: "ขายได้",
+        status: "active",
         confirmedPrice: "",
+        redemptionPrice: "",
         salesChannel: "",
         imageUrl: "",
       },
@@ -88,7 +91,7 @@ export default function PawnRecording() {
     }
   };
 
-  const handleItemChange = (id: string, field: string, value: string) => {
+  const handleItemChange = (id: string, field: string, value: any) => {
     setItems(items.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
@@ -120,8 +123,9 @@ export default function PawnRecording() {
         productName: "",
         category: "",
         year: "",
-        status: "ขายได้",
+        status: "active",
         confirmedPrice: "",
+        redemptionPrice: "",
         salesChannel: "",
         imageUrl: "",
       },
@@ -437,8 +441,9 @@ export default function PawnRecording() {
                 <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">ชื่อสินค้า/รายละเอียด</TableColumn>
                 <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">หมวดหมู่</TableColumn>
                 <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">ปี/รุ่น</TableColumn>
-                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">สถานะ</TableColumn>
-                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">ยอดจำนำ</TableColumn>
+                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">สถานะจำนำ</TableColumn>
+                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">ราคาจำนำ</TableColumn>
+                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px] text-center">ราคาปิดยอด</TableColumn>
                 <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px] text-center">การกระทำ</TableColumn>
               </TableHeader>
               <TableBody items={items}>
@@ -509,21 +514,7 @@ export default function PawnRecording() {
                       />
                     </TableCell>
                     <TableCell>
-                      <Select
-                        placeholder="สถานะ"
-                        variant="flat"
-                        size="sm"
-                        className="min-w-[120px]"
-                        selectedKeys={[item.status]}
-                        classNames={{
-                          trigger: "bg-transparent shadow-none h-10 px-0 group-data-[hover=true]:bg-transparent",
-                          value: "font-semibold text-slate-700",
-                        }}
-                        onChange={(e) => handleItemChange(item.id, "status", e.target.value)}
-                      >
-                        <SelectItem key="ขายได้">ปกติ</SelectItem>
-                        <SelectItem key="ขายไม่ได้">ชำรุด</SelectItem>
-                      </Select>
+                      <PawnStatusCell item={item} onItemChangeAction={handleItemChange} />
                     </TableCell>
                     <TableCell>
                       <Input
@@ -537,6 +528,20 @@ export default function PawnRecording() {
                           inputWrapper: "bg-transparent h-10 px-0 group-data-[hover=true]:bg-transparent",
                         }}
                         onChange={(e) => handleItemChange(item.id, "confirmedPrice", e.target.value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        placeholder="0.00"
+                        variant="flat"
+                        size="sm"
+                        type="number"
+                        value={(item as any).redemptionPrice}
+                        classNames={{
+                          input: "font-black text-emerald-600 text-right",
+                          inputWrapper: "bg-transparent h-10 px-0 group-data-[hover=true]:bg-transparent",
+                        }}
+                        onChange={(e) => handleItemChange(item.id, "redemptionPrice", e.target.value)}
                       />
                     </TableCell>
                     <TableCell className="text-center">
@@ -569,9 +574,9 @@ export default function PawnRecording() {
                 <Package size={40} />
               </div>
               <p className="text-xl font-bold text-slate-600">ยังไม่มีรายการสินค้า</p>
-              <p className="text-sm text-slate-400 mb-8 font-medium italic">กรุณากดปุ่มเพิ่มสินค้าเพื่อเริ่มบันทึกรายการ</p>
+              <p className="text-sm text-slate-400 mb-8 font-medium italic">กรุณากดปุ่มเพิ่มสินค้าใหม่เพื่อเริ่มบันทึกรายการ</p>
               <Button
-                color="warning"
+                color="primary"
                 startContent={<Plus size={20} />}
                 onPress={handleAddItem}
                 className="bg-slate-900 font-bold px-10 rounded-2xl h-12"

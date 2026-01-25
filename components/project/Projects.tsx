@@ -17,6 +17,7 @@ import {
   Select,
   SelectItem,
   Tooltip,
+  Chip,
 } from "@heroui/react";
 import {
   Plus,
@@ -34,6 +35,25 @@ import {
   Wrench,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import ProductHistoryStatus from "./ProductHistoryStatus";
+import RepairingHistoryStatus from "./RepairHistoryStatus";
+
+
+interface RepairItem {
+  id: string;
+  productName: string;
+  category: string;
+  year: string;
+  status: string;
+  productStatus: string; // เพิ่มมาใหม่ สำหรับ RepairHistoryStatus
+  confirmedPrice: string;
+  salesChannel: string;
+  imageUrl: string;
+  defectImages?: string[] | string;
+  slipImage?: string;
+  repairStartDate?: string;
+  repairEndDate?: string;
+}
 
 export default function Projects() {
   const [loading, setLoading] = useState(false);
@@ -49,13 +69,14 @@ export default function Projects() {
     images: [] as string[],
   });
 
-  const [items, setItems] = useState([
+  const [items, setItems] = useState<RepairItem[]>([
     {
       id: "initial-item",
       productName: "",
       category: "",
       year: "",
-      status: "ขายได้",
+      status: "pending",
+      productStatus: "normal",
       confirmedPrice: "",
       salesChannel: "",
       imageUrl: "",
@@ -70,7 +91,8 @@ export default function Projects() {
         productName: "",
         category: "",
         year: "",
-        status: "ขายได้",
+        status: "pending",
+        productStatus: "normal",
         confirmedPrice: "",
         salesChannel: "",
         imageUrl: "",
@@ -81,13 +103,11 @@ export default function Projects() {
   const handleRemoveItem = (id: string) => {
     if (items.length > 1) {
       setItems(items.filter((item) => item.id !== id));
-    } else {
-      setItems([]);
     }
   };
 
-  const handleItemChange = (id: string, field: string, value: string) => {
-    setItems(items.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+  const handleItemChange = (id: string, field: string, value: any) => {
+    setItems(items.map((item) => (item.id === id ? { ...item, [field as keyof RepairItem]: value } : item)));
   };
 
   const handleItemImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,7 +137,8 @@ export default function Projects() {
         productName: "",
         category: "",
         year: "",
-        status: "ขายได้",
+        status: "pending",
+        productStatus: "normal",
         confirmedPrice: "",
         salesChannel: "",
         imageUrl: "",
@@ -167,15 +188,21 @@ export default function Projects() {
     }
   };
 
+  const statusOptions = [
+    { label: "รอดำเนินการ", value: "pending", color: "warning" as const },
+    { label: "กำลังซ่อม", value: "repairing", color: "primary" as const },
+    { label: "ซ่อมเสร็จแล้ว", value: "completed", color: "success" as const },
+  ];
+
   return (
     <div className="p-4 md:p-8 bg-[#F8FAFC] min-h-screen font-sans text-slate-800">
       <div className="max-w-[1600px] mx-auto space-y-8">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="space-y-1">
-            <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-1">
+            <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-purple-600 mb-1">
               <span>Repair Management</span>
-              <span className="w-1 h-1 rounded-full bg-blue-200" />
+              <span className="w-1 h-1 rounded-full bg-purple-200" />
               <span>Service Record</span>
             </nav>
             <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
@@ -188,7 +215,7 @@ export default function Projects() {
               variant="flat"
               startContent={<RotateCcw size={18} />}
               onPress={handleClear}
-              className="bg-white border border-slate-200 font-bold text-slate-600 h-14 px-6 rounded-2xl hover:bg-slate-50 transition-all"
+              className="bg-white border border-slate-200 font-bold text-slate-600 h-12 px-6 rounded-2xl hover:bg-slate-50 transition-all"
             >
               ล้างฟอร์ม
             </Button>
@@ -197,56 +224,59 @@ export default function Projects() {
               startContent={<Save size={18} />}
               onPress={handleSubmit}
               isLoading={loading}
-              className="bg-blue-600 font-black text-white h-14 px-10 rounded-2xl shadow-xl shadow-blue-100 transition-all active:scale-95"
+              className="bg-purple-600 font-black text-white h-12 px-10 rounded-2xl shadow-xl shadow-purple-100 transition-all active:scale-95"
             >
               บันทึกรายการ
             </Button>
           </div>
         </div>
 
-        {/* Form Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Top Forms Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Info Card */}
           <Card className="lg:col-span-2 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/80 backdrop-blur-xl" radius="lg">
             <CardBody className="p-8 space-y-10">
               <div className="flex items-center gap-4 border-b border-slate-50 pb-6">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600">
                   <UserIcon size={24} />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-900">ข้อมูลผู้ฝากซ่อม</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Customer Information</p>
+                  <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Customer Information</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 ">
                 <div className="space-y-1">
                   <label className="text-lg font-bold text-slate-700">วันที่รับสินค้าฝากซ่อม</label>
                   <Input
                     type="date"
                     variant="bordered"
                     labelPlacement="outside"
+                    placeholder=" "
                     value={formData.date}
                     startContent={<Calendar className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
-                      inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-blue-500 transition-all group-data-[focus=true]:bg-white",
+                      label: "font-bold text-slate-700",
+                      inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
                     }}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-lg font-bold text-slate-700">ล๊อต</label>
+                  <label className="text-lg font-bold text-slate-700">รหัสล๊อตสินค้า</label>
                   <Input
-                    placeholder="LOT-XXXXXX"
+                    placeholder="ระบุล๊อต (e.g. REPAIR-2024-001)"
                     variant="bordered"
                     labelPlacement="outside"
                     value={formData.lot}
                     startContent={<Hash className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
-                      inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-blue-500 transition-all group-data-[focus=true]:bg-white",
+                      label: "font-bold text-slate-700",
+                      inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
                     }}
                     onChange={(e) => setFormData({ ...formData, lot: e.target.value })}
                   />
@@ -262,14 +292,15 @@ export default function Projects() {
                     startContent={<UserIcon className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
-                      inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-blue-500 transition-all group-data-[focus=true]:bg-white",
+                      label: "font-bold text-slate-700",
+                      inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
                     }}
                     onChange={(e) => setFormData({ ...formData, consignorName: e.target.value })}
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-lg font-bold text-slate-700">เบอร์ติดต่อ</label>
+                  <label className="text-lg font-bold text-slate-700">เบอร์โทรศัพท์ติดต่อ</label>
                   <Input
                     placeholder="08X-XXX-XXXX"
                     variant="bordered"
@@ -278,7 +309,8 @@ export default function Projects() {
                     startContent={<Phone className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
-                      inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-blue-500 transition-all group-data-[focus=true]:bg-white",
+                      label: "font-bold text-slate-700",
+                      inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white ",
                     }}
                     onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
                   />
@@ -286,32 +318,32 @@ export default function Projects() {
               </div>
 
               <Textarea
-                label="ที่อยู่ผู้ฝากซ่อม"
-                placeholder="กรอกที่อยู่สำหรับการจัดส่งคืน..."
+                label="ที่อยู่ติดต่อ"
+                placeholder="ระบุที่อยู่สำหรับการจัดส่งคืน..."
                 variant="bordered"
                 labelPlacement="outside"
                 minRows={3}
                 value={formData.address}
                 startContent={<MapPin className="text-slate-400 mt-1" size={18} />}
-                className="font-medium px-0"
+                className="font-medium"
                 classNames={{
-                  label: "font-bold text-slate-700 text-lg",
-                  inputWrapper: "border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-blue-500 transition-all group-data-[focus=true]:bg-white p-4",
+                  label: "font-bold text-slate-700",
+                  inputWrapper: "border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white p-4",
                 }}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
 
               <div className="flex justify-between items-center p-6 bg-slate-900 rounded-[2rem] text-white">
                 <div className="space-y-1">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Total Value</p>
-                  <p className="text-2xl font-black italic">ยอดรวมค่าซ่อมโดยประมาณ</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Total Estimate</p>
+                  <p className="text-2xl font-black italic">ค่าซ่อมโดยประมาณ</p>
                 </div>
                 <div className="relative">
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-2xl font-black text-blue-400">฿</span>
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-2xl font-black text-white">฿</span>
                   <input
                     type="number"
                     placeholder="0.00"
-                    className="bg-transparent text-4xl font-black text-right outline-none w-48 pl-8 placeholder:text-slate-700"
+                    className="bg-transparent text-4xl font-black text-right outline-none w-48 pl-6 placeholder:text-slate-700"
                     value={formData.totalPrice}
                     onChange={(e) => setFormData({ ...formData, totalPrice: e.target.value })}
                   />
@@ -320,16 +352,16 @@ export default function Projects() {
             </CardBody>
           </Card>
 
-          {/* Image Upload Card */}
+          {/* Master Image Upload Section */}
           <Card className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/80 backdrop-blur-xl" radius="lg">
-            <CardBody className="p-8 space-y-10">
-              <div className="flex items-center gap-4">
+            <CardBody className="p-8 space-y-6">
+              <div className="flex items-center gap-4 border-b border-slate-50 pb-6">
                 <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-600">
                   <ImageIcon size={24} />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-900">รูปภาพอาการเสีย</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Defect Reference Images</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Defect Images</p>
                 </div>
               </div>
 
@@ -342,12 +374,17 @@ export default function Projects() {
                   ref={fileInputRef}
                   onChange={handleImageUpload}
                 />
-                <div className="w-20 h-20 rounded-full bg-white shadow-xl shadow-slate-200/50 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
+                <div className="w-20 h-20 rounded-full bg-white shadow-xl shadow-slate-200/50 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all duration-500">
                   <PlusCircle size={32} />
                 </div>
                 <div className="text-center space-y-2">
                   <p className="text-base font-bold text-slate-700 tracking-tight">เพิ่มรูปภาพสินค้าฝากซ่อม</p>
                   <p className="text-xs text-slate-400 font-medium">PNG, JPG up to 10MB</p>
+                </div>
+
+                {/* Visual decoration */}
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
+                  <ImageIcon size={64} className="text-slate-300" />
                 </div>
               </div>
 
@@ -387,23 +424,26 @@ export default function Projects() {
           </Card>
         </div>
 
-        {/* Product Items Table Section */}
+        {/* Items Table Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
+              <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
                 <Wrench size={20} />
               </div>
-              <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">รายการสินค้าฝากซ่อม</h2>
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">รายการสินค้าทั้งหมด</h2>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Repair Item List ({items.length} items)</p>
+              </div>
             </div>
             <Button
+              variant="shadow"
               color="primary"
-              variant="flat"
-              startContent={<Plus size={18} />}
+              startContent={<PlusCircle size={20} />}
               onPress={handleAddItem}
-              className="bg-blue-50 text-blue-700 font-black px-6 rounded-xl hover:bg-blue-100 transition-all"
+              className="font-black h-12 px-8 rounded-2xl bg-slate-900 text-white shadow-xl shadow-slate-200"
             >
-              เพิ่มรายการใหม่
+              เพิ่มสินค้าใหม่
             </Button>
           </div>
 
@@ -414,126 +454,127 @@ export default function Projects() {
               className="text-sm font-medium"
             >
               <TableHeader>
-                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">รูปภาพ</TableColumn>
-                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">ชื่อสินค้า/รายละเอียด</TableColumn>
-                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">หมวดหมู่</TableColumn>
-                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">ปี/รุ่น</TableColumn>
-                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">สถานะ</TableColumn>
-                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">ราคาเบื้องต้น</TableColumn>
-                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px]">หมายเหตุ</TableColumn>
-                <TableColumn className="bg-slate-50/50 text-slate-400 font-black h-14 uppercase tracking-wider text-[10px] text-center">การกระทำ</TableColumn>
+                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] text-center w-24">IMAGE</TableColumn>
+                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px]">PRODUCT DETAILS</TableColumn>
+                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-48">CATEGORY</TableColumn>
+                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-24">YEAR</TableColumn>
+                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-40">ESTIMATED COST</TableColumn>
+                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-24">REPAIR STATUS</TableColumn>
+                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-44">PRODUCT STATUS</TableColumn>
+                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] text-center w-20">ACTIONS</TableColumn>
               </TableHeader>
               <TableBody items={items}>
                 {(item) => (
                   <TableRow key={item.id} className="group border-b border-slate-50 last:border-none transition-colors hover:bg-slate-50/30">
+                    {/* Image Column */}
                     <TableCell>
                       <div
-                        className="relative w-16 h-12 rounded-xl overflow-hidden cursor-pointer group/img border-2 border-dashed border-slate-200 bg-slate-50 transition-all hover:border-blue-400"
-                        onClick={() => document.getElementById(`repair-file-item-${item.id}`)?.click()}
+                        className="mx-auto w-16 h-16 rounded-2xl border-2 border-dashed border-slate-100 bg-slate-50/50 flex items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-white transition-all group/img relative overflow-hidden shadow-inner"
+                        onClick={() => document.getElementById(`file-${item.id}`)?.click()}
                       >
                         {item.imageUrl ? (
-                          <img src={item.imageUrl} className="w-full h-full object-cover" />
+                          <img src={item.imageUrl} className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-500" alt="product" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-300">
-                            <Plus size={16} />
-                          </div>
+                          <Plus className="text-slate-300 group-hover/img:text-purple-500 group-hover/img:scale-125 transition-all" size={20} />
                         )}
                         <input
+                          id={`file-${item.id}`}
                           type="file"
-                          id={`repair-file-item-${item.id}`}
                           className="hidden"
+                          accept="image/*"
                           onChange={(e) => handleItemImageUpload(item.id, e)}
                         />
                       </div>
                     </TableCell>
+
+                    {/* Product Name */}
                     <TableCell>
                       <Input
-                        placeholder="ชื่อสินค้า..."
-                        variant="flat"
-                        size="sm"
+                        variant="faded"
+                        placeholder="ระบุชื่อรุ่น / แบรนด์สินค้า"
                         value={item.productName}
+                        className="font-bold"
                         classNames={{
-                          input: "font-semibold text-slate-700",
-                          inputWrapper: "bg-transparent h-10 px-0 group-data-[hover=true]:bg-transparent",
+                          input: "text-slate-800",
+                          inputWrapper: "border-none bg-transparent hover:bg-white focus-within:bg-white transition-all rounded-xl",
                         }}
                         onChange={(e) => handleItemChange(item.id, "productName", e.target.value)}
                       />
                     </TableCell>
+
+                    {/* Category */}
                     <TableCell>
                       <Select
-                        placeholder="เลือก"
-                        variant="flat"
-                        size="sm"
-                        className="min-w-[120px]"
-                        selectedKeys={item.category ? [item.category] : []}
+                        variant="faded"
+                        placeholder="เลือกหมวดหมู่"
+                        className="font-bold"
+                        selectedKeys={item.category ? new Set([item.category]) : new Set()}
                         classNames={{
-                          trigger: "bg-transparent shadow-none h-10 px-0 group-data-[hover=true]:bg-transparent",
-                          value: "font-semibold text-slate-700",
+                          trigger: "bg-white border-none shadow-none hover:bg-slate-50 transition-all rounded-xl h-10",
+                          value: "font-bold text-slate-700",
+                          popoverContent: "bg-white border-none shadow-2xl rounded-2xl p-1",
+                          listbox: "bg-white",
                         }}
-                        onChange={(e) => handleItemChange(item.id, "category", e.target.value)}
+                        onSelectionChange={(keys) => handleItemChange(item.id, "category", Array.from(keys)[0] as string)}
                       >
-                        <SelectItem key="Filing">Filing</SelectItem>
-                        <SelectItem key="Camera">กล้อง</SelectItem>
-                        <SelectItem key="Other">อื่นๆ</SelectItem>
+                        <SelectItem key="Camera" className="font-bold py-3 rounded-xl" startContent={<ImageIcon size={18} className="text-blue-500" />}>กล้อง</SelectItem>
+                        <SelectItem key="Lens" className="font-bold py-3 rounded-xl" startContent={<Package size={18} className="text-emerald-500" />}>เลนส์</SelectItem>
+                        <SelectItem key="Accessory" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-indigo-500" />}>อุปกรณ์เสริม</SelectItem>
+                        <SelectItem key="Other" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-slate-400" />}>อื่นๆ</SelectItem>
                       </Select>
                     </TableCell>
+
+                    {/* Year */}
                     <TableCell>
                       <Input
-                        placeholder="ปี/รุ่น..."
-                        variant="flat"
-                        size="sm"
+                        variant="faded"
+                        placeholder="ปีที่ผลิต"
                         value={item.year}
+                        className="font-bold w-20"
                         classNames={{
-                          input: "font-semibold text-slate-700",
-                          inputWrapper: "bg-transparent h-10 px-0 group-data-[hover=true]:bg-transparent",
+                          input: "text-center",
+                          inputWrapper: "border-none bg-transparent hover:bg-white rounded-xl h-10 shadow-none",
                         }}
                         onChange={(e) => handleItemChange(item.id, "year", e.target.value)}
                       />
                     </TableCell>
+
+                    {/* Estimated Cost */}
                     <TableCell>
-                      <Select
-                        placeholder="สถานะ"
-                        variant="flat"
-                        size="sm"
-                        className="min-w-[120px]"
-                        selectedKeys={[item.status]}
-                        classNames={{
-                          trigger: "bg-transparent shadow-none h-10 px-0 group-data-[hover=true]:bg-transparent",
-                          value: "font-semibold text-slate-700",
-                        }}
-                        onChange={(e) => handleItemChange(item.id, "status", e.target.value)}
-                      >
-                        <SelectItem key="ขายได้">ปกติ</SelectItem>
-                        <SelectItem key="ขายไม่ได้">ชำรุด</SelectItem>
-                      </Select>
+                      <div className="relative group/price">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">฿</span>
+                        <Input
+                          type="number"
+                          variant="faded"
+                          placeholder="0.00"
+                          value={item.confirmedPrice}
+                          className="font-black text-purple-600"
+                          classNames={{
+                            input: "text-right font-black text-purple-600 pr-1",
+                            inputWrapper: "border-none bg-slate-50 group-hover/price:bg-purple-50 transition-all rounded-xl pl-6",
+                          }}
+                          onChange={(e) => handleItemChange(item.id, "confirmedPrice", e.target.value)}
+                        />
+                      </div>
                     </TableCell>
+
+                    {/* Repair Status */}
                     <TableCell>
-                      <Input
-                        placeholder="0.00"
-                        variant="flat"
-                        size="sm"
-                        type="number"
-                        value={item.confirmedPrice}
-                        classNames={{
-                          input: "font-black text-blue-600 text-right",
-                          inputWrapper: "bg-transparent h-10 px-0 group-data-[hover=true]:bg-transparent",
-                        }}
-                        onChange={(e) => handleItemChange(item.id, "confirmedPrice", e.target.value)}
+                      <RepairingHistoryStatus
+                        item={item}
+                        onItemChangeAction={handleItemChange}
                       />
                     </TableCell>
+
+                    {/* Product Status */}
                     <TableCell>
-                      <Input
-                        placeholder="ระบุเพิ่มเติม..."
-                        variant="flat"
-                        size="sm"
-                        value={item.salesChannel}
-                        classNames={{
-                          input: "font-semibold text-slate-600",
-                          inputWrapper: "bg-transparent h-10 px-0 group-data-[hover=true]:bg-transparent",
-                        }}
-                        onChange={(e) => handleItemChange(item.id, "salesChannel", e.target.value)}
+                      <ProductHistoryStatus
+                        item={item}
+                        onItemChangeAction={handleItemChange}
                       />
                     </TableCell>
+
+                    {/* Actions */}
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
                         <Tooltip content="ลบรายการนี้" color="danger">
@@ -564,17 +605,38 @@ export default function Projects() {
                 <Package size={40} />
               </div>
               <p className="text-xl font-bold text-slate-600">ยังไม่มีรายการสินค้า</p>
-              <p className="text-sm text-slate-400 mb-8 font-medium italic">กรุณากดปุ่มเพิ่มรายการเพื่อเริ่มบันทึกข้อมูลฝากซ่อม</p>
+              <p className="text-sm text-slate-400 mb-8 font-medium italic">กรุณากดปุ่มเพิ่มสินค้าใหม่เพื่อเริ่มบันทึกรายการ</p>
               <Button
                 color="primary"
                 startContent={<Plus size={20} />}
                 onPress={handleAddItem}
                 className="bg-slate-900 font-bold px-10 rounded-2xl h-12"
               >
-                เพิ่มรายการใหม่
+                เพิ่มสินค้ากระบอกแรก
               </Button>
             </div>
           )}
+        </div>
+
+        {/* Action Buttons Section */}
+        <div className="flex justify-center flex-col md:flex-row items-center gap-4 py-12">
+          <Button
+            variant="flat"
+            startContent={<RotateCcw size={20} />}
+            onPress={handleClear}
+            className="bg-white border border-slate-200 font-bold text-slate-500 w-full md:w-auto px-10 h-14 rounded-[1.5rem] hover:bg-slate-50 transition-all"
+          >
+            ล้างข้อมูลทั้งหมด
+          </Button>
+          <Button
+            color="primary"
+            startContent={<Save size={20} />}
+            onPress={handleSubmit}
+            isLoading={loading}
+            className="bg-purple-600 font-black text-white w-full md:w-[400px] h-14 rounded-[1.5rem] shadow-2xl shadow-purple-200 transition-all active:scale-[0.98] text-lg"
+          >
+            ยืนยันการบันทึกรายการฝากซ่อม
+          </Button>
         </div>
       </div>
     </div>

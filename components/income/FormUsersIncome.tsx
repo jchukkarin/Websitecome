@@ -16,9 +16,6 @@ import {
   TableCell,
   Select,
   SelectItem,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
   Chip,
   Tooltip
 } from "@heroui/react";
@@ -28,26 +25,22 @@ import {
   Save,
   RotateCcw,
   PlusCircle,
-  Edit3,
   Calendar,
   Hash,
   User as UserIcon,
   Phone,
   MapPin,
   Package,
-  Wrench,
-  CheckCircle2,
-  Clock,
   AlertCircle,
   Image as ImageIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Components
-import RepairingForm from "./Repairing";
-import { RepairingItem } from "./RepairStatusItem";
+import RepairStatusCell from "./RepairStatusCell";
+import ProductStatusCell from "./ProductStatusCell";
 
-interface ConsignmentItem {
+export interface ConsignmentItem {
   id: string;
   productName: string;
   category: string;
@@ -66,8 +59,7 @@ interface ConsignmentItem {
 
 export default function ImportForm() {
   const [loading, setLoading] = useState(false);
-  const [isOpenRepair, setIsOpenRepair] = useState(false);
-  const [activeRepairItemId, setActiveRepairItemId] = useState<string | null>(null);
+
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -529,17 +521,23 @@ export default function ImportForm() {
                       <Select
                         variant="faded"
                         placeholder="เลือกหมวดหมู่"
-                        className="max-w-[160px] font-bold"
+                        className="font-bold"
                         selectedKeys={item.category ? new Set([item.category]) : new Set()}
                         classNames={{
-                          trigger: "border-none bg-transparent hover:bg-white shadow-none rounded-xl h-10",
+                          trigger: "bg-white border-none shadow-none hover:bg-slate-50 transition-all rounded-xl h-10",
+                          value: "font-bold text-slate-700",
+                          popoverContent: "bg-white border-none shadow-2xl rounded-2xl p-1",
+                          listbox: "bg-white",
                         }}
                         onSelectionChange={(keys) => handleItemChange(item.id, "category", Array.from(keys)[0] as string)}
                       >
-                        <SelectItem key="Camera" startContent={<ImageIcon size={16} />}>กล้อง</SelectItem>
-                        <SelectItem key="Lens" startContent={<Package size={16} />}>เลนส์</SelectItem>
-                        <SelectItem key="Accessory" startContent={<Plus size={16} />}>อุปกรณ์เสริม</SelectItem>
-                        <SelectItem key="Other">อื่นๆ</SelectItem>
+                        <SelectItem key="Camera" className="font-bold py-3 rounded-xl" startContent={<ImageIcon size={18} className="text-blue-500" />}>กล้อง</SelectItem>
+                        <SelectItem key="Lens" className="font-bold py-3 rounded-xl" startContent={<Package size={18} className="text-emerald-500" />}>เลนส์</SelectItem>
+                        <SelectItem key="Tripod" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-amber-500" />}>ขาตั้งกล้อง</SelectItem>
+                        <SelectItem key="Battery" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-rose-500" />}>แบต</SelectItem>
+                        <SelectItem key="Film" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-violet-500" />}>ฟิลม์</SelectItem>
+                        <SelectItem key="Accessory" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-indigo-500" />}>อุปกรณ์เสริม</SelectItem>
+                        <SelectItem key="Other" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-slate-400" />}>อื่นๆ</SelectItem>
                       </Select>
                     </TableCell>
 
@@ -596,111 +594,15 @@ export default function ImportForm() {
                       </div>
                     </TableCell>
 
-                    {/* Product Status */}
                     <TableCell>
-                      <Select
-                        variant="faded"
-                        size="sm"
-                        selectedKeys={item.productStatus ? new Set([item.productStatus]) : new Set(["ready"])}
-                        classNames={{
-                          trigger: "border-none bg-transparent hover:bg-white shadow-none rounded-xl font-bold min-h-[40px]",
-                        }}
-                        renderValue={(items) => {
-                          return items.map((item) => {
-                            const option = statusOptions.find(o => o.value === item.key);
-                            return (
-                              <Chip key={item.key} color={option?.color} variant="flat" size="sm" className="font-bold border-none">
-                                {option?.label}
-                              </Chip>
-                            );
-                          });
-                        }}
-                        onSelectionChange={(keys) => handleItemChange(item.id, "productStatus", Array.from(keys)[0] as string)}
-                      >
-                        {statusOptions.map((opt) => (
-                          <SelectItem key={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </Select>
+                      <ProductStatusCell
+                        item={item}
+                        onItemChangeAction={handleItemChange}
+                      />
                     </TableCell>
 
-                    {/* Repair Status */}
                     <TableCell>
-                      <Popover
-                        isOpen={isOpenRepair && activeRepairItemId === item.id}
-                        onOpenChange={(open) => {
-                          setIsOpenRepair(open);
-                          if (open) setActiveRepairItemId(item.id);
-                        }}
-                        placement="bottom-end"
-                        offset={10}
-                      >
-                        <PopoverTrigger>
-                          <Button
-                            size="sm"
-                            variant="flat"
-                            startContent={
-                              item.repairStatus === "not_repair" ? <CheckCircle2 size={14} className="text-slate-400" /> :
-                                item.repairStatus === "repairing" ? <Wrench size={14} className="text-amber-500 animate-pulse" /> :
-                                  <AlertCircle size={14} className="text-blue-500" />
-                            }
-                            className={`w-full font-bold h-10 rounded-xl border-none transition-all ${item.repairStatus === "repairing" ? "bg-amber-50 text-amber-600" :
-                              item.repairStatus === "not_repair" ? "bg-slate-50 text-slate-500" :
-                                "bg-blue-50 text-blue-600"
-                              }`}
-                          >
-                            {item.repairStatus === "not_repair" ? "ไม่ซ่อม" :
-                              item.repairStatus === "repairing" ? "กำลังซ่อม" : "ซ่อมเสร็จแล้ว"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="p-0 border-none shadow-2xl overflow-hidden rounded-[2rem] bg-white">
-                          <div className="w-[300px] bg-white">
-                            <div className="p-3 bg-slate-50/50 border-b border-slate-100 mb-2">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Update Management</p>
-                              <h4 className="font-black text-slate-800">จัดการสถานะสินค้า</h4>
-                            </div>
-                            <div className="p-4 space-y-2">
-                              <div
-                                className="px-6 py-4 text-sm font-bold text-slate-600 hover:bg-slate-50 cursor-pointer rounded-2xl transition-all flex items-center gap-3 border border-transparent hover:border-slate-100"
-                                onClick={() => {
-                                  handleItemChange(item.id, "repairStatus", "not_repair");
-                                  setIsOpenRepair(false);
-                                }}
-                              >
-                                <div className="w-4 h-4 rounded-full border-4 border-slate-200" />
-                                ไม่ประสงค์ซ่อมสินค้า
-                              </div>
-
-                              <Popover placement="right-start" offset={20}>
-                                <PopoverTrigger>
-                                  <div className="px-6 py-4 text-sm font-bold text-amber-600 bg-amber-50/30 hover:bg-amber-50 cursor-pointer rounded-2xl transition-all flex items-center justify-between border border-transparent hover:border-amber-100 group">
-                                    <div className="flex items-center gap-3">
-                                      <Clock size={18} />
-                                      ระบุกำหนดการซ่อม
-                                    </div>
-                                    <Edit3 size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                                  </div>
-                                </PopoverTrigger>
-                                <PopoverContent className="p-0 bg-transparent shadow-none border-none">
-                                  <RepairingForm onComplete={() => setIsOpenRepair(false)} />
-                                </PopoverContent>
-                              </Popover>
-
-                              <div
-                                className="px-6 py-4 text-sm font-bold text-blue-600 bg-blue-50/30 hover:bg-blue-50 cursor-pointer rounded-2xl transition-all flex items-center gap-3 border border-transparent hover:border-blue-100"
-                                onClick={() => {
-                                  handleItemChange(item.id, "repairStatus", "completed");
-                                  setIsOpenRepair(false);
-                                }}
-                              >
-                                <CheckCircle2 size={18} />
-                                ยืนยันซ่อมเสร็จสิ้น
-                              </div>
-                            </div>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
+                      <RepairStatusCell item={item} onItemChangeAction={handleItemChange} />
                     </TableCell>
 
                     {/* Actions */}

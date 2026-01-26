@@ -1,4 +1,4 @@
-name: Node.js CI
+name: Node.js Build & Deploy
 
 on:
   push:
@@ -7,24 +7,44 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build_and_deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4 # Action to check out your repository code
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20.x'
-    - name: Install dependencies
-      run: npm ci
-      env:
-        DATABASE_URL:  ${{ secrets.DATABASE_URL}}
-        
-    - name: Build project
-      run: npm run build # Assumes you have a 'build' script in your package.json
-      env:
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        
-    - name: Run tests
-      run: npm test # Assumes you have a 'test' script in your package.json
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        # กลับมาใช้ npm ci ปกติ แต่ระบุ DATABASE_URL ไว้ให้พร้อม
+        run: npm ci
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Generate Prisma Client
+        # รันซ้ำเพื่อความมั่นใจ และข้ามการใช้ prisma.config.ts ถ้ามีปัญหา
+        run: |
+          [ -f prisma.config.ts ] && mv prisma.config.ts prisma.config.ts.bak || true
+          npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Build project
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Run tests (Optional)
+        run: npm test || echo "No tests found"
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'

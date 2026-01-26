@@ -4,10 +4,11 @@ import { db } from "@/lib/db";
 
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const { id: idStr } = await params;
+        const id = parseInt(idStr);
         await db.importStatus.delete({
             where: { id },
         });
@@ -20,10 +21,11 @@ export async function DELETE(
 
 export async function PATCH(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const { id: idStr } = await params;
+        const id = parseInt(idStr);
         const { name } = await req.json();
         const updated = await db.importStatus.update({
             where: { id },

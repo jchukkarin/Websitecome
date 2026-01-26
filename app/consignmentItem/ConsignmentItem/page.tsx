@@ -1,27 +1,24 @@
-// /app/consignmentItem/ConsignmentItem.tsx
-
 export type ConsignmentHistoryItem = {
-  id: string;
-
-  productName: string;
-  category: string;
-  year: string;
-
-  confirmedPrice: number;
-
-  // สถานะสินค้า
-  status: "ready" | "reserved" | "sold";
-
-  // ข้อมูลการฝากขาย
-  consignorName: string;
-  lot: string;
-  date: string;
-
-  // รูปสินค้า
-  imageUrl?: string | null;
-  displayImage: string;
-
-  // ⭐ เพิ่มสำหรับขายแล้ว
-  slipImage?: string | null;
-  soldAt?: string | null;
+    id: string;
+    productName: string;
+    category: string;
+    year: string;
+    confirmedPrice: number;
+    status: "ready" | "reserved" | "sold";
+    consignorName: string;
+    lot: string;
+    date: string;
+    imageUrl?: string | null;
+    displayImage: string;
+    slipImage?: string | null;
+    soldAt?: string | null;
 };
+
+export default function ConsignmentItemPage() {
+    return (
+        <div className="p-8">
+            <h1 className="text-2xl font-bold">ข้อมูลรายการฝากขาย</h1>
+            <p className="text-gray-500">หน้านี้กำลังอยู่ในการพัฒนา</p>
+        </div>
+    );
+}

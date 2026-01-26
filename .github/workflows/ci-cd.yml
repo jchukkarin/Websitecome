@@ -21,6 +21,8 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        env:
+          DATABASE_URL:  ${{ secrets.DATABASE_URL}}
 
       # ขั้นตอนการเช็คความปลอดภัยแบบ "ไม่บล็อกงาน"
       # จะแค่รายงานผลไว้ แต่ถ้าเจอ High/Moderate ก็ยังปล่อยให้ Build ต่อได้
@@ -29,6 +31,8 @@ jobs:
 
       - name: Build project
         run: npm run build
+        env: 
+          DATABASE_URL:  ${{ secrets.DATABASE_URL}}
 
       - name: Run tests (Optional)
         run: npm test || echo "No tests found"

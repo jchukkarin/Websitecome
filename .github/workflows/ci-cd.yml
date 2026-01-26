@@ -1,4 +1,4 @@
-name: Node.js CI
+name: Node.js Security & CI
 
 on:
   push:
@@ -7,18 +7,61 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  # Job 1: ตรวจสอบความปลอดภัย (Scan ก่อน Build)
+  security_scan:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4 # Action to check out your repository code
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20.x'
-    - name: Install dependencies
-      run: npm install
-    - name: Build project
-      run: npm run build # Assumes you have a 'build' script in your package.json
-    - name: Run tests
-      run: npm test # Assumes you have a 'test' script in your package.json
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # จำเป็นสำหรับการสแกนประวัติโค้ด
+
+      # 1. Secret Scanning (ป้องกันรหัสหลุด)
+      - name: Gitleaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2. Dependency Scanning (ตรวจ Library ที่มีช่องโหว่)
+      - name: Security Audit (npm)
+        run: npm audit --audit-level=high
+
+      # 3. SAST - สแกนช่องโหว่ในโค้ด (ใช้ CodeQL)
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # Job 2: ขั้นตอนการ Build และ Test (จะทำต่อเมื่อ Job Security ผ่าน)
+  build_and_deploy:
+    needs: security_scan # ต้องสแกนผ่านก่อนถึงจะยอม Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm' # ช่วยให้ Build เร็วขึ้น
+
+      - name: Install dependencies
+        run: npm ci # ใช้ npm ci แทน install เพื่อความแม่นยำในระบบ CI
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      # 4. Deployment Security (Vercel Scan)
+      # ในกรณี Vercel ระบบจะสแกนความปลอดภัยของ Deployment ให้อัตโนมัติเมื่อใช้ Vercel Action
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'

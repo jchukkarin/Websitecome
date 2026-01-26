@@ -20,19 +20,26 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        # ใช้ --no-scripts เพื่อไม่ให้มันรัน prisma generate อัตโนมัติในจังหวะที่ยังไม่พร้อม
+        run: npm ci --no-scripts
         env:
-          DATABASE_URL:  ${{ secrets.DATABASE_URL}}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Generate Prisma Client
+        # รันแยกออกมาต่างหากหลังจากลง lib เสร็จแล้ว
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       # ขั้นตอนการเช็คความปลอดภัยแบบ "ไม่บล็อกงาน"
       # จะแค่รายงานผลไว้ แต่ถ้าเจอ High/Moderate ก็ยังปล่อยให้ Build ต่อได้
       - name: Security Audit (Informative)
-        run: npm audit --audit-level=critical || true 
+        run: npm audit --audit-level=critical || true
 
       - name: Build project
         run: npm run build
-        env: 
-          DATABASE_URL:  ${{ secrets.DATABASE_URL}}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Run tests (Optional)
         run: npm test || echo "No tests found"

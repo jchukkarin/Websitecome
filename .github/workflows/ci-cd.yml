@@ -56,6 +56,9 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Security Audit (npm)
+        run: npm audit --audit-level=critical
+
       # 4. Deployment Security (Vercel Scan)
       # ในกรณี Vercel ระบบจะสแกนความปลอดภัยของ Deployment ให้อัตโนมัติเมื่อใช้ Vercel Action
       - name: Deploy to Vercel

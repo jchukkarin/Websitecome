@@ -10,17 +10,16 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Chip,
   Tooltip,
 } from "@heroui/react";
-import { Search, Pencil, Trash2, Plus, Info, HandCoins } from "lucide-react";
+import { Search, Plus, Info, HandCoins } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 type PawnStatus = {
   id: number;
   name: string;
-  sold: number;
-  unsold: number;
+  count: number;
+  code: string;
 };
 
 export default function PawnGoods() {
@@ -46,7 +45,8 @@ export default function PawnGoods() {
   }, []);
 
   const filtered = data.filter((d) =>
-    d.name.toLowerCase().includes(search.toLowerCase())
+    d.name.toLowerCase().includes(search.toLowerCase()) ||
+    d.code.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -73,15 +73,15 @@ export default function PawnGoods() {
           radius="lg"
           startContent={<Plus size={22} strokeWidth={3} />}
           className="font-bold px-8 shadow-xl shadow-red-200 bg-red-600 text-white"
-          onClick={() => toast.info("ระบบจำนำกำลังอยู่ในการพัฒนาทางฐานข้อมูล")}
+          onClick={() => toast("ระบบจำนำกำลังอยู่ในการพัฒนาทางฐานข้อมูล", { icon: "ℹ️" })}
         >
-          เพิ่มสถานะใหม่
+          เพิ่มหมวดหมู่ใหม่
         </Button>
       </div>
 
       <div className="flex items-center gap-3 border-l-4 border-red-500 pl-4 py-1">
         <h2 className="text-2xl font-black text-gray-900 tracking-tight">รายการสถานะการจำนำ</h2>
-        <Tooltip content="รายการสถานะที่ใช้ในการจัดการสินค้าที่ลูกค้านำมาเข้าจำนำ">
+        <Tooltip content="หมวดหมู่สถานะที่ใช้ในการจัดการสินค้าที่ลูกค้านำมาเข้าจำนำ">
           <Info size={18} className="text-gray-300 cursor-help" />
         </Tooltip>
       </div>
@@ -94,8 +94,7 @@ export default function PawnGoods() {
         }}>
           <TableHeader>
             <TableColumn width={400}>ชื่อสถานะการจำนำ</TableColumn>
-            <TableColumn align="center">หลุดจำนำ (ขายแล้ว)</TableColumn>
-            <TableColumn align="center">ยังอยู่ในสัญญา</TableColumn>
+            <TableColumn align="center">จำนวนสินค้า</TableColumn>
             <TableColumn align="end">การจัดการ</TableColumn>
           </TableHeader>
           <TableBody isLoading={loading} emptyContent={
@@ -111,23 +110,20 @@ export default function PawnGoods() {
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="font-bold text-gray-900 text-lg">{item.name}</span>
-                    <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">ID: PAWN-STATUS-{item.id.toString().padStart(3, '0')}</span>
+                    <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">STATUS CODE: {item.code}</span>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-center">
-                    <Chip color="success" variant="flat" size="lg" className="font-black px-4 bg-green-50 text-green-700 border-green-100">{item.sold}</Chip>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-center">
-                    <Chip color="warning" variant="flat" size="lg" className="font-black px-4 bg-amber-50 text-amber-700 border-amber-100">{item.unsold}</Chip>
+                    <div className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full font-black text-lg border border-red-100 min-w-[60px] text-center">
+                      {item.count}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2 text-gray-300">
-                    <Tooltip content="สถานะตัวอย่างสำหรับระบบจำนำ">
-                      <Info size={18} />
+                    <Tooltip content="สถานะระบบ (อ่านอย่างเดียว)">
+                      <Info size={18} className="cursor-help" />
                     </Tooltip>
                   </div>
                 </TableCell>

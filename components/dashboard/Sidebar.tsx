@@ -124,6 +124,20 @@ export function Sidebar() {
     );
   };
 
+  const [isMobileScreen, setIsMobileScreen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileScreen(window.innerWidth < 1024);
+    };
+
+    // Check initially to avoid hydration mismatch, running only on client
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const sidebarVariants = {
     desktop: { width: isCollapsed ? 84 : 280 },
     mobile: { x: isMobileOpen ? 0 : "-100%" }
@@ -146,7 +160,7 @@ export function Sidebar() {
 
       <motion.aside
         initial={false}
-        animate={typeof window !== 'undefined' && window.innerWidth < 1024 ? "mobile" : "desktop"}
+        animate={isMobileScreen ? "mobile" : "desktop"}
         variants={sidebarVariants}
         className={`fixed inset-y-0 left-0 bg-white border-r border-slate-100 flex flex-col z-[70] transition-all duration-300
           lg:sticky lg:top-0 lg:h-screen lg:z-50

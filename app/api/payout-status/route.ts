@@ -5,8 +5,10 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const statuses = await db.payoutStatus.findMany({
     include: {
-      _count: {
-        select: { products: true }
+      products: {
+        select: {
+          isSold: true
+        }
       }
     },
     orderBy: { createdAt: 'desc' }
@@ -15,7 +17,9 @@ export async function GET() {
   return NextResponse.json(statuses.map(s => ({
     id: s.id,
     name: s.name,
-    count: s._count.products
+    soldCount: s.products.filter(p => p.isSold).length,
+    notSoldCount: s.products.filter(p => !p.isSold).length,
+    count: s.products.length
   })));
 }
 

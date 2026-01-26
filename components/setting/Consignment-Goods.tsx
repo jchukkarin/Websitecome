@@ -12,7 +12,7 @@ import {
     TableCell,
     Tooltip,
 } from "@heroui/react";
-import { Search, Pencil, Trash2, Plus, Info, BadgeDollarSign } from "lucide-react";
+import { Search, Plus, Info, BadgeDollarSign } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 type ConsignmentStatus = {
@@ -43,8 +43,28 @@ export default function ConsignmentGoods() {
         fetchData();
     }, []);
 
-    const filtered = data.filter((d) =>
-        d.name.toLowerCase().includes(search.toLowerCase())
+    // Status groups requested by user
+    const totals = {
+        repairing: data
+            .filter(d => d.name.toLowerCase() === "repairing" || d.name === "กำลังซ่อม")
+            .reduce((sum, d) => sum + d.count, 0),
+        repairDone: data
+            .filter(d => d.name.toLowerCase() === "repair_done" || d.name === "ซ่อมเสร็จแล้ว")
+            .reduce((sum, d) => sum + d.count, 0),
+        returnCustomer: data
+            .filter(d => d.name.toLowerCase() === "return_customer" || d.name === "ส่งคืนลูกค้า")
+            .reduce((sum, d) => sum + d.count, 0)
+    };
+
+    const summaryRows = [
+        { id: 'repairing', label: 'กำลังซ่อม', count: totals.repairing, code: 'REPAIRING' },
+        { id: 'repair_done', label: 'ซ่อมเสร็จแล้ว', count: totals.repairDone, code: 'REPAIR_DONE' },
+        { id: 'return_customer', label: 'ส่งคืนลูกค้า', count: totals.returnCustomer, code: 'RETURN_CUSTOMER' },
+    ];
+
+    const filtered = summaryRows.filter((r) =>
+        r.label.toLowerCase().includes(search.toLowerCase()) ||
+        r.code.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
@@ -71,7 +91,7 @@ export default function ConsignmentGoods() {
                     radius="lg"
                     startContent={<Plus size={22} strokeWidth={3} />}
                     className="font-bold px-8 shadow-xl shadow-red-200 bg-red-600 text-white"
-                    onClick={() => toast.info("ฟีเจอร์นี้ผูกกับสถานะในรายการฝากขายโดยตรง")}
+                    onClick={() => toast("ฟีเจอร์นี้ผูกกับสถานะในรายการฝากขายโดยตรง", { icon: "ℹ️" })}
                 >
                     เพิ่มหมวดหมู่ใหม่
                 </Button>
@@ -103,18 +123,18 @@ export default function ConsignmentGoods() {
                             <p className="text-gray-500 font-medium">ไม่พบข้อมูลการฝากขาย</p>
                         </div>
                     }>
-                        {filtered.map((category) => (
-                            <TableRow key={category.id}>
+                        {filtered.map((item) => (
+                            <TableRow key={item.id}>
                                 <TableCell>
                                     <div className="flex flex-col">
-                                        <span className="font-bold text-gray-900 text-lg">{category.name}</span>
-                                        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">STATUS CODE: {category.name.toUpperCase()}</span>
+                                        <span className="font-bold text-gray-900 text-lg">{item.label}</span>
+                                        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">STATUS CODE: {item.code}</span>
                                     </div>
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex justify-center">
                                         <div className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full font-black text-lg border border-red-100 min-w-[60px] text-center">
-                                            {category.count}
+                                            {item.count}
                                         </div>
                                     </div>
                                 </TableCell>

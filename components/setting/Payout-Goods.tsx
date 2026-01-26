@@ -25,6 +25,8 @@ type PayoutStatus = {
     id: number;
     name: string;
     count: number;
+    soldCount: number;
+    notSoldCount: number;
 };
 
 export default function PayoutGoods() {
@@ -105,8 +107,20 @@ export default function PayoutGoods() {
         }
     };
 
-    const filtered = statuses.filter((s) =>
-        s.name.toLowerCase().includes(search.toLowerCase())
+    // Aggregate totals for Sold / Not Sold
+    const totals = {
+        sold: statuses.reduce((sum, s) => sum + (s.soldCount || 0), 0),
+        notSold: statuses.reduce((sum, s) => sum + (s.notSoldCount || 0), 0),
+    };
+
+    const summaryRows = [
+        { id: 'not_sold', label: 'ยังไม่ขาย', count: totals.notSold, code: 'NOT_SOLD' },
+        { id: 'sold', label: 'ขาย', count: totals.sold, code: 'SOLD' },
+    ];
+
+    const filtered = summaryRows.filter((r) =>
+        r.label.toLowerCase().includes(search.toLowerCase()) ||
+        r.code.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
@@ -114,7 +128,7 @@ export default function PayoutGoods() {
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="w-full sm:max-w-md">
                     <Input
-                        placeholder="ค้นหาหมวดหมู่การเบิกจ่าย..."
+                        placeholder="ค้นหาสถานะการเบิกจ่าย..."
                         startContent={<Search size={20} className="text-gray-400" />}
                         variant="flat"
                         radius="lg"
@@ -140,20 +154,20 @@ export default function PayoutGoods() {
             </div>
 
             <div className="flex items-center gap-3 border-l-4 border-red-500 pl-4 py-1">
-                <h2 className="text-2xl font-black text-gray-900 tracking-tight">รายการหมวดหมู่การเบิกจ่าย</h2>
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">รายการสถานะการเบิกจ่ายสินค้า</h2>
                 <Tooltip content="หมวดหมู่ที่ใช้ในการบันทึกการจ่ายเงินออกหรือการคืนสินค้า">
                     <Info size={18} className="text-gray-300 cursor-help" />
                 </Tooltip>
             </div>
 
             <div className="overflow-hidden rounded-3xl border border-gray-100">
-                <Table aria-label="Payout categories table" shadow="none" classNames={{
+                <Table aria-label="Payout summary table" shadow="none" classNames={{
                     th: "bg-gray-50/50 text-gray-500 font-bold text-sm py-5 border-b border-gray-100 first:pl-8 last:pr-8",
                     td: "py-5 px-4 first:pl-8 last:pr-8",
                     tr: "group hover:bg-gray-50/80 transition-all duration-300 border-b border-gray-50 last:border-0",
                 }}>
                     <TableHeader>
-                        <TableColumn width={400}>ชื่อหมวดหมู่</TableColumn>
+                        <TableColumn width={400}>ชื่อสถานะการเบิกจ่าย</TableColumn>
                         <TableColumn align="center">จำนวนรายการ</TableColumn>
                         <TableColumn align="end">การจัดการ</TableColumn>
                     </TableHeader>
@@ -162,35 +176,28 @@ export default function PayoutGoods() {
                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                                 <ArrowUpRight size={32} className="text-gray-300" />
                             </div>
-                            <p className="text-gray-500 font-medium">ไม่พบข้อมูลหมวดหมู่</p>
+                            <p className="text-gray-500 font-medium">ไม่พบข้อมูลสถานะ</p>
                         </div>
                     }>
-                        {filtered.map((category) => (
-                            <TableRow key={category.id}>
+                        {filtered.map((item) => (
+                            <TableRow key={item.id}>
                                 <TableCell>
                                     <div className="flex flex-col">
-                                        <span className="font-bold text-gray-900 text-lg">{category.name}</span>
-                                        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">ID: PAY-CAT-{category.id.toString().padStart(3, '0')}</span>
+                                        <span className="font-bold text-gray-900 text-lg">{item.label}</span>
+                                        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">STATUS CODE: {item.code}</span>
                                     </div>
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex justify-center">
                                         <div className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full font-black text-lg border border-red-100 min-w-[60px] text-center">
-                                            {category.count}
+                                            {item.count}
                                         </div>
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    <div className="flex justify-end gap-2">
-                                        <Tooltip content="แก้ไข">
-                                            <Button isIconOnly variant="flat" size="md" className="bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-colors rounded-xl" onClick={() => handleOpenEdit(category)}>
-                                                <Pencil size={18} />
-                                            </Button>
-                                        </Tooltip>
-                                        <Tooltip content="ลบ" color="danger">
-                                            <Button isIconOnly variant="flat" size="md" className="bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 transition-colors rounded-xl" onClick={() => handleDelete(category.id)}>
-                                                <Trash2 size={18} />
-                                            </Button>
+                                    <div className="flex justify-end gap-2 text-gray-300">
+                                        <Tooltip content="สถานะระบบ (อ่านอย่างเดียว)">
+                                            <Info size={18} className="cursor-help" />
                                         </Tooltip>
                                     </div>
                                 </TableCell>

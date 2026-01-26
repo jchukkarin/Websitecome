@@ -2,12 +2,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// สำหรับ Pawn เราจะทำเป็นสถานะที่มีการแยก Sold/Unsold
 export async function GET() {
-    // ม็อกข้อมูลเนื่องจาก Schema ยังไม่มีตาราง Pawn 
-    // แต่เราจะทำ API ไว้เพื่อรองรับ UI
+    // Return mock data for the 4 pawn statuses requested by the user
+    // Since the actual pawn system is still under development in the database.
     return NextResponse.json([
-        { id: 1, name: "ส่งดอกเบี้ย", sold: 5, unsold: 10 },
-        { id: 2, name: "ขาดส่ง", sold: 2, unsold: 15 },
+        { id: 1, name: "ยังไม่ครบกำหนด", count: 0, code: "NOT_YET_DUE" },
+        { id: 2, name: "ครบกำหนด", count: 0, code: "DUE" },
+        { id: 3, name: "ต่อยอด", count: 0, code: "EXTEND" },
+        { id: 4, name: "ปิดยอด", count: 0, code: "SETTLE" },
     ]);
 }

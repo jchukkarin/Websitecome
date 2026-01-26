@@ -12,7 +12,7 @@ import {
     TableCell,
     Tooltip,
 } from "@heroui/react";
-import { Search, Pencil, Trash2, Plus, Info, Wrench } from "lucide-react";
+import { Search, Plus, Info, Wrench } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 type RepairStatus = {
@@ -43,8 +43,29 @@ export default function RepairGoods() {
         fetchData();
     }, []);
 
-    const filtered = data.filter((d) =>
-        d.name.toLowerCase().includes(search.toLowerCase())
+    // Define which statuses map to "Repairable" and "Non-repairable"
+    // Repairable: repairing, repair_done, normal, return_customer
+    // Non-repairable: danger, not_final
+    const repairableNames = ["repairing", "repair_done", "normal", "return_customer"];
+    const nonRepairableNames = ["danger", "not_final"];
+
+    const totals = {
+        repairable: data
+            .filter(d => repairableNames.includes(d.name.toLowerCase()))
+            .reduce((sum, d) => sum + d.count, 0),
+        nonRepairable: data
+            .filter(d => nonRepairableNames.includes(d.name.toLowerCase()))
+            .reduce((sum, d) => sum + d.count, 0)
+    };
+
+    const summaryRows = [
+        { id: 'repairable', label: 'ซ่อมได้', count: totals.repairable, code: 'REPAIRABLE' },
+        { id: 'non_repairable', label: 'ซ่อมไม่ได้', count: totals.nonRepairable, code: 'NON_REPAIRABLE' },
+    ];
+
+    const filtered = summaryRows.filter((r) =>
+        r.label.toLowerCase().includes(search.toLowerCase()) ||
+        r.code.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
@@ -52,7 +73,7 @@ export default function RepairGoods() {
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="w-full sm:max-w-md">
                     <Input
-                        placeholder="ค้นหาหมวดหมู่การฝากซ่อม..."
+                        placeholder="ค้นหาสถานะการซ่อม..."
                         startContent={<Search size={20} className="text-gray-400" />}
                         variant="flat"
                         radius="lg"
@@ -71,7 +92,7 @@ export default function RepairGoods() {
                     radius="lg"
                     startContent={<Plus size={22} strokeWidth={3} />}
                     className="font-bold px-8 shadow-xl shadow-red-200 bg-red-600 text-white"
-                    onClick={() => toast.info("ฟีเจอร์นี้ผูกกับสถานะในรายการซ่อมโดยตรง")}
+                    onClick={() => toast("ฟีเจอร์นี้ผูกกับสถานะในรายการซ่อมโดยตรง", { icon: "ℹ️" })}
                 >
                     เพิ่มหมวดหมู่ใหม่
                 </Button>
@@ -103,18 +124,18 @@ export default function RepairGoods() {
                             <p className="text-gray-500 font-medium">ไม่พบข้อมูลการฝากซ่อม</p>
                         </div>
                     }>
-                        {filtered.map((category) => (
-                            <TableRow key={category.id}>
+                        {filtered.map((item) => (
+                            <TableRow key={item.id}>
                                 <TableCell>
                                     <div className="flex flex-col">
-                                        <span className="font-bold text-gray-900 text-lg">{category.name}</span>
-                                        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">STATUS CODE: {category.name.toUpperCase()}</span>
+                                        <span className="font-bold text-gray-900 text-lg">{item.label}</span>
+                                        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">STATUS CODE: {item.code}</span>
                                     </div>
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex justify-center">
                                         <div className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full font-black text-lg border border-red-100 min-w-[60px] text-center">
-                                            {category.count}
+                                            {item.count}
                                         </div>
                                     </div>
                                 </TableCell>

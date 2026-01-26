@@ -117,6 +117,12 @@ model Product {
   isSold Boolean   @default(false)
   soldAt DateTime?
 
+  // New fields for extended status tracking
+  status       String   @default("ready") // ready, reserved, repair, sold
+  images       String[] // Array of image URLs
+  defectImages String[] // Array of defect image URLs
+  slipImage    String? // URL of payment slip
+
   createdAt DateTime @default(now())
 }
 

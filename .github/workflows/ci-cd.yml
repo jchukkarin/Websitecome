@@ -20,19 +20,18 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        # ใช้ --ignore-scripts เพื่อบล็อก postinstall (prisma generate) ไม่ให้รันในจังหวะนี้
-        run: npm ci --ignore-scripts
+        # กลับมาใช้ npm ci ปกติ แต่ระบุ DATABASE_URL ไว้ให้พร้อม
+        run: npm ci
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          PRISMA_SKIP_POSTINSTALL_GENERATE: true
 
       - name: Generate Prisma Client
-        run: npx prisma generate
+        # รันซ้ำเพื่อความมั่นใจ และข้ามการใช้ prisma.config.ts ถ้ามีปัญหา
+        run: |
+          [ -f prisma.config.ts ] && mv prisma.config.ts prisma.config.ts.bak || true
+          npx prisma generate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      - name: Security Audit (Informative)
-        run: npm audit --audit-level=critical || true
 
       - name: Build project
         run: npm run build

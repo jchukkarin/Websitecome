@@ -485,7 +485,7 @@ export default function ConsignmentItemPage() {
                             <h2 className="text-lg font-black text-slate-800">รายการสินค้าจำนำ</h2>
                         </div>
                         <Button
-                            color="orange"
+                            color="default"
                             variant="flat"
                             className="bg-orange-50 text-orange-600 font-bold"
                             startContent={<Plus size={18} />}

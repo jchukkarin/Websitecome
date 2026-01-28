@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
     Table,
     TableHeader,
@@ -25,7 +26,13 @@ import {
     Package,
     Users,
     Filter,
-    FileSpreadsheet
+    FileSpreadsheet,
+    Camera,
+    Aperture,
+    Video,
+    BatteryMedium,
+    Film,
+    MoreHorizontal,
 } from "lucide-react";
 import axios from "axios";
 import HistoryForm from "./HistoryForm";
@@ -33,10 +40,21 @@ import { useSession } from "next-auth/react";
 
 export default function History() {
     const { data: session } = useSession();
+    const searchParams = useSearchParams();
     const [view, setView] = useState<"product" | "importer">("product");
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState<string>("");
+    const [selectedStatus, setSelectedStatus] = useState<string>("");
+
+    // Initial filter from URL
+    useEffect(() => {
+        const catParam = searchParams.get("category");
+        const statusParam = searchParams.get("status");
+        if (catParam) setSelectedCategory(catParam);
+        if (statusParam) setSelectedStatus(statusParam);
+    }, [searchParams]);
 
     const user = session?.user as any;
     const isManager = user?.role === "MANAGER";
@@ -79,11 +97,15 @@ export default function History() {
     };
 
     const filteredData = useMemo(() => {
-        return data.filter((item) =>
-            item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.lot?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [data, searchQuery]);
+        return data.filter((item) => {
+            const matchesSearch = (item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.lot?.toLowerCase().includes(searchQuery.toLowerCase()));
+            const matchesCategory = (selectedCategory === "" || selectedCategory === "all" || item.category === selectedCategory);
+            const matchesStatus = (selectedStatus === "" || selectedStatus === "all" || item.status === selectedStatus);
+
+            return matchesSearch && matchesCategory && matchesStatus;
+        });
+    }, [data, searchQuery, selectedCategory, selectedStatus]);
 
     return (
         <div className="p-4 sm:p-8 bg-[#FAFBFC] min-h-screen">
@@ -140,13 +162,66 @@ export default function History() {
                             </div>
                             <div className="flex gap-3 w-full lg:w-auto">
                                 <Select
+                                    items={[
+                                        { key: "all", label: "ทั้งหมด", icon: <Filter className="text-slate-400" size={18} /> },
+                                        { key: "กล้อง", label: "กล้อง", icon: <Camera className="text-blue-500" size={18} /> },
+                                        { key: "เลนส์", label: "เลนส์", icon: <Aperture className="text-emerald-500" size={18} /> },
+                                        { key: "ขาตั้งกล้อง", label: "ขาตั้งกล้อง", icon: <Video className="text-orange-500" size={18} /> },
+                                        { key: "แบต", label: "แบต", icon: <BatteryMedium className="text-pink-500" size={18} /> },
+                                        { key: "ฟิลม์", label: "ฟิลม์", icon: <Film className="text-purple-500" size={18} /> },
+                                        { key: "อื่นๆ", label: "อื่นๆ", icon: <MoreHorizontal className="text-slate-400" size={18} /> },
+                                    ]}
                                     placeholder="หมวดหมู่"
                                     className="w-full lg:w-44"
-                                    classNames={{ trigger: "h-14 bg-slate-50 border-none rounded-2xl" }}
-                                    startContent={<Filter size={18} className="text-slate-400" />}
+                                    selectedKeys={selectedCategory ? [selectedCategory] : []}
+                                    classNames={{
+                                        trigger: "h-14 bg-slate-50 border-none rounded-2xl data-[hover=true]:bg-slate-100 transition-colors",
+                                        popoverContent: "rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.08)]",
+                                        value: "text-slate-700 font-bold",
+                                    }}
+                                    renderValue={(items) => {
+                                        return items.map((item) => (
+                                            <div key={item.key} className="flex items-center gap-2">
+                                                {item.data?.icon}
+                                                <span>{item.data?.label}</span>
+                                            </div>
+                                        ));
+                                    }}
+                                    onChange={(e) => setSelectedCategory(e.target.value)}
                                 >
-                                    <SelectItem key="film">กล้องฟิล์ม</SelectItem>
-                                    <SelectItem key="digital">กล้องดิจิตอล</SelectItem>
+                                    {(category) => (
+                                        <SelectItem
+                                            key={category.key}
+                                            textValue={category.label}
+                                            startContent={category.icon}
+                                            className="bg-white"
+                                        >
+                                            {category.label}
+                                        </SelectItem>
+                                    )}
+                                </Select>
+
+                                <Select
+                                    items={[
+                                        { key: "all", label: "ทุกสถานะ" },
+                                        { key: "ready", label: "พร้อมขาย" },
+                                        { key: "reserved", label: "ติดจอง" },
+                                        { key: "repair", label: "ซ่อม" },
+                                        { key: "sold", label: "ขายแล้ว" },
+                                    ]}
+                                    placeholder="สถานะสินค้า"
+                                    className="w-full lg:w-44"
+                                    selectedKeys={selectedStatus ? [selectedStatus] : []}
+                                    classNames={{
+                                        trigger: "h-14 bg-slate-50 border-none rounded-2xl data-[hover=true]:bg-slate-100 transition-all",
+                                        popoverContent: "rounded-2xl border border-slate-100 shadow-2xl",
+                                        value: "text-slate-700 font-bold",
+                                    }}
+                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                >
+                                    {(status) => (
+                                        <SelectItem key={status.key} textValue={status.label}>{status.label}</SelectItem>
+                                    )}
                                 </Select>
                                 <Button className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black shadow-lg shadow-slate-200" startContent={<FileSpreadsheet size={18} />}>
                                     Export Excel
@@ -247,12 +322,14 @@ export default function History() {
                                                     size="sm"
                                                     className="font-black text-[10px] uppercase"
                                                     color={
-                                                        item.productStatus === "ready" ? "success" :
-                                                            item.productStatus === "reserved" ? "warning" : "danger"
+                                                        item.status === "ready" ? "success" :
+                                                            item.status === "reserved" ? "warning" :
+                                                                item.status === "repair" ? "primary" : "danger"
                                                     }
                                                 >
-                                                    {item.productStatus === "ready" ? "พร้อมขาย" :
-                                                        item.productStatus === "reserved" ? "ติดจอง" : "ขายแล้ว"}
+                                                    {item.status === "ready" ? "พร้อมขาย" :
+                                                        item.status === "reserved" ? "ติดจอง" :
+                                                            item.status === "repair" ? "กำลังซ่อม" : "ขายแล้ว"}
                                                 </Chip>
                                             </TableCell>
 
@@ -263,12 +340,12 @@ export default function History() {
                                                     size="sm"
                                                     className="font-black text-[10px]"
                                                     color={
-                                                        item.repairStatus === "repairing" ? "warning" :
-                                                            item.repairStatus === "completed" ? "primary" : "default"
+                                                        item.repairStatus === "REPAIRING" ? "warning" :
+                                                            item.repairStatus === "REPAIRED" ? "primary" : "default"
                                                     }
                                                 >
-                                                    {item.repairStatus === "not_repair" ? "ไม่ซ่อม" :
-                                                        item.repairStatus === "repairing" ? "กำลังซ่อม" : "ซ่อมเสร็จแล้ว"}
+                                                    {item.repairStatus === "NOT_REPAIR" ? "ไม่ซ่อม" :
+                                                        item.repairStatus === "REPAIRING" ? "กำลังซ่อม" : "ซ่อมเสร็จแล้ว"}
                                                 </Chip>
                                             </TableCell>
 

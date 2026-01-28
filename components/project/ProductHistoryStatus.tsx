@@ -247,6 +247,27 @@ export default function ProductHistoryStatus({
                         </motion.div>
                     )}
                 </div>
+
+                {/* Footer Actions */}
+                <div className="px-4 py-3 border-t bg-white flex gap-2">
+                    <Button
+                        size="sm"
+                        variant="light"
+                        className="flex-1 rounded-xl font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 active:scale-95 transition-all border border-slate-200"
+                        onPress={() => setIsOpen(false)}
+                    >
+                        ปิด
+                    </Button>
+
+                    <Button
+                        size="sm"
+                        color="success"
+                        className="w-[150px] flex-1 rounded-xl font-bold shadow-md shadow-emerald-200 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all text-gray-500 border border-slate-200"
+                        onPress={() => setIsOpen(false)}
+                    >
+                        บันทึกสถานะ
+                    </Button>
+                </div>
             </PopoverContent>
         </Popover>
     );

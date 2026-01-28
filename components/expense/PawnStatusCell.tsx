@@ -278,7 +278,30 @@ export default function PawnStatusCell({
                     )}
 
                 </div>
+
+                <div className="p-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                    <Button
+                        size="sm"
+                        variant="light"
+                        color="default"
+                        onPress={() => setIsOpen(false)}
+                        className="font-bold text-slate-400"
+                    >
+                        ปิดหน้าต่าง
+                    </Button>
+                    <Button
+                        size="sm"
+                        color="primary"
+                        onPress={() => setIsOpen(false)}
+                        className="font-bold text-white shadow-lg shadow-blue-200"
+                    >
+                        เสร็จสิ้น
+                    </Button>
+                </div>
+
             </PopoverContent>
         </Popover>
+
+
     );
 }

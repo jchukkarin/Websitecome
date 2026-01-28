@@ -8,7 +8,7 @@ import {
   Input,
   Button,
 } from "@heroui/react";
-import { Eye, EyeOff, UserPlus, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, UserPlus, ArrowLeft, Package } from "lucide-react";
 import Link from "next/link";
 
 export default function RegisterPage() {
@@ -50,116 +50,130 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-white flex items-center justify-center overflow-hidden relative p-4">
+    <div className="min-h-screen w-full flex overflow-hidden bg-slate-50">
 
-      {/* Background Red Accents - Hidden on mobile */}
-      <div className="hidden lg:block absolute top-[-10%] right-[-10%] w-[60%] h-[120%] bg-[#d9161a] rounded-full z-0">
-        <div className="text-white flex flex-col items-center justify-center h-full">
-          <img
-            src="/naitounoi.png"
-            alt="Logo"
-            className="w-32 h-32 md:w-48 md:h-48 mb-4 brightness-0 invert"
-          />
-          <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter">Second-Hand Camera Shop Management System</h1>
-          <p className="text-lg md:text-xl font-bold opacity-80 mt-2">JOIN OUR COMMUNITY</p>
+      {/* Right Decoration Section (Desktop) - Swapped side for variety */}
+      <div className="hidden lg:flex w-1/2 bg-slate-900 relative items-center justify-center overflow-hidden order-2">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-gradient-to-bl from-slate-900 via-slate-900/90 to-red-900/40"></div>
+
+        <div className="relative z-10 flex flex-col items-center text-center p-12 max-w-lg">
+          <div className="w-32 h-32 bg-white/10 backdrop-blur-md rounded-[2.5rem] flex items-center justify-center mb-8 shadow-2xl shadow-black/20 ring-1 ring-white/20 animate-in fade-in zoom-in duration-700">
+            <Package size={64} className="text-white" />
+          </div>
+          <h1 className="text-5xl font-black text-white tracking-tight mb-6 leading-tight">
+            Join Our <br />
+            <span className="text-red-500">Community</span>
+          </h1>
+          <p className="text-slate-400 text-lg font-medium leading-relaxed">
+            เริ่มต้นใช้งานระบบจัดการร้านกล้องมือสองที่มีประสิทธิภาพสูงสุด สมัครเลยวันนี้
+          </p>
         </div>
+
+        {/* Decorative Circles */}
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-red-600/20 rounded-full blur-3xl"></div>
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl"></div>
       </div>
 
-      {/* Mobile Logo */}
-      <div className="lg:hidden absolute top-8 left-0 right-0 flex flex-col items-center z-10">
-        <img
-          src="/naitounoi.png"
-          alt="Logo"
-          className="w-20 h-20 mb-2"
-        />
-      </div>
+      {/* Left Form Section - Order 1 */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 relative order-1">
+        <div className="absolute top-0 left-0 p-8 hidden md:block">
+          <Link href="/login" className="text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+              <ArrowLeft size={16} />
+            </div>
+            กลับไปหน้าเข้าสู่ระบบ
+          </Link>
+        </div>
 
-      {/* Decorative Elements - Hidden on mobile */}
-      <div className="hidden lg:block absolute top-[-5%] left-[-5%] w-[20%] h-[30%] bg-[#d9161a]/10 rounded-full z-0" />
-      <div className="hidden lg:block absolute bottom-[-10%] left-[5%] w-[25%] h-[40%] bg-[#d9161a] rounded-full z-0" />
+        <div className="w-full max-w-[420px] space-y-10">
+          <div className="text-center lg:text-left space-y-3">
+            <div className="lg:hidden flex justify-center mb-6">
+              <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-200">
+                <Package size={32} className="text-white" />
+              </div>
+            </div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">สร้างบัญชีใหม่</h2>
+            <p className="text-slate-500 font-medium">กรอกข้อมูลด้านล่างเพื่อลงทะเบียนเข้าใช้งาน</p>
+          </div>
 
-      <div className="w-full max-w-7xl mx-auto flex justify-center lg:justify-start px-4 md:px-12 relative z-10 mt-32 lg:mt-0">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-5">
+              <Input
+                placeholder="ระบุชื่อจริงของคุณ"
+                variant="flat"
+                labelPlacement="outside"
+                classNames={{
+                  label: "font-bold text-slate-700 pb-1.5",
+                  inputWrapper: "h-14 bg-white border border-slate-200 rounded-2xl focus-within:!border-red-500 focus-within:!bg-red-50/10 transition-all shadow-sm group-data-[hover=true]:bg-slate-50/50",
+                  input: "font-medium text-slate-900 placeholder:text-slate-400"
+                }}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
 
-        {/* Register Card */}
-        <Card className="w-full max-w-[450px] shadow-2xl border-none p-2 md:p-4" radius="lg">
-          <CardBody className="space-y-6 md:space-y-8 p-6 md:p-8">
-            <div className="space-y-2">
-              <Link href="/login" className="text-[#d01317] flex items-center gap-2 text-xs font-bold hover:underline mb-4">
-                <ArrowLeft size={14} /> กลับไปหน้าเข้าสู่ระบบ
-              </Link>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800">สร้างบัญชีใหม่</h2>
-              <p className="text-xs md:text-sm text-gray-400 font-medium">กรอกข้อมูลเพื่อเริ่มต้นใช้งานระบบ</p>
+              <Input
+                type="email"
+                placeholder="กรอกอีเมลของคุณ"
+                variant="flat"
+                labelPlacement="outside"
+                classNames={{
+                  label: "font-bold text-slate-700 pb-1.5",
+                  inputWrapper: "h-14 bg-white border border-slate-200 rounded-2xl focus-within:!border-red-500 focus-within:!bg-red-50/10 transition-all shadow-sm group-data-[hover=true]:bg-slate-50/50",
+                  input: "font-medium text-slate-900 placeholder:text-slate-400"
+                }}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+
+              <Input
+                type={isVisible ? "text" : "password"}
+                placeholder="ตั้งรหัสผ่านของคุณ"
+                variant="flat"
+                labelPlacement="outside"
+                classNames={{
+                  label: "font-bold text-slate-700 pb-1.5",
+                  inputWrapper: "h-14 bg-white border border-slate-200 rounded-2xl focus-within:!border-red-500 focus-within:!bg-red-50/10 transition-all shadow-sm group-data-[hover=true]:bg-slate-50/50",
+                  input: "font-medium text-slate-900 placeholder:text-slate-400"
+                }}
+                endContent={
+                  <button className="focus:outline-none text-slate-400 hover:text-slate-600 transition-colors" type="button" onClick={toggleVisibility}>
+                    {isVisible ? (
+                      <EyeOff size={20} />
+                    ) : (
+                      <Eye size={20} />
+                    )}
+                  </button>
+                }
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-bold text-gray-700">ชื่อ-นามสกุล</label>
-                  <Input
-                    placeholder="ระบุชื่อจริงของคุณ"
-                    variant="bordered"
-                    classNames={{
-                      inputWrapper: "border-gray-200 h-11 md:h-12",
-                    }}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full h-14 bg-red-600 text-white font-black text-lg rounded-2xl shadow-xl shadow-red-200 hover:scale-[0.98] active:scale-95 transition-all"
+              isLoading={loading}
+              startContent={!loading && <UserPlus size={20} />}
+            >
+              ลงทะเบียนใช้งาน
+            </Button>
+          </form>
 
-                <div className="space-y-1">
-                  <label className="text-sm font-bold text-gray-700">อีเมล</label>
-                  <Input
-                    type="email"
-                    placeholder="example@mail.com"
-                    variant="bordered"
-                    classNames={{
-                      inputWrapper: "border-gray-200 h-11 md:h-12",
-                    }}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+          <div className="lg:hidden text-center">
+            <p className="text-sm font-medium text-slate-500">
+              มีบัญชีอยู่แล้ว? <Link href="/login" className="text-slate-900 font-bold">เข้าสู่ระบบ</Link>
+            </p>
+          </div>
 
-                <div className="space-y-1">
-                  <label className="text-sm font-bold text-gray-700">รหัสผ่าน</label>
-                  <Input
-                    type={isVisible ? "text" : "password"}
-                    placeholder="ตั้งรหัสผ่านของคุณ"
-                    variant="bordered"
-                    classNames={{
-                      inputWrapper: "border-gray-200 h-11 md:h-12",
-                    }}
-                    endContent={
-                      <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
-                        {isVisible ? (
-                          <EyeOff className="text-2xl text-default-400 pointer-events-none" />
-                        ) : (
-                          <Eye className="text-2xl text-default-400 pointer-events-none" />
-                        )}
-                      </button>
-                    }
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                color="danger"
-                className="w-full bg-[#d01317] text-white font-bold h-11 md:h-12 text-base md:text-lg shadow-lg mt-4"
-                isLoading={loading}
-                startContent={<UserPlus size={20} />}
-              >
-                ลงทะเบียนใช้งาน
-              </Button>
-            </form>
-          </CardBody>
-        </Card>
-
+          <p className="text-center text-xs text-slate-400 font-medium px-8 leading-relaxed">
+            โดยการสมัครสมาชิก คุณยอมรับ <a href="#" className="underline hover:text-slate-600">ข้อกำหนดการใช้งาน</a> และ <a href="#" className="underline hover:text-slate-600">นโยบายความเป็นส่วนตัว</a> ของเรา
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -17,6 +17,7 @@ import {
     Select,
     SelectItem,
     Tooltip,
+    Chip,
 } from "@heroui/react";
 import {
     Plus,
@@ -31,13 +32,22 @@ import {
     MapPin,
     Package,
     Image as ImageIcon,
+    Camera,
+    Aperture,
+    Video,
+    BatteryMedium,
+    Film,
+    MoreHorizontal,
+    AlertCircle,
 } from "lucide-react";
+import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import IncomeProductStatus from "./IncomeProductStatus";
 
 export default function ConsignmentForm() {
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split("T")[0],
@@ -148,20 +158,58 @@ export default function ConsignmentForm() {
         }));
     };
 
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+
+        // -------- Form หลัก --------
+        if (!formData.date) newErrors.date = "กรุณาเลือกวันที่";
+        if (!formData.lot) newErrors.lot = "กรุณากรอกรหัสล๊อต";
+        if (!formData.consignorName) newErrors.consignorName = "กรุณากรอกชื่อผู้ขาย";
+        if (!formData.contactNumber) newErrors.contactNumber = "กรุณากรอกเบอร์โทร";
+        if (!formData.totalPrice) newErrors.totalPrice = "กรุณากรอกยอดรวม";
+
+        // -------- Items --------
+        if (items.length === 0) {
+            toast.error("ต้องมีสินค้าอย่างน้อย 1 รายการ");
+            return false;
+        }
+
+        items.forEach((item, index) => {
+            if (!item.productName)
+                newErrors[`item.${item.id}.productName`] = `กรุณากรอกชื่อสินค้า (แถว ${index + 1})`;
+
+            if (!item.category)
+                newErrors[`item.${item.id}.category`] = `กรุณาเลือกหมวดหมู่ (แถว ${index + 1})`;
+
+            if (!item.confirmedPrice)
+                newErrors[`item.${item.id}.confirmedPrice`] = `กรุณากรอกราคา (แถว ${index + 1})`;
+
+            if (!item.imageUrl)
+                newErrors[`item.${item.id}.imageUrl`] = `กรุณาเพิ่มรูปสินค้า (แถว ${index + 1})`;
+        });
+
+        setErrors(newErrors);
+
+        if (Object.keys(newErrors).length > 0) {
+            toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
+            return false;
+        }
+
+        return true;
+    };
+
     const handleSubmit = async () => {
+        if (!validateForm()) return;
+
         setLoading(true);
         try {
-            const payload = {
-                ...formData,
-                items,
-                type: "CONSIGNMENT",
-            };
+            const payload = { ...formData, items, type: "CONSIGNMENT" };
             await axios.post("/api/consignments", payload);
-            alert("บันทึกข้อมูลการฝากขายสำเร็จ!");
+            toast.success("บันทึกข้อมูลการนำเข้าสินค้าสำเร็จ!");
             handleClear();
         } catch (error) {
             console.error("Save error:", error);
-            alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+            toast.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
         } finally {
             setLoading(false);
         }
@@ -169,6 +217,7 @@ export default function ConsignmentForm() {
 
     return (
         <div className="p-4 md:p-8 bg-[#F8FAFC] min-h-screen font-sans text-slate-800">
+            <Toaster richColors position="top-right" />
             <div className="max-w-[1600px] mx-auto space-y-8">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -227,12 +276,17 @@ export default function ConsignmentForm() {
                                         variant="bordered"
                                         labelPlacement="outside"
                                         value={formData.date}
+                                        isInvalid={!!errors.date}
+                                        errorMessage={errors.date}
                                         startContent={<Calendar className="text-slate-400" size={18} />}
                                         className="font-medium"
                                         classNames={{
                                             inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
                                         }}
-                                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                        onChange={(e) => {
+                                            setFormData({ ...formData, date: e.target.value });
+                                            setErrors((prev) => ({ ...prev, date: "" }));
+                                        }}
                                     />
                                 </div>
 
@@ -243,12 +297,17 @@ export default function ConsignmentForm() {
                                         variant="bordered"
                                         labelPlacement="outside"
                                         value={formData.lot}
+                                        isInvalid={!!errors.lot}
+                                        errorMessage={errors.lot}
                                         startContent={<Hash className="text-slate-400" size={18} />}
                                         className="font-medium"
                                         classNames={{
                                             inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
                                         }}
-                                        onChange={(e) => setFormData({ ...formData, lot: e.target.value })}
+                                        onChange={(e) => {
+                                            setFormData({ ...formData, lot: e.target.value });
+                                            setErrors((prev) => ({ ...prev, lot: "" }));
+                                        }}
                                     />
                                 </div>
 
@@ -259,12 +318,17 @@ export default function ConsignmentForm() {
                                         variant="bordered"
                                         labelPlacement="outside"
                                         value={formData.consignorName}
+                                        isInvalid={!!errors.consignorName}
+                                        errorMessage={errors.consignorName}
                                         startContent={<UserIcon className="text-slate-400" size={18} />}
                                         className="font-medium"
                                         classNames={{
                                             inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
                                         }}
-                                        onChange={(e) => setFormData({ ...formData, consignorName: e.target.value })}
+                                        onChange={(e) => {
+                                            setFormData({ ...formData, consignorName: e.target.value });
+                                            setErrors((prev) => ({ ...prev, consignorName: "" }));
+                                        }}
                                     />
                                 </div>
 
@@ -275,12 +339,17 @@ export default function ConsignmentForm() {
                                         variant="bordered"
                                         labelPlacement="outside"
                                         value={formData.contactNumber}
+                                        isInvalid={!!errors.contactNumber}
+                                        errorMessage={errors.contactNumber}
                                         startContent={<Phone className="text-slate-400" size={18} />}
                                         className="font-medium"
                                         classNames={{
                                             inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
                                         }}
-                                        onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                                        onChange={(e) => {
+                                            setFormData({ ...formData, contactNumber: e.target.value });
+                                            setErrors((prev) => ({ ...prev, contactNumber: "" }));
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -306,15 +375,25 @@ export default function ConsignmentForm() {
                                     <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Total Value</p>
                                     <p className="text-2xl font-black italic">ราคารวม</p>
                                 </div>
-                                <div className="relative">
-                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 text-2xl font-black text-purple-400">฿</span>
-                                    <input
-                                        type="number"
-                                        placeholder="0.00"
-                                        className="bg-transparent text-4xl font-black text-right outline-none w-48 pl-8 placeholder:text-slate-700"
-                                        value={formData.totalPrice}
-                                        onChange={(e) => setFormData({ ...formData, totalPrice: e.target.value })}
-                                    />
+                                <div className="relative flex flex-col items-end">
+                                    <div className="relative">
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-2xl font-black text-purple-400">฿</span>
+                                        <input
+                                            type="number"
+                                            placeholder="0.00"
+                                            className="bg-transparent text-4xl font-black text-right outline-none w-48 pl-8 placeholder:text-slate-700"
+                                            value={formData.totalPrice}
+                                            onChange={(e) => {
+                                                setFormData({ ...formData, totalPrice: e.target.value });
+                                                setErrors((prev) => ({ ...prev, totalPrice: "" }));
+                                            }}
+                                        />
+                                    </div>
+                                    {errors.totalPrice && (
+                                        <p className="text-red-500 text-xs font-semibold mt-2 flex items-center gap-1">
+                                            <AlertCircle size={14} /> {errors.totalPrice}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </CardBody>
@@ -442,9 +521,22 @@ export default function ConsignmentForm() {
                                                     type="file"
                                                     id={`consignment-file-item-${item.id}`}
                                                     className="hidden"
-                                                    onChange={(e) => handleItemImageUpload(item.id, e)}
+                                                    onChange={(e) => {
+                                                        handleItemImageUpload(item.id, e);
+                                                        setErrors((prev) => ({
+                                                            ...prev,
+                                                            [`item.${item.id}.imageUrl`]: "",
+                                                        }));
+                                                    }}
                                                 />
                                             </div>
+                                            {errors[`item.${item.id}.imageUrl`] && (
+                                                <div className="mt-1">
+                                                    <Chip color="danger" size="sm" variant="flat" className="h-[20px] text-[10px] px-1">
+                                                        {errors[`item.${item.id}.imageUrl`]}
+                                                    </Chip>
+                                                </div>
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             <Input
@@ -452,29 +544,69 @@ export default function ConsignmentForm() {
                                                 variant="flat"
                                                 size="sm"
                                                 value={item.productName}
+                                                isInvalid={!!errors[`item.${item.id}.productName`]}
+                                                errorMessage={errors[`item.${item.id}.productName`]}
                                                 classNames={{
                                                     input: "font-semibold text-slate-700",
                                                     inputWrapper: "bg-transparent h-10 px-0 group-data-[hover=true]:bg-transparent",
                                                 }}
-                                                onChange={(e) => handleItemChange(item.id, "productName", e.target.value)}
+                                                onChange={(e) => {
+                                                    handleItemChange(item.id, "productName", e.target.value);
+                                                    setErrors((prev) => ({
+                                                        ...prev,
+                                                        [`item.${item.id}.productName`]: "",
+                                                    }));
+                                                }}
                                             />
                                         </TableCell>
                                         <TableCell>
                                             <Select
+                                                items={[
+                                                    { key: "กล้อง", label: "กล้อง", icon: <Camera className="text-blue-500 " size={18} /> },
+                                                    { key: "เลนส์", label: "เลนส์", icon: <Aperture className="text-emerald-500" size={18} /> },
+                                                    { key: "ขาตั้งกล้อง", label: "ขาตั้งกล้อง", icon: <Video className="text-orange-500" size={18} /> },
+                                                    { key: "แบต", label: "แบต", icon: <BatteryMedium className="text-pink-500" size={18} /> },
+                                                    { key: "ฟิลม์", label: "ฟิลม์", icon: <Film className="text-purple-500" size={18} /> },
+                                                    { key: "อื่นๆ", label: "อื่นๆ", icon: <MoreHorizontal className="text-slate-400" size={18} /> },
+                                                ]}
                                                 placeholder="เลือก"
-                                                variant="flat"
+                                                variant="bordered"
                                                 size="sm"
-                                                className="min-w-[120px]"
+                                                className="min-w-[130px]"
                                                 selectedKeys={item.category ? [item.category] : []}
+                                                isInvalid={!!errors[`item.${item.id}.category`]}
+                                                errorMessage={errors[`item.${item.id}.category`]}
                                                 classNames={{
-                                                    trigger: "bg-transparent shadow-none h-10 px-0 group-data-[hover=true]:bg-transparent",
-                                                    value: "font-semibold text-slate-700",
+                                                    trigger: "bg-white border border-slate-200 h-10 rounded-lg data-[hover=true]:border-slate-300 transition-all",
+                                                    value: "font-bold text-slate-700 text-sm",
+                                                    popoverContent: "rounded-xl shadow-xl w-[140px]",
                                                 }}
-                                                onChange={(e) => handleItemChange(item.id, "category", e.target.value)}
+                                                renderValue={(items) => {
+                                                    return items.map((item) => (
+                                                        <div key={item.key} className="flex items-center gap-2">
+                                                            {item.data?.icon}
+                                                            <span>{item.data?.label}</span>
+                                                        </div>
+                                                    ));
+                                                }}
+                                                onChange={(e) => {
+                                                    handleItemChange(item.id, "category", e.target.value);
+                                                    setErrors((prev) => ({
+                                                        ...prev,
+                                                        [`item.${item.id}.category`]: "",
+                                                    }));
+                                                }}
                                             >
-                                                <SelectItem key="Filing">Filing</SelectItem>
-                                                <SelectItem key="Camera">กล้อง</SelectItem>
-                                                <SelectItem key="Other">อื่นๆ</SelectItem>
+                                                {(category) => (
+                                                    <SelectItem
+                                                        key={category.key}
+                                                        textValue={category.label}
+                                                        startContent={category.icon}
+                                                        className="bg-white text-slate-700 font-bold"
+                                                    >
+                                                        {category.label}
+                                                    </SelectItem>
+                                                )}
                                             </Select>
                                         </TableCell>
                                         <TableCell>
@@ -503,11 +635,19 @@ export default function ConsignmentForm() {
                                                 size="sm"
                                                 type="number"
                                                 value={item.confirmedPrice}
+                                                isInvalid={!!errors[`item.${item.id}.confirmedPrice`]}
+                                                errorMessage={errors[`item.${item.id}.confirmedPrice`]}
                                                 classNames={{
                                                     input: "font-black text-purple-600 text-right",
                                                     inputWrapper: "bg-transparent h-10 px-0 group-data-[hover=true]:bg-transparent",
                                                 }}
-                                                onChange={(e) => handleItemChange(item.id, "confirmedPrice", e.target.value)}
+                                                onChange={(e) => {
+                                                    handleItemChange(item.id, "confirmedPrice", e.target.value);
+                                                    setErrors((prev) => ({
+                                                        ...prev,
+                                                        [`item.${item.id}.confirmedPrice`]: "",
+                                                    }));
+                                                }}
                                             />
                                         </TableCell>
                                         <TableCell>

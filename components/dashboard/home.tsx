@@ -95,7 +95,17 @@ export default function DashboardHome() {
         try {
             setLoading(true)
             const res = await fetch("/api/consignments")
-            if (!res.ok) throw new Error("Failed to fetch data")
+            if (!res.ok) {
+                const errText = await res.text();
+                let errMsg = "Failed to fetch data";
+                try {
+                    const errJson = JSON.parse(errText);
+                    errMsg = errJson.error || errMsg;
+                } catch {
+                    errMsg = errText || errMsg;
+                }
+                throw new Error(errMsg);
+            }
 
             let consignments: Consignment[] = await res.json()
 
@@ -120,9 +130,9 @@ export default function DashboardHome() {
             )
 
             setItems(allItems)
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error fetching data:", err)
-            setError("เกิดข้อผิดพลาดในการโหลดข้อมูล")
+            setError(err.message || "เกิดข้อผิดพลาดในการโหลดข้อมูล")
         } finally {
             setLoading(false)
         }

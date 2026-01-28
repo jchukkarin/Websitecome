@@ -20,21 +20,21 @@ interface StatusOption {
 export default function RepairingForm({ value, onStatusChangeAction }: RepairingFormProps) {
     const statusOptions: StatusOption[] = [
         {
-            key: "not_repair",
+            key: "NOT_REPAIR",
             label: "ไม่ซ่อม",
             icon: <CheckCircle2 size={16} className="text-slate-400" />,
             color: "text-slate-500",
             bg: "bg-slate-50",
         },
         {
-            key: "repairing",
+            key: "REPAIRING",
             label: "กำลังซ่อม",
             icon: <Wrench size={16} className="text-amber-500" />,
             color: "text-amber-600",
             bg: "bg-amber-50",
         },
         {
-            key: "completed",
+            key: "REPAIRED",
             label: "ซ่อมเสร็จแล้ว",
             icon: <CheckCircle2 size={16} className="text-blue-500" />,
             color: "text-blue-600",

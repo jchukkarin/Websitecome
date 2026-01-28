@@ -24,7 +24,13 @@ import {
     Users,
     Filter,
     FileSpreadsheet,
-    RotateCcw
+    RotateCcw,
+    Camera,
+    Aperture,
+    Video,
+    BatteryMedium,
+    Film,
+    MoreHorizontal,
 } from "lucide-react";
 import axios from "axios";
 import UnifiedPersonView from "../history/UnifiedPersonView";
@@ -34,6 +40,7 @@ export default function ConsignmentHistory() {
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState<string>("");
 
     useEffect(() => {
         fetchData();
@@ -65,7 +72,10 @@ export default function ConsignmentHistory() {
         return data.filter((item) =>
             item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.lot?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.consignorName?.toLowerCase().includes(searchQuery.toLowerCase())
+            (item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.lot?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.consignorName?.toLowerCase().includes(searchQuery.toLowerCase())) &&
+            (selectedCategory === "" || selectedCategory === "all" || item.category === selectedCategory)
         );
     }, [data, searchQuery]);
 
@@ -124,15 +134,45 @@ export default function ConsignmentHistory() {
                             </div>
                             <div className="flex gap-3 w-full lg:w-auto">
                                 <Select
+                                    items={[
+                                        { key: "all", label: "ทั้งหมด", icon: <Filter className="text-slate-400" size={18} /> },
+                                        { key: "กล้อง", label: "กล้อง", icon: <Camera className="text-blue-500" size={18} /> },
+                                        { key: "เลนส์", label: "เลนส์", icon: <Aperture className="text-emerald-500" size={18} /> },
+                                        { key: "ขาตั้งกล้อง", label: "ขาตั้งกล้อง", icon: <Video className="text-orange-500" size={18} /> },
+                                        { key: "แบต", label: "แบต", icon: <BatteryMedium className="text-pink-500" size={18} /> },
+                                        { key: "ฟิลม์", label: "ฟิลม์", icon: <Film className="text-purple-500" size={18} /> },
+                                        { key: "อื่นๆ", label: "อื่นๆ", icon: <MoreHorizontal className="text-slate-400" size={18} /> },
+                                    ]}
                                     placeholder="หมวดหมู่"
                                     className="w-full lg:w-44"
-                                    classNames={{ trigger: "h-14 bg-slate-50 border-none rounded-2xl" }}
-                                    startContent={<Filter size={18} className="text-slate-400" />}
+                                    selectedKeys={selectedCategory ? [selectedCategory] : []}
+                                    classNames={{
+                                        trigger: "h-14 bg-slate-50 border-none rounded-2xl data-[hover=true]:bg-slate-100 transition-colors",
+                                        popoverContent: "rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.08)]",
+                                        value: "text-slate-700 font-bold",
+                                    }}
+                                    renderValue={(items) => {
+                                        return items.map((item) => (
+                                            <div key={item.key} className="flex items-center gap-2">
+                                                {item.data?.icon}
+                                                <span>{item.data?.label}</span>
+                                            </div>
+                                        ));
+                                    }}
+                                    onChange={(e) => setSelectedCategory(e.target.value)}
                                 >
-                                    <SelectItem key="Filing">Filing</SelectItem>
-                                    <SelectItem key="Camera">กล้อง</SelectItem>
-                                    <SelectItem key="Other">อื่นๆ</SelectItem>
+                                    {(category) => (
+                                        <SelectItem
+                                            key={category.key}
+                                            textValue={category.label}
+                                            startContent={category.icon}
+                                            className="bg-white"
+                                        >
+                                            {category.label}
+                                        </SelectItem>
+                                    )}
                                 </Select>
+
                                 <Button className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black shadow-lg shadow-slate-200" startContent={<FileSpreadsheet size={18} />}>
                                     Export Excel
                                 </Button>
@@ -245,8 +285,7 @@ export default function ConsignmentHistory() {
                         priceLabel="ราคารวม"
                     />
                 )}
-
             </div>
-        </div>
+        </div >
     );
 }

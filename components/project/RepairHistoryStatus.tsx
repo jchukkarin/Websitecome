@@ -118,103 +118,125 @@ export default function RepairHistoryStatus({
                     />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[300px] bg-white">
-                <div className="p-4 bg-slate-50/50 border-b border-slate-100">
+            <PopoverContent className="w-[320px] bg-white rounded-3xl overflow-hidden">
+                {/* Header */}
+                <div className="px-5 py-4 bg-gradient-to-r from-slate-50 to-white border-b">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                        Status Management
+                        Repair Status
                     </p>
-                    <h4 className="font-black text-slate-800">อัปเดตสถานะงานซ่อม</h4>
+                    <h4 className="font-black text-slate-800 text-sm">
+                        จัดการสถานะงานซ่อม
+                    </h4>
                 </div>
 
-                <div className="p-3 space-y-3">
-                    {/* Status Grid */}
-                    <div className="flex flex-wrap gap-2">
+                {/* Body */}
+                <div className="p-4 space-y-4">
+                    {/* Status Buttons */}
+                    <div className="grid grid-cols-2 gap-2">
                         {statusOptions.map((opt) => (
                             <Button
                                 key={opt.key}
                                 size="sm"
-                                variant={value === opt.key ? "solid" : "light"}
+                                variant={value === opt.key ? "solid" : "bordered"}
                                 color={value === opt.key ? opt.btnColor : "default"}
-                                className={`flex-1 font-bold rounded-xl h-10 transition-all justify-start min-w-[120px] ${value === opt.key ? "shadow-md" : "text-slate-500"
-                                    }`}
+                                className={`
+            h-11 rounded-2xl font-bold justify-start gap-2
+            ${value === opt.key
+                                        ? "shadow-md"
+                                        : "text-slate-500 hover:bg-slate-50"}
+          `}
                                 onPress={() => handleStatusSelect(opt.key)}
                             >
-                                <div className="flex items-center gap-2">
-                                    {opt.icon}
-                                    <span>{opt.label}</span>
-                                </div>
+                                {opt.icon}
+                                <span>{opt.label}</span>
                             </Button>
                         ))}
                     </div>
 
-                    {/* Repairing - Date Inputs */}
-                    {value === "repairing" && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="space-y-3 pt-2"
-                        >
-                            <Divider className="opacity-50" />
+                    {/* Repair Date Section */}
+                    <AnimatePresence>
+                        {value === "repairing" && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 8 }}
+                                className="bg-slate-50 rounded-2xl p-4 space-y-3"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-blue-600 font-bold text-sm">
+                                        <Calendar size={16} />
+                                        <span>ช่วงเวลาการซ่อม</span>
+                                    </div>
 
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-blue-600 font-bold text-sm">
-                                    <Calendar size={16} />
-                                    <span>กำหนดระยะเวลาซ่อม</span>
+                                    {hasDates && (
+                                        <div className="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                                            <CheckCircle2 size={12} />
+                                            ระบุแล้ว
+                                        </div>
+                                    )}
                                 </div>
-                                <Checkbox
-                                    isSelected={hasDates}
-                                    isReadOnly
-                                    color="primary"
-                                    size="sm"
-                                    classNames={{ label: "text-xs font-bold text-slate-500" }}
-                                >
-                                    ระบุแล้ว
-                                </Checkbox>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400">เริ่มซ่อม</label>
-                                    <Input
-                                        type="date"
-                                        size="sm"
-                                        variant="bordered"
-                                        value={item.repairStartDate || ""}
-                                        onChange={(e) => onItemChangeAction(item.id, "repairStartDate", e.target.value)}
-                                        classNames={{
-                                            input: "text-xs font-bold text-slate-700",
-                                            inputWrapper: "h-9 rounded-lg border-slate-200"
-                                        }}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400">ซ่อมเสร็จ (ประมาณ)</label>
-                                    <Input
-                                        type="date"
-                                        size="sm"
-                                        variant="bordered"
-                                        value={item.repairEndDate || ""}
-                                        onChange={(e) => onItemChangeAction(item.id, "repairEndDate", e.target.value)}
-                                        classNames={{
-                                            input: "text-xs font-bold text-slate-700",
-                                            inputWrapper: "h-9 rounded-lg border-slate-200"
-                                        }}
-                                    />
-                                </div>
-                            </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400">
+                                            เริ่มซ่อม
+                                        </label>
+                                        <Input
+                                            type="date"
+                                            size="sm"
+                                            value={item.repairStartDate || ""}
+                                            onChange={(e) =>
+                                                onItemChangeAction(item.id, "repairStartDate", e.target.value)
+                                            }
+                                            classNames={{
+                                                inputWrapper: "h-9 rounded-xl",
+                                                input: "text-xs font-bold",
+                                            }}
+                                        />
+                                    </div>
 
-                            {/* Checkbox to Confirm/Toggle? - Logic implies just filling inputs IS the confirmation */}
-                            {hasDates && (
-                                <div className="flex items-center gap-2 justify-center py-2 bg-blue-50 rounded-xl">
-                                    <CheckCircle2 size={16} className="text-blue-500" />
-                                    <span className="text-xs font-black text-blue-600 uppercase tracking-wide">
-                                        บันทึกข้อมูลนัดหมายแล้ว
-                                    </span>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400">
+                                            เสร็จประมาณ
+                                        </label>
+                                        <Input
+                                            type="date"
+                                            size="sm"
+                                            value={item.repairEndDate || ""}
+                                            onChange={(e) =>
+                                                onItemChangeAction(item.id, "repairEndDate", e.target.value)
+                                            }
+                                            classNames={{
+                                                inputWrapper: "h-9 rounded-xl",
+                                                input: "text-xs font-bold",
+                                            }}
+                                        />
+                                    </div>
                                 </div>
-                            )}
-                        </motion.div>
-                    )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="px-4 py-3 border-t bg-white flex gap-2">
+                    <Button
+                        size="sm"
+                        variant="light"
+                        className="flex-1 rounded-xl font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 active:scale-95 transition-all border border-slate-200"
+                        onPress={() => setIsOpen(false)}
+                    >
+                        ปิด
+                    </Button>
+
+                    <Button
+                        size="sm"
+                        color="primary"
+                        className="flex-1 rounded-xl font-bold shadow-md shadow-blue-200 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all border border-slate-200"
+                        onPress={() => setIsOpen(false)}
+                    >
+                        บันทึก
+                    </Button>
                 </div>
             </PopoverContent>
         </Popover>

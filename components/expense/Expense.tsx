@@ -17,6 +17,7 @@ import {
   Select,
   SelectItem,
   Tooltip,
+  Chip,
 } from "@heroui/react";
 import {
   Plus,
@@ -33,13 +34,22 @@ import {
   Image as ImageIcon,
   HandCoins,
   Clock,
+  Camera,
+  Aperture,
+  Video,
+  BatteryMedium,
+  Film,
+  MoreHorizontal,
+  AlertCircle,
 } from "lucide-react";
+import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import PawnStatusCell from "./PawnStatusCell";
 
 export default function PawnRecording() {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -155,7 +165,53 @@ export default function PawnRecording() {
     }));
   };
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    // -------- Form หลัก --------
+    if (!formData.date) newErrors.date = "กรุณาเลือกวันที่";
+    if (!formData.endDate) newErrors.endDate = "กรุณาเลือกวันครบกำหนด";
+    if (!formData.lot) newErrors.lot = "กรุณากรอกชื่อผู้รับจำนำ";
+    if (!formData.consignorName) newErrors.consignorName = "กรุณากรอกชื่อผู้นำมาจำนำ";
+    if (!formData.contactNumber) newErrors.contactNumber = "กรุณากรอกเบอร์โทร";
+    if (!formData.totalPrice) newErrors.totalPrice = "กรุณากรอกยอดรวม";
+
+    // -------- Items --------
+    if (items.length === 0) {
+      toast.error("ต้องมีสินค้าอย่างน้อย 1 รายการ");
+      return false;
+    }
+
+    items.forEach((item, index) => {
+      if (!item.productName)
+        newErrors[`item.${item.id}.productName`] = `กรุณากรอกชื่อสินค้า (แถว ${index + 1})`;
+
+      if (!item.category)
+        newErrors[`item.${item.id}.category`] = `กรุณาเลือกหมวดหมู่ (แถว ${index + 1})`;
+
+      if (!item.confirmedPrice)
+        newErrors[`item.${item.id}.confirmedPrice`] = `กรุณากรอกราคาจำนำ (แถว ${index + 1})`;
+
+      if (!item.redemptionPrice)
+        newErrors[`item.${item.id}.redemptionPrice`] = `กรุณากรอกราคาไถ่ถอน (แถว ${index + 1})`;
+
+      if (!item.imageUrl)
+        newErrors[`item.${item.id}.imageUrl`] = `กรุณาเพิ่มรูปสินค้า (แถว ${index + 1})`;
+    });
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async () => {
+    if (!validateForm()) return;
+
     setLoading(true);
     try {
       const payload = {
@@ -164,11 +220,11 @@ export default function PawnRecording() {
         type: "PAWN",
       };
       await axios.post("/api/consignments", payload);
-      alert("บันทึกข้อมูลการจำนำสำเร็จ!");
+      toast.success("บันทึกข้อมูลการจำนำสำเร็จ!");
       handleClear();
     } catch (error) {
       console.error("Save error:", error);
-      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+      toast.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
     } finally {
       setLoading(false);
     }
@@ -176,6 +232,7 @@ export default function PawnRecording() {
 
   return (
     <div className="p-4 md:p-8 bg-[#F8FAFC] min-h-screen font-sans text-slate-800">
+      <Toaster richColors position="top-right" />
       <div className="max-w-[1600px] mx-auto space-y-8">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -234,12 +291,17 @@ export default function PawnRecording() {
                     variant="bordered"
                     labelPlacement="outside"
                     value={formData.date}
+                    isInvalid={!!errors.date}
+                    errorMessage={errors.date}
                     startContent={<Calendar className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
                       inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-orange-500 transition-all group-data-[focus=true]:bg-white",
                     }}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, date: e.target.value })
+                      setErrors((prev) => ({ ...prev, date: "" }));
+                    }}
                   />
                 </div>
 
@@ -250,12 +312,17 @@ export default function PawnRecording() {
                     variant="bordered"
                     labelPlacement="outside"
                     value={formData.endDate}
+                    isInvalid={!!errors.endDate}
+                    errorMessage={errors.endDate}
                     startContent={<Clock className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
                       inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-orange-500 transition-all group-data-[focus=true]:bg-white",
                     }}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, endDate: e.target.value });
+                      setErrors((prev) => ({ ...prev, endDate: "" }));
+                    }}
                   />
                 </div>
 
@@ -266,12 +333,17 @@ export default function PawnRecording() {
                     variant="bordered"
                     labelPlacement="outside"
                     value={formData.consignorName}
+                    isInvalid={!!errors.consignorName}
+                    errorMessage={errors.consignorName}
                     startContent={<UserIcon className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
                       inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-orange-500 transition-all group-data-[focus=true]:bg-white",
                     }}
-                    onChange={(e) => setFormData({ ...formData, consignorName: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, consignorName: e.target.value });
+                      setErrors((prev) => ({ ...prev, consignorName: "" }));
+                    }}
                   />
                 </div>
 
@@ -282,12 +354,17 @@ export default function PawnRecording() {
                     variant="bordered"
                     labelPlacement="outside"
                     value={formData.lot}
+                    isInvalid={!!errors.lot}
+                    errorMessage={errors.lot}
                     startContent={<Hash className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
                       inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-orange-500 transition-all group-data-[focus=true]:bg-white",
                     }}
-                    onChange={(e) => setFormData({ ...formData, lot: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, lot: e.target.value });
+                      setErrors((prev) => ({ ...prev, lot: "" }));
+                    }}
                   />
                 </div>
 
@@ -298,12 +375,17 @@ export default function PawnRecording() {
                     variant="bordered"
                     labelPlacement="outside"
                     value={formData.contactNumber}
+                    isInvalid={!!errors.contactNumber}
+                    errorMessage={errors.contactNumber}
                     startContent={<Phone className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
                       inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-orange-500 transition-all group-data-[focus=true]:bg-white",
                     }}
-                    onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, contactNumber: e.target.value });
+                      setErrors((prev) => ({ ...prev, contactNumber: "" }));
+                    }}
                   />
                 </div>
               </div>
@@ -336,8 +418,16 @@ export default function PawnRecording() {
                     placeholder="0.00"
                     className="bg-transparent text-4xl font-black text-right outline-none w-48 pl-8 placeholder:text-slate-700"
                     value={formData.totalPrice}
-                    onChange={(e) => setFormData({ ...formData, totalPrice: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, totalPrice: e.target.value });
+                      setErrors((prev) => ({ ...prev, totalPrice: "" }));
+                    }}
                   />
+                  {errors.totalPrice && (
+                    <p className="text-red-500 text-xs font-semibold mt-2 flex items-center gap-1 absolute top-full right-0">
+                      <AlertCircle size={14} /> {errors.totalPrice}
+                    </p>
+                  )}
                 </div>
               </div>
             </CardBody>
@@ -465,9 +555,22 @@ export default function PawnRecording() {
                           type="file"
                           id={`pawn-file-item-${item.id}`}
                           className="hidden"
-                          onChange={(e) => handleItemImageUpload(item.id, e)}
+                          onChange={(e) => {
+                            handleItemImageUpload(item.id, e);
+                            setErrors((prev) => ({
+                              ...prev,
+                              [`item.${item.id}.imageUrl`]: "",
+                            }));
+                          }}
                         />
                       </div>
+                      {errors[`item.${item.id}.imageUrl`] && (
+                        <div className="mt-1 flex justify-center">
+                          <Chip color="danger" size="sm" variant="flat" className="h-[20px] text-[10px] px-1">
+                            {errors[`item.${item.id}.imageUrl`]}
+                          </Chip>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Input
@@ -475,29 +578,69 @@ export default function PawnRecording() {
                         variant="flat"
                         size="sm"
                         value={item.productName}
+                        isInvalid={!!errors[`item.${item.id}.productName`]}
+                        errorMessage={errors[`item.${item.id}.productName`]}
                         classNames={{
                           input: "font-semibold text-slate-700",
                           inputWrapper: "bg-transparent h-10 px-0 group-data-[hover=true]:bg-transparent",
                         }}
-                        onChange={(e) => handleItemChange(item.id, "productName", e.target.value)}
+                        onChange={(e) => {
+                          handleItemChange(item.id, "productName", e.target.value);
+                          setErrors((prev) => ({
+                            ...prev,
+                            [`item.${item.id}.productName`]: "",
+                          }));
+                        }}
                       />
                     </TableCell>
                     <TableCell>
                       <Select
+                        items={[
+                          { key: "กล้อง", label: "กล้อง", icon: <Camera className="text-blue-500 " size={18} /> },
+                          { key: "เลนส์", label: "เลนส์", icon: <Aperture className="text-emerald-500" size={18} /> },
+                          { key: "ขาตั้งกล้อง", label: "ขาตั้งกล้อง", icon: <Video className="text-orange-500" size={18} /> },
+                          { key: "แบต", label: "แบต", icon: <BatteryMedium className="text-pink-500" size={18} /> },
+                          { key: "ฟิลม์", label: "ฟิลม์", icon: <Film className="text-purple-500" size={18} /> },
+                          { key: "อื่นๆ", label: "อื่นๆ", icon: <MoreHorizontal className="text-slate-400" size={18} /> },
+                        ]}
                         placeholder="เลือก"
-                        variant="flat"
+                        variant="bordered"
                         size="sm"
-                        className="min-w-[120px]"
+                        className="min-w-[130px]"
                         selectedKeys={item.category ? [item.category] : []}
+                        isInvalid={!!errors[`item.${item.id}.category`]}
+                        errorMessage={errors[`item.${item.id}.category`]}
                         classNames={{
-                          trigger: "bg-transparent shadow-none h-10 px-0 group-data-[hover=true]:bg-transparent",
-                          value: "font-semibold text-slate-700",
+                          trigger: "bg-white border border-slate-200 h-10 rounded-lg data-[hover=true]:border-slate-300 transition-all",
+                          value: "font-bold text-slate-700 text-sm",
+                          popoverContent: "rounded-xl shadow-xl w-[140px]",
                         }}
-                        onChange={(e) => handleItemChange(item.id, "category", e.target.value)}
+                        renderValue={(items) => {
+                          return items.map((item) => (
+                            <div key={item.key} className="flex items-center gap-2">
+                              {item.data?.icon}
+                              <span>{item.data?.label}</span>
+                            </div>
+                          ));
+                        }}
+                        onChange={(e) => {
+                          handleItemChange(item.id, "category", e.target.value);
+                          setErrors((prev) => ({
+                            ...prev,
+                            [`item.${item.id}.category`]: "",
+                          }));
+                        }}
                       >
-                        <SelectItem key="Filing">Filing</SelectItem>
-                        <SelectItem key="Camera">กล้อง</SelectItem>
-                        <SelectItem key="Other">อื่นๆ</SelectItem>
+                        {(category) => (
+                          <SelectItem
+                            key={category.key}
+                            textValue={category.label}
+                            startContent={category.icon}
+                            className="bg-white text-slate-700 font-bold"
+                          >
+                            {category.label}
+                          </SelectItem>
+                        )}
                       </Select>
                     </TableCell>
                     <TableCell>
@@ -523,11 +666,19 @@ export default function PawnRecording() {
                         size="sm"
                         type="number"
                         value={item.confirmedPrice}
+                        isInvalid={!!errors[`item.${item.id}.confirmedPrice`]}
+                        errorMessage={errors[`item.${item.id}.confirmedPrice`]}
                         classNames={{
                           input: "font-black text-orange-600 text-right",
                           inputWrapper: "bg-transparent h-10 px-0 group-data-[hover=true]:bg-transparent",
                         }}
-                        onChange={(e) => handleItemChange(item.id, "confirmedPrice", e.target.value)}
+                        onChange={(e) => {
+                          handleItemChange(item.id, "confirmedPrice", e.target.value);
+                          setErrors((prev) => ({
+                            ...prev,
+                            [`item.${item.id}.confirmedPrice`]: "",
+                          }));
+                        }}
                       />
                     </TableCell>
                     <TableCell>
@@ -537,11 +688,19 @@ export default function PawnRecording() {
                         size="sm"
                         type="number"
                         value={(item as any).redemptionPrice}
+                        isInvalid={!!errors[`item.${item.id}.redemptionPrice`]}
+                        errorMessage={errors[`item.${item.id}.redemptionPrice`]}
                         classNames={{
                           input: "font-black text-emerald-600 text-right",
                           inputWrapper: "bg-transparent h-10 px-0 group-data-[hover=true]:bg-transparent",
                         }}
-                        onChange={(e) => handleItemChange(item.id, "redemptionPrice", e.target.value)}
+                        onChange={(e) => {
+                          handleItemChange(item.id, "redemptionPrice", e.target.value);
+                          setErrors((prev) => ({
+                            ...prev,
+                            [`item.${item.id}.redemptionPrice`]: "",
+                          }));
+                        }}
                       />
                     </TableCell>
                     <TableCell className="text-center">
@@ -585,6 +744,26 @@ export default function PawnRecording() {
               </Button>
             </div>
           )}
+        </div>
+        {/* Action Buttons Section */}
+        <div className="flex justify-center flex-col md:flex-row items-center gap-4 py-12">
+          <Button
+            variant="bordered"
+            startContent={<RotateCcw size={20} />}
+            onPress={handleClear}
+            className="bg-white border-2 border-slate-100 font-bold text-slate-500 w-full md:w-auto px-10 h-14 rounded-full hover:bg-slate-50 hover:border-slate-200 transition-all"
+          >
+            ล้างข้อมูลทั้งหมด
+          </Button>
+          <Button
+            color="warning"
+            startContent={<Save size={20} />}
+            onPress={handleSubmit}
+            isLoading={loading}
+            className="bg-orange-600 font-black text-white w-full md:w-[400px] h-14 rounded-full shadow-2xl shadow-orange-200 transition-all active:scale-[0.98] text-lg"
+          >
+            ยืนยันการบันทึกรายการจำนำ
+          </Button>
         </div>
       </div>
     </div>

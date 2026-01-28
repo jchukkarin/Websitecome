@@ -1,5 +1,10 @@
 import History from "@/components/income/History";
+import { Suspense } from "react";
 
 export default function HistoryPage() {
-    return <History />;
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <History />
+        </Suspense>
+    );
 }

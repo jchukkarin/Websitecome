@@ -53,8 +53,19 @@ model Consignment {
   userId String? // ✅ Tracking owner
   user   User?   @relation(fields: [userId], references: [id])
 
+  // ✅ เชื่อมกับ ConsignmentStatus (หมวดหมู่สถานะ)
+  statusId Int?
+  status   ConsignmentStatus? @relation(fields: [statusId], references: [id])
+
   images ConsignmentImage[]
   items  ConsignmentItem[]
+}
+
+// ✅ เพิ่ม Model สำหรับสถานะการจำนำ (4 สถานะ: ยังไม่กำหนด, ครบกำหนด, ต่อยอด, ปิดยอด)
+model ConsignmentStatus {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique // ชื่อสถานะ เช่น "ยังไม่กำหนด", "ครบกำหนด"
+  consignments Consignment[] // 1 สถานะ มีรายการจำนำได้หลายรายการ
 }
 
 model ConsignmentImage {
@@ -64,19 +75,34 @@ model ConsignmentImage {
   consignment   Consignment @relation(fields: [consignmentId], references: [id])
 }
 
+enum RepairStatus {
+  NOT_REPAIR
+  REPAIRING
+  REPAIRED
+}
+
 model ConsignmentItem {
-  id             String      @id @default(uuid())
+  id             String    @id @default(uuid())
   productName    String
   category       String
   year           String
-  status         String
-  confirmedPrice Float
-  salesChannel   String
+  status         String    @default("ready") // ready, reserved, sold, repair
+  repairStatus   String    @default("NOT_REPAIR") // NOT_REPAIR, REPAIRING, REPAIRED
+  confirmedPrice Float     @default(0)
+  salesPrice     Float?    @default(0)
+  salesChannel   String?
   imageUrl       String?
-  slipImage      String? // ✅ เพิ่ม
+  slipImage      String?
   soldAt         DateTime?
-  consignmentId  String
-  consignment    Consignment @relation(fields: [consignmentId], references: [id])
+
+  // Reservation details
+  isReserveOpen    String? @default("false")
+  reserveStartDate String?
+  reserveEndDate   String?
+  reserveDays      String?
+
+  consignmentId String
+  consignment   Consignment @relation(fields: [consignmentId], references: [id])
 }
 
 model ShopProfile {

@@ -96,10 +96,17 @@ export async function POST(req: Request) {
                         productName: item.productName || "",
                         category: item.category || "",
                         year: item.year || "",
-                        status: item.productStatus || "ready",
+                        status: item.status || "ready",
+                        repairStatus: item.repairStatus || "NOT_REPAIR",
                         confirmedPrice: Number(item.confirmedPrice) || 0,
+                        salesPrice: Number(item.salesPrice) || 0,
                         salesChannel: item.salesChannel || "",
                         imageUrl: item.imageUrl ?? "",
+                        slipImage: item.slipImage ?? null,
+                        isReserveOpen: item.isReserveOpen || "false",
+                        reserveStartDate: item.reserveStartDate || null,
+                        reserveEndDate: item.reserveEndDate || null,
+                        reserveDays: item.reserveDays || null,
                     }))
                 },
             },
@@ -146,7 +153,7 @@ export async function GET(req: Request) {
     } catch (error) {
         console.error(error);
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { error: error instanceof Error ? error.message : "Internal Server Error" },
             { status: 500 }
         );
     }

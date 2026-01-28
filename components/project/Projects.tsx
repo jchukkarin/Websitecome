@@ -33,7 +33,15 @@ import {
   Package,
   Image as ImageIcon,
   Wrench,
+  Camera,
+  Aperture,
+  Video,
+  BatteryMedium,
+  Film,
+  MoreHorizontal,
+  AlertCircle,
 } from "lucide-react";
+import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductHistoryStatus from "./ProductHistoryStatus";
 import RepairingHistoryStatus from "./RepairHistoryStatus";
@@ -58,6 +66,7 @@ interface RepairItem {
 export default function Projects() {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -169,7 +178,49 @@ export default function Projects() {
     }));
   };
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    // -------- Form หลัก --------
+    if (!formData.date) newErrors.date = "กรุณาเลือกวันที่";
+    if (!formData.lot) newErrors.lot = "กรุณากรอกรหัสล๊อต";
+    if (!formData.consignorName) newErrors.consignorName = "กรุณากรอกชื่อผู้ฝากซ่อม";
+    if (!formData.contactNumber) newErrors.contactNumber = "กรุณากรอกเบอร์โทร";
+    if (!formData.totalPrice) newErrors.totalPrice = "กรุณากรอกยอดรวม";
+
+    // -------- Items --------
+    if (items.length === 0) {
+      toast.error("ต้องมีสินค้าอย่างน้อย 1 รายการ");
+      return false;
+    }
+
+    items.forEach((item, index) => {
+      if (!item.productName)
+        newErrors[`item.${item.id}.productName`] = `กรุณากรอกชื่อสินค้า (แถว ${index + 1})`;
+
+      if (!item.category)
+        newErrors[`item.${item.id}.category`] = `กรุณาเลือกหมวดหมู่ (แถว ${index + 1})`;
+
+      if (!item.confirmedPrice)
+        newErrors[`item.${item.id}.confirmedPrice`] = `กรุณากรอกราคา (แถว ${index + 1})`;
+
+      if (!item.imageUrl)
+        newErrors[`item.${item.id}.imageUrl`] = `กรุณาเพิ่มรูปสินค้า (แถว ${index + 1})`;
+    });
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async () => {
+    if (!validateForm()) return;
+
     setLoading(true);
     try {
       const payload = {
@@ -178,11 +229,11 @@ export default function Projects() {
         type: "REPAIR",
       };
       await axios.post("/api/consignments", payload);
-      alert("บันทึกข้อมูลการฝากซ่อมสำเร็จ!");
+      toast.success("บันทึกข้อมูลการฝากซ่อมสำเร็จ!");
       handleClear();
     } catch (error) {
       console.error("Save error:", error);
-      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+      toast.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
     } finally {
       setLoading(false);
     }
@@ -196,6 +247,7 @@ export default function Projects() {
 
   return (
     <div className="p-4 md:p-8 bg-[#F8FAFC] min-h-screen font-sans text-slate-800">
+      <Toaster richColors position="top-right" />
       <div className="max-w-[1600px] mx-auto space-y-8">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -255,13 +307,18 @@ export default function Projects() {
                     labelPlacement="outside"
                     placeholder=" "
                     value={formData.date}
+                    isInvalid={!!errors.date}
+                    errorMessage={errors.date}
                     startContent={<Calendar className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
                       label: "font-bold text-slate-700",
                       inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
                     }}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, date: e.target.value });
+                      setErrors((prev) => ({ ...prev, date: "" }));
+                    }}
                   />
                 </div>
 
@@ -272,13 +329,18 @@ export default function Projects() {
                     variant="bordered"
                     labelPlacement="outside"
                     value={formData.lot}
+                    isInvalid={!!errors.lot}
+                    errorMessage={errors.lot}
                     startContent={<Hash className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
                       label: "font-bold text-slate-700",
                       inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
                     }}
-                    onChange={(e) => setFormData({ ...formData, lot: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, lot: e.target.value });
+                      setErrors((prev) => ({ ...prev, lot: "" }));
+                    }}
                   />
                 </div>
 
@@ -289,13 +351,18 @@ export default function Projects() {
                     variant="bordered"
                     labelPlacement="outside"
                     value={formData.consignorName}
+                    isInvalid={!!errors.consignorName}
+                    errorMessage={errors.consignorName}
                     startContent={<UserIcon className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
                       label: "font-bold text-slate-700",
                       inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
                     }}
-                    onChange={(e) => setFormData({ ...formData, consignorName: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, consignorName: e.target.value });
+                      setErrors((prev) => ({ ...prev, consignorName: "" }));
+                    }}
                   />
                 </div>
 
@@ -306,13 +373,18 @@ export default function Projects() {
                     variant="bordered"
                     labelPlacement="outside"
                     value={formData.contactNumber}
+                    isInvalid={!!errors.contactNumber}
+                    errorMessage={errors.contactNumber}
                     startContent={<Phone className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
                       label: "font-bold text-slate-700",
                       inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white ",
                     }}
-                    onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, contactNumber: e.target.value });
+                      setErrors((prev) => ({ ...prev, contactNumber: "" }));
+                    }}
                   />
                 </div>
               </div>
@@ -345,8 +417,16 @@ export default function Projects() {
                     placeholder="0.00"
                     className="bg-transparent text-4xl font-black text-right outline-none w-48 pl-6 placeholder:text-slate-700"
                     value={formData.totalPrice}
-                    onChange={(e) => setFormData({ ...formData, totalPrice: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, totalPrice: e.target.value });
+                      setErrors((prev) => ({ ...prev, totalPrice: "" }));
+                    }}
                   />
+                  {errors.totalPrice && (
+                    <p className="text-red-500 text-xs font-semibold mt-2 flex items-center gap-1 absolute top-full right-0">
+                      <AlertCircle size={14} /> {errors.totalPrice}
+                    </p>
+                  )}
                 </div>
               </div>
             </CardBody>
@@ -482,9 +562,22 @@ export default function Projects() {
                           type="file"
                           className="hidden"
                           accept="image/*"
-                          onChange={(e) => handleItemImageUpload(item.id, e)}
+                          onChange={(e) => {
+                            handleItemImageUpload(item.id, e);
+                            setErrors((prev) => ({
+                              ...prev,
+                              [`item.${item.id}.imageUrl`]: "",
+                            }));
+                          }}
                         />
                       </div>
+                      {errors[`item.${item.id}.imageUrl`] && (
+                        <div className="mt-1 flex justify-center">
+                          <Chip color="danger" size="sm" variant="flat" className="h-[20px] text-[10px] px-1">
+                            {errors[`item.${item.id}.imageUrl`]}
+                          </Chip>
+                        </div>
+                      )}
                     </TableCell>
 
                     {/* Product Name */}
@@ -494,33 +587,71 @@ export default function Projects() {
                         placeholder="ระบุชื่อรุ่น / แบรนด์สินค้า"
                         value={item.productName}
                         className="font-bold"
+                        isInvalid={!!errors[`item.${item.id}.productName`]}
+                        errorMessage={errors[`item.${item.id}.productName`]}
                         classNames={{
                           input: "text-slate-800",
                           inputWrapper: "border-none bg-transparent hover:bg-white focus-within:bg-white transition-all rounded-xl",
                         }}
-                        onChange={(e) => handleItemChange(item.id, "productName", e.target.value)}
+                        onChange={(e) => {
+                          handleItemChange(item.id, "productName", e.target.value);
+                          setErrors((prev) => ({
+                            ...prev,
+                            [`item.${item.id}.productName`]: "",
+                          }));
+                        }}
                       />
                     </TableCell>
 
                     {/* Category */}
                     <TableCell>
                       <Select
-                        variant="faded"
-                        placeholder="เลือกหมวดหมู่"
-                        className="font-bold"
-                        selectedKeys={item.category ? new Set([item.category]) : new Set()}
+                        items={[
+                          { key: "กล้อง", label: "กล้อง", icon: <Camera className="text-blue-500 " size={18} /> },
+                          { key: "เลนส์", label: "เลนส์", icon: <Aperture className="text-emerald-500" size={18} /> },
+                          { key: "ขาตั้งกล้อง", label: "ขาตั้งกล้อง", icon: <Video className="text-orange-500" size={18} /> },
+                          { key: "แบต", label: "แบต", icon: <BatteryMedium className="text-pink-500" size={18} /> },
+                          { key: "ฟิลม์", label: "ฟิลม์", icon: <Film className="text-purple-500" size={18} /> },
+                          { key: "อื่นๆ", label: "อื่นๆ", icon: <MoreHorizontal className="text-slate-400" size={18} /> },
+                        ]}
+                        placeholder="เลือก"
+                        variant="bordered"
+                        size="sm"
+                        className="min-w-[130px]"
+                        selectedKeys={item.category ? [item.category] : []}
+                        isInvalid={!!errors[`item.${item.id}.category`]}
+                        errorMessage={errors[`item.${item.id}.category`]}
                         classNames={{
-                          trigger: "bg-white border-none shadow-none hover:bg-slate-50 transition-all rounded-xl h-10",
-                          value: "font-bold text-slate-700",
-                          popoverContent: "bg-white border-none shadow-2xl rounded-2xl p-1",
-                          listbox: "bg-white",
+                          trigger: "bg-white border border-slate-200 h-10 rounded-lg data-[hover=true]:border-slate-300 transition-all",
+                          value: "font-bold text-slate-700 text-sm",
+                          popoverContent: "rounded-xl shadow-xl w-[140px]",
                         }}
-                        onSelectionChange={(keys) => handleItemChange(item.id, "category", Array.from(keys)[0] as string)}
+                        renderValue={(items) => {
+                          return items.map((item) => (
+                            <div key={item.key} className="flex items-center gap-2">
+                              {item.data?.icon}
+                              <span>{item.data?.label}</span>
+                            </div>
+                          ));
+                        }}
+                        onChange={(e) => {
+                          handleItemChange(item.id, "category", e.target.value);
+                          setErrors((prev) => ({
+                            ...prev,
+                            [`item.${item.id}.category`]: "",
+                          }));
+                        }}
                       >
-                        <SelectItem key="Camera" className="font-bold py-3 rounded-xl" startContent={<ImageIcon size={18} className="text-blue-500" />}>กล้อง</SelectItem>
-                        <SelectItem key="Lens" className="font-bold py-3 rounded-xl" startContent={<Package size={18} className="text-emerald-500" />}>เลนส์</SelectItem>
-                        <SelectItem key="Accessory" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-indigo-500" />}>อุปกรณ์เสริม</SelectItem>
-                        <SelectItem key="Other" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-slate-400" />}>อื่นๆ</SelectItem>
+                        {(category) => (
+                          <SelectItem
+                            key={category.key}
+                            textValue={category.label}
+                            startContent={category.icon}
+                            className="bg-white text-slate-700 font-bold"
+                          >
+                            {category.label}
+                          </SelectItem>
+                        )}
                       </Select>
                     </TableCell>
 
@@ -549,11 +680,19 @@ export default function Projects() {
                           placeholder="0.00"
                           value={item.confirmedPrice}
                           className="font-black text-purple-600"
+                          isInvalid={!!errors[`item.${item.id}.confirmedPrice`]}
+                          errorMessage={errors[`item.${item.id}.confirmedPrice`]}
                           classNames={{
                             input: "text-right font-black text-purple-600 pr-1",
                             inputWrapper: "border-none bg-slate-50 group-hover/price:bg-purple-50 transition-all rounded-xl pl-6",
                           }}
-                          onChange={(e) => handleItemChange(item.id, "confirmedPrice", e.target.value)}
+                          onChange={(e) => {
+                            handleItemChange(item.id, "confirmedPrice", e.target.value)
+                            setErrors((prev) => ({
+                              ...prev,
+                              [`item.${item.id}.confirmedPrice`]: "",
+                            }));
+                          }}
                         />
                       </div>
                     </TableCell>

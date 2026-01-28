@@ -1,42 +1,60 @@
 // app/api/import-status/route.ts
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    // Get global counts by status
-    const allProducts = await db.product.findMany({
-      select: { status: true, isSold: true }
+    // We will aggregate data from ConsignmentItem
+    // specifically for consignments of type 'INCOME' if we want Import Goods
+    const items = await prisma.consignmentItem.findMany({
+      include: {
+        consignment: {
+          select: { type: true }
+        }
+      }
     });
 
+    // Filter to only include INCOME (Import) type items
+    const importItems = items.filter(item => item.consignment.type === "INCOME");
+
+    // Get unique categories
+    const categoriesSet = new Set(importItems.map(item => item.category).filter(Boolean));
+    const uniqueCategories = Array.from(categoriesSet);
+
+    // Initial summary
     const summary = {
-      ready: allProducts.filter(p => (p.status === 'ready' || p.status === 'พร้อม') && !p.isSold).length,
-      reserved: allProducts.filter(p => (p.status === 'reserved' || p.status === 'ติดจอง') && !p.isSold).length,
-      repair: allProducts.filter(p => (p.status === 'repair' || p.status === 'ซ่อม') && !p.isSold).length,
-      sold: allProducts.filter(p => p.status === 'sold' || p.status === 'ขายแล้ว' || p.isSold).length,
+      ready: 0,
+      reserved: 0,
+      repair: 0,
+      sold: 0
     };
 
-    // Keep the categories link as well if needed
-    const categories = await db.importStatus.findMany({
-      include: {
-        products: {
-          select: { status: true, isSold: true }
-        }
-      },
-      orderBy: { id: 'asc' }
-    });
+    const processedCategories = uniqueCategories.map((catName, index) => {
+      const catItems = importItems.filter(item => item.category === catName);
 
-    const processedCategories = categories.map(s => ({
-      id: s.id,
-      name: s.name,
-      count: s.products.length,
-      details: {
-        ready: s.products.filter(p => (p.status === 'ready' || p.status === 'พร้อม') && !p.isSold).length,
-        reserved: s.products.filter(p => (p.status === 'reserved' || p.status === 'ติดจอง') && !p.isSold).length,
-        repair: s.products.filter(p => (p.status === 'repair' || p.status === 'ซ่อม') && !p.isSold).length,
-        sold: s.products.filter(p => p.status === 'sold' || p.status === 'ขายแล้ว' || p.isSold).length,
-      }
-    }));
+      const details = {
+        ready: catItems.filter(item => item.status === "ready").length,
+        reserved: catItems.filter(item => item.status === "reserved").length,
+        // If status is 'sold' or its already sold out
+        sold: catItems.filter(item => item.status === "sold" || item.status === "ขายแล้ว").length,
+        // For repair, we check if repairStatus is 'repairing'
+        // wait, ConsignmentItem model might not have repairStatus on DB yet? 
+        // Let's check the schema again.
+        repair: catItems.filter(item => (item as any).repairStatus === "REPAIRING").length
+      };
+
+      summary.ready += details.ready;
+      summary.reserved += details.reserved;
+      summary.sold += details.sold;
+      summary.repair += details.repair;
+
+      return {
+        id: index + 1,
+        name: catName,
+        count: catItems.length,
+        details
+      };
+    });
 
     return NextResponse.json({
       summary,
@@ -45,21 +63,5 @@ export async function GET() {
   } catch (error) {
     console.error("Fetch status error:", error);
     return NextResponse.json({ error: "โหลดข้อมูลล้มเหลว" }, { status: 500 });
-  }
-}
-
-export async function POST(req: Request) {
-  try {
-    const { name } = await req.json();
-    if (!name) return NextResponse.json({ error: "กรุณาระบุชื่อสถานะ" }, { status: 400 });
-
-    const newStatus = await db.importStatus.create({
-      data: { name },
-    });
-
-    return NextResponse.json(newStatus);
-  } catch (error) {
-    console.error("Create import status error:", error);
-    return NextResponse.json({ error: "สร้างสถานะไม่สำเร็จ" }, { status: 500 });
   }
 }

@@ -33,13 +33,14 @@ export default function ProductStatusCell({ item, onItemChangeAction }: ProductS
     const statusOptions = [
         { label: "พร้อมขาย", value: "ready", color: "success" as const },
         { label: "ติดจอง", value: "reserved", color: "warning" as const },
-        { label: "ขายแล้ว", value: "danger", color: "danger" as const },
+        { label: "ขายแล้ว", value: "sold", color: "danger" as const },
+        { label: "กำลังซ่อม", value: "repair", color: "primary" as const },
     ];
 
-    const currentOption = statusOptions.find((opt) => opt.value === item.productStatus) || statusOptions[0];
+    const currentOption = statusOptions.find((opt) => opt.value === (item as any).status) || statusOptions[0];
 
     const handleStatusSelect = (value: string) => {
-        onItemChangeAction(item.id, "productStatus", value);
+        onItemChangeAction(item.id, "status" as any, value);
     };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,10 +76,10 @@ export default function ProductStatusCell({ item, onItemChangeAction }: ProductS
                         >
                             {currentOption.label}
                         </Chip>
-                        {item.productStatus === "reserved" && item.isReserveOpen === "true" && (
+                        {item.status === "reserved" && item.isReserveOpen === "true" && (
                             <Clock size={14} className="text-warning animate-pulse" />
                         )}
-                        {item.productStatus === "danger" && item.slipImage && (
+                        {item.status === "sold" && item.slipImage && (
                             <CheckCircle2 size={14} className="text-success" />
                         )}
                     </div>
@@ -99,9 +100,9 @@ export default function ProductStatusCell({ item, onItemChangeAction }: ProductS
                                 <Button
                                     key={opt.value}
                                     size="sm"
-                                    variant={item.productStatus === opt.value ? "solid" : "light"}
-                                    color={item.productStatus === opt.value ? opt.color : "default"}
-                                    className={`flex-1 font-bold rounded-xl h-9 transition-all ${item.productStatus === opt.value ? "shadow-md" : "text-slate-500"
+                                    variant={(item as any).status === opt.value ? "solid" : "light"}
+                                    color={(item as any).status === opt.value ? opt.color : "default"}
+                                    className={`flex-1 font-bold rounded-xl h-9 transition-all ${(item as any).status === opt.value ? "shadow-md" : "text-slate-500"
                                         }`}
                                     onPress={() => handleStatusSelect(opt.value)}
                                 >
@@ -113,7 +114,7 @@ export default function ProductStatusCell({ item, onItemChangeAction }: ProductS
                         <Divider className="my-2 opacity-50" />
 
                         {/* Reserved Details */}
-                        {item.productStatus === "reserved" && (
+                        {item.status === "reserved" && (
                             <div className="space-y-3 p-2 bg-amber-50/30 rounded-2xl border border-amber-50">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-warning font-bold text-sm">
@@ -168,7 +169,7 @@ export default function ProductStatusCell({ item, onItemChangeAction }: ProductS
                         )}
 
                         {/* Sold Details */}
-                        {item.productStatus === "danger" && (
+                        {item.status === "sold" && (
                             <div className="space-y-3 p-2 bg-emerald-50/30 rounded-2xl border border-emerald-50">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
@@ -228,7 +229,7 @@ export default function ProductStatusCell({ item, onItemChangeAction }: ProductS
                         )}
 
                         {/* Ready Status */}
-                        {item.productStatus === "ready" && (
+                        {item.status === "ready" && (
                             <div className="p-4 text-center space-y-2">
                                 <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mx-auto">
                                     <CheckCircle2 size={24} />

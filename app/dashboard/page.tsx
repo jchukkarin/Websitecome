@@ -8,7 +8,7 @@ export default function DashboardPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-black text-slate-900 tracking-tight">หน้าหลัก</h1>
         <p className="text-slate-500 font-medium italic mt-1">
-          ยินดีต้อนรับเข้าสู่ระบบจัดการข้อมูล ร้านนายตัวน้อย
+          ยินดีต้อนรับเข้าสู่ระบบจัดการข้อมูล
         </p>
       </div>
 

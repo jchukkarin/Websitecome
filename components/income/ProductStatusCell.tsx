@@ -31,16 +31,26 @@ export default function ProductStatusCell({ item, onItemChangeAction }: ProductS
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const statusOptions = [
-        { label: "พร้อมขาย", value: "ready", color: "success" as const },
-        { label: "ติดจอง", value: "reserved", color: "warning" as const },
-        { label: "ขายแล้ว", value: "sold", color: "danger" as const },
+        { label: "ไม่ซ่อม", value: "reserved", color: "warning" as const },
         { label: "กำลังซ่อม", value: "repair", color: "primary" as const },
+        { label: "ซ่อมเสร็จสิ้น", value: "sold", color: "danger" as const },
     ];
 
     const currentOption = statusOptions.find((opt) => opt.value === (item as any).status) || statusOptions[0];
 
     const handleStatusSelect = (value: string) => {
         onItemChangeAction(item.id, "status" as any, value);
+
+        if (value === "reserved") {
+            // เคลียร์ข้อมูลที่เกี่ยวกับการซ่อม / การจอง
+            onItemChangeAction(item.id, "repairStartDate", "");
+            onItemChangeAction(item.id, "repairEndDate", "");
+            onItemChangeAction(item.id, "isReserveOpen", "false");
+            onItemChangeAction(item.id, "reserveStartDate", "");
+
+            // ปิด popover ทันที
+            setIsOpen(false);
+        }
     };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,8 +86,8 @@ export default function ProductStatusCell({ item, onItemChangeAction }: ProductS
                         >
                             {currentOption.label}
                         </Chip>
-                        {item.status === "reserved" && item.isReserveOpen === "true" && (
-                            <Clock size={14} className="text-warning animate-pulse" />
+                        {item.status === "repair" && item.repairStartDate && item.repairEndDate && (
+                            <Clock size={14} className="text-primary animate-pulse" />
                         )}
                         {item.status === "sold" && item.slipImage && (
                             <CheckCircle2 size={14} className="text-success" />
@@ -113,58 +123,75 @@ export default function ProductStatusCell({ item, onItemChangeAction }: ProductS
 
                         <Divider className="my-2 opacity-50" />
 
-                        {/* Reserved Details */}
-                        {item.status === "reserved" && (
-                            <div className="space-y-3 p-2 bg-amber-50/30 rounded-2xl border border-amber-50">
+                        {/* Repair Details (New) */}
+                        {item.status === "repair" && (
+                            <div className="space-y-3 p-4 bg-blue-50/40 rounded-2xl border border-blue-100 animate-in fade-in slide-in-from-top-2">
+                                {/* Header */}
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-warning font-bold text-sm">
-                                        <Calendar size={18} />
-                                        <span>ระบุระยะเวลาการจอง</span>
+                                    <div className="flex items-center gap-2 text-blue-600 font-bold text-sm">
+                                        <Calendar size={16} />
+                                        <span>ช่วงเวลาการซ่อม</span>
                                     </div>
-                                    <Checkbox
-                                        isSelected={item.isReserveOpen === "true"}
-                                        onValueChange={(val) => onItemChangeAction(item.id, "isReserveOpen", val ? "true" : "false")}
-                                        color="warning"
-                                        size="sm"
-                                    />
+
+                                    {item.repairStartDate && item.repairEndDate && (
+                                        <div className="flex items-center gap-1 text-[10px] font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                                            <CheckCircle2 size={12} />
+                                            ระบุแล้ว
+                                        </div>
+                                    )}
                                 </div>
 
-                                {item.isReserveOpen === "true" && (
-                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-400 px-1 uppercase">เริ่มเมื่อ</label>
-                                                <Input
-                                                    type="date"
-                                                    size="sm"
-                                                    variant="faded"
-                                                    className="font-bold"
-                                                    value={item.reserveStartDate}
-                                                    onChange={(e) => onItemChangeAction(item.id, "reserveStartDate", e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-400 px-1 uppercase">ถึงเวลา</label>
-                                                <Input
-                                                    type="date"
-                                                    size="sm"
-                                                    variant="faded"
-                                                    className="font-bold"
-                                                    value={item.reserveEndDate}
-                                                    onChange={(e) => onItemChangeAction(item.id, "reserveEndDate", e.target.value)}
-                                                />
-                                            </div>
-                                        </div>
-                                        <Button
+                                {/* Date Inputs */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase">
+                                            เริ่มซ่อม
+                                        </label>
+                                        <Input
+                                            type="date"
                                             size="sm"
-                                            color="warning"
-                                            className="w-full font-black text-white h-10 rounded-xl shadow-lg shadow-amber-100"
-                                            onPress={() => setIsOpen(false)}
-                                        >
-                                            ยืนยันกำหนดการ
-                                        </Button>
+                                            variant="faded"
+                                            value={item.repairStartDate || ""}
+                                            onChange={(e) =>
+                                                onItemChangeAction(item.id, "repairStartDate", e.target.value)
+                                            }
+                                            classNames={{
+                                                inputWrapper: "rounded-xl h-9",
+                                                input: "text-xs font-bold",
+                                            }}
+                                        />
                                     </div>
-                                )}
+
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase">
+                                            เสร็จประมาณ
+                                        </label>
+                                        <Input
+                                            type="date"
+                                            size="sm"
+                                            variant="faded"
+                                            value={item.repairEndDate || ""}
+                                            onChange={(e) =>
+                                                onItemChangeAction(item.id, "repairEndDate", e.target.value)
+                                            }
+                                            classNames={{
+                                                inputWrapper: "rounded-xl h-9",
+                                                input: "text-xs font-bold",
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Action */}
+                                <Button
+                                    size="sm"
+                                    color="primary"
+                                    className="w-full font-black text-white h-10 rounded-xl shadow-md shadow-blue-100 bg-blue-500"
+                                    isDisabled={!item.repairStartDate || !item.repairEndDate}
+                                    onPress={() => setIsOpen(false)}
+                                >
+                                    บันทึกช่วงเวลาซ่อม
+                                </Button>
                             </div>
                         )}
 
@@ -219,24 +246,11 @@ export default function ProductStatusCell({ item, onItemChangeAction }: ProductS
                                     <Button
                                         size="sm"
                                         color="success"
-                                        className="w-full font-black text-white h-10 rounded-xl shadow-lg shadow-emerald-100"
+                                        className="w-full font-black text-white h-10 rounded-xl shadow-lg shadow-emerald-100 bg-emerald-500"
                                         onPress={() => setIsOpen(false)}
                                     >
                                         บันทึกหลักฐาน
                                     </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Ready Status */}
-                        {item.status === "ready" && (
-                            <div className="p-4 text-center space-y-2">
-                                <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mx-auto">
-                                    <CheckCircle2 size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-slate-800">สินค้าพร้อมขาย</p>
-                                    <p className="text-xs text-slate-400 font-medium">ไม่มีข้อมูลเพิ่มเติมที่ต้องระบุ</p>
                                 </div>
                             </div>
                         )}

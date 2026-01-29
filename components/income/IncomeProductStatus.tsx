@@ -41,14 +41,14 @@ export default function IncomeProductStatus({
     const statusOptions = [
         {
             key: "ขายได้",
-            label: "ปกติ",
+            label: "ขายได้",
             icon: <CheckCircle2 size={16} className="text-emerald-500" />,
             color: "text-emerald-600",
             btnColor: "success" as const,
         },
         {
             key: "ขายไม่ได้",
-            label: "ชำรุด",
+            label: "ขายไม่ได้",
             icon: <AlertCircle size={16} className="text-rose-500" />,
             color: "text-rose-600",
             btnColor: "danger" as const,
@@ -170,20 +170,26 @@ export default function IncomeProductStatus({
                         >
                             <Divider className="opacity-50" />
 
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-rose-600 font-bold text-sm">
-                                    <ImageIcon size={16} />
-                                    <span>หลักฐานความเสียหาย ({currentImages.length}/6)</span>
-                                </div>
+                            <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-slate-50 border border-slate-100">
+                                {/* Checkbox (Left) */}
                                 <Checkbox
                                     isSelected={currentImages.length > 0}
                                     isReadOnly
-                                    color="danger"
+                                    color="success"
                                     size="sm"
-                                    classNames={{ label: "text-xs font-bold text-slate-500" }}
+                                    classNames={{
+                                        base: "px-3 py-1 rounded-full bg-emerald-50",
+                                        label: "text-xs font-bold text-emerald-600",
+                                    }}
                                 >
-                                    มีรูปภาพ
+                                    อัปโหลดแล้ว
                                 </Checkbox>
+
+                                {/* Label (Right) */}
+                                <div className="flex items-center gap-2 text-amber-600 font-bold text-sm">
+                                    <ImageIcon size={16} />
+                                    <span>หลักฐาน ({currentImages.length}/6)</span>
+                                </div>
                             </div>
 
                             {/* Image Grid */}

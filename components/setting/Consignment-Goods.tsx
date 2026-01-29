@@ -2,151 +2,177 @@
 
 import React, { useEffect, useState } from "react";
 import {
-    Input,
-    Button,
     Table,
     TableHeader,
     TableColumn,
     TableBody,
     TableRow,
     TableCell,
-    Tooltip,
+    Button,
+    Input,
+    Skeleton,
+    Chip,
 } from "@heroui/react";
-import { Search, Plus, Info, BadgeDollarSign } from "lucide-react";
+import {
+    Search,
+    CheckCircle2,
+    XCircle,
+    ArrowRight
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 
-type ConsignmentStatus = {
-    id: number;
-    name: string;
+type StatusRow = {
+    key: "SELLABLE" | "UNSELLABLE";
+    label: string;
     count: number;
 };
 
 export default function ConsignmentGoods() {
-    const [data, setData] = useState<ConsignmentStatus[]>([]);
-    const [search, setSearch] = useState("");
+    const router = useRouter();
+    const [data, setData] = useState<StatusRow[]>([]);
     const [loading, setLoading] = useState(true);
-
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch("/api/consignment-status");
-            const result = await res.json();
-            setData(result);
-        } catch (error) {
-            toast.error("โหลดข้อมูลฝากขายล้มเหลว");
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const res = await fetch("/api/consignment-status");
+                const result = await res.json();
+                setData(Array.isArray(result) ? result : []);
+            } catch {
+                toast.error("โหลดข้อมูลสถานะสินค้าล้มเหลว");
+            } finally {
+                setLoading(false);
+            }
+        };
         fetchData();
     }, []);
 
-    // Status groups requested by user
-    const totals = {
-        repairing: data
-            .filter(d => d.name.toLowerCase() === "repairing" || d.name === "กำลังซ่อม")
-            .reduce((sum, d) => sum + d.count, 0),
-        repairDone: data
-            .filter(d => d.name.toLowerCase() === "repair_done" || d.name === "ซ่อมเสร็จแล้ว")
-            .reduce((sum, d) => sum + d.count, 0),
-        returnCustomer: data
-            .filter(d => d.name.toLowerCase() === "return_customer" || d.name === "ส่งคืนลูกค้า")
-            .reduce((sum, d) => sum + d.count, 0)
-    };
-
-    const summaryRows = [
-        { id: 'repairing', label: 'กำลังซ่อม', count: totals.repairing, code: 'REPAIRING' },
-        { id: 'repair_done', label: 'ซ่อมเสร็จแล้ว', count: totals.repairDone, code: 'REPAIR_DONE' },
-        { id: 'return_customer', label: 'ส่งคืนลูกค้า', count: totals.returnCustomer, code: 'RETURN_CUSTOMER' },
-    ];
-
-    const filtered = summaryRows.filter((r) =>
-        r.label.toLowerCase().includes(search.toLowerCase()) ||
-        r.code.toLowerCase().includes(search.toLowerCase())
+    const filtered = data.filter((d) =>
+        (d.label || "").toLowerCase().includes(search.toLowerCase())
     );
 
+    const statusConfig = {
+        SELLABLE: {
+            icon: CheckCircle2,
+            color: "success",
+            bg: "bg-emerald-50",
+            text: "text-emerald-600",
+        },
+        UNSELLABLE: {
+            icon: XCircle,
+            color: "default",
+            bg: "bg-slate-100",
+            text: "text-slate-600",
+        },
+    };
+
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <div className="w-full sm:max-w-md">
-                    <Input
-                        placeholder="ค้นหาหมวดหมู่การฝากขาย..."
-                        startContent={<Search size={20} className="text-gray-400" />}
-                        variant="flat"
-                        radius="lg"
-                        size="lg"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        classNames={{
-                            inputWrapper: "bg-gray-100/50 hover:bg-gray-100 transition-colors border-none",
-                            input: "text-base",
-                        }}
-                    />
-                </div>
-                <Button
-                    color="danger"
-                    size="lg"
-                    radius="lg"
-                    startContent={<Plus size={22} strokeWidth={3} />}
-                    className="font-bold px-8 shadow-xl shadow-red-200 bg-red-600 text-white"
-                    onClick={() => toast("ฟีเจอร์นี้ผูกกับสถานะในรายการฝากขายโดยตรง", { icon: "ℹ️" })}
+        <div className="space-y-6">
+            {/* Search */}
+            <Input
+                placeholder="ค้นหาสถานะสินค้า..."
+                startContent={<Search size={18} className="text-orange-400" />}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                radius="full"
+                variant="bordered"
+                classNames={{
+                    inputWrapper:
+                        "h-12 bg-orange-50/40 border-orange-100 hover:bg-orange-50 focus-within:border-orange-400",
+                }}
+            />
+
+            {/* Table */}
+            <div className="rounded-[2.2rem] overflow-hidden border border-orange-100 shadow-lg bg-white">
+                <Table
+                    shadow="none"
+                    aria-label="Consignment Status"
+                    classNames={{
+                        th: "bg-orange-50 text-orange-700 font-bold text-xs uppercase tracking-widest py-6 px-6",
+                        td: "py-6 px-6",
+                        tr: "group hover:bg-orange-50/40 transition-all cursor-pointer",
+                    }}
                 >
-                    เพิ่มหมวดหมู่ใหม่
-                </Button>
-            </div>
-
-            <div className="flex items-center gap-3 border-l-4 border-red-500 pl-4 py-1">
-                <h2 className="text-2xl font-black text-gray-900 tracking-tight">รายการสถานะการฝากขาย</h2>
-                <Tooltip content="หมวดหมู่สถานะที่ใช้ในการจัดการสินค้าที่รับฝากขายในร้าน">
-                    <Info size={18} className="text-gray-300 cursor-help" />
-                </Tooltip>
-            </div>
-
-            <div className="overflow-hidden rounded-3xl border border-gray-100">
-                <Table aria-label="Consignment categories table" shadow="none" classNames={{
-                    th: "bg-gray-50/50 text-gray-500 font-bold text-sm py-5 border-b border-gray-100 first:pl-8 last:pr-8",
-                    td: "py-5 px-4 first:pl-8 last:pr-8",
-                    tr: "group hover:bg-gray-50/80 transition-all duration-300 border-b border-gray-50 last:border-0",
-                }}>
                     <TableHeader>
-                        <TableColumn width={400}>ชื่อสถานะการฝากขาย</TableColumn>
+                        <TableColumn>หมวดหมู่สินค้า</TableColumn>
                         <TableColumn align="center">จำนวนสินค้า</TableColumn>
-                        <TableColumn align="end">การจัดการ</TableColumn>
+                        <TableColumn align="end">ดูรายการ</TableColumn>
                     </TableHeader>
-                    <TableBody isLoading={loading} emptyContent={
-                        <div className="flex flex-col items-center justify-center py-20 bg-gray-50/30">
-                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                <BadgeDollarSign size={32} className="text-gray-300" />
+
+                    <TableBody
+                        isLoading={loading}
+                        loadingContent={
+                            <div className="p-6 space-y-4">
+                                {[1, 2].map((i) => (
+                                    <Skeleton key={i} className="h-14 rounded-xl" />
+                                ))}
                             </div>
-                            <p className="text-gray-500 font-medium">ไม่พบข้อมูลการฝากขาย</p>
-                        </div>
-                    }>
-                        {filtered.map((item) => (
-                            <TableRow key={item.id}>
-                                <TableCell>
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-gray-900 text-lg">{item.label}</span>
-                                        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">STATUS CODE: {item.code}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex justify-center">
-                                        <div className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full font-black text-lg border border-red-100 min-w-[60px] text-center">
-                                            {item.count}
+                        }
+                        emptyContent={
+                            <div className="py-20 text-center text-orange-400 font-bold">
+                                ไม่พบข้อมูล
+                            </div>
+                        }
+                    >
+                        {filtered.map((row) => {
+                            const cfg = statusConfig[row.key] || statusConfig.UNSELLABLE;
+                            const IconComp = cfg.icon;
+
+                            return (
+                                <TableRow
+                                    key={row.key}
+                                    onClick={() =>
+                                        router.push(`/consignment/list?status=${row.key}`)
+                                    }
+                                >
+                                    {/* Category */}
+                                    <TableCell>
+                                        <div className="flex items-center gap-4">
+                                            <div
+                                                className={`w-12 h-12 rounded-2xl flex items-center justify-center ${cfg.bg} ${cfg.text} group-hover:scale-110 transition shadow-sm`}
+                                            >
+                                                <IconComp size={22} />
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-lg text-slate-800 group-hover:text-orange-600 transition tracking-tight">
+                                                    {row.label}
+                                                </p>
+                                                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
+                                                    {row.key}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex justify-end gap-2 text-gray-300">
-                                        <Tooltip content="สถานะตามฐานข้อมูลจริง">
-                                            <Info size={18} />
-                                        </Tooltip>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                                    </TableCell>
+
+                                    {/* Count */}
+                                    <TableCell>
+                                        <div className="flex justify-center">
+                                            <Chip
+                                                color={cfg.color as any}
+                                                variant="flat"
+                                                className="px-6 py-2 h-10 text-lg font-black shadow-sm group-hover:scale-105 transition"
+                                            >
+                                                {row.count}
+                                            </Chip>
+                                        </div>
+                                    </TableCell>
+
+                                    {/* Action */}
+                                    <TableCell>
+                                        <div className="flex justify-end pr-4">
+                                            <div className="flex items-center gap-2 text-orange-500 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                                                <span className="text-sm font-black uppercase tracking-wider">ดูรายการ</span>
+                                                <div className="p-1.5 bg-orange-500 text-white rounded-full shadow-md">
+                                                    <ArrowRight size={14} strokeWidth={3} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </div>

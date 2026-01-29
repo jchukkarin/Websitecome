@@ -2,90 +2,59 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  Input,
   Table,
   TableHeader,
   TableColumn,
   TableBody,
   TableRow,
   TableCell,
-  Tooltip,
+  Button,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Skeleton,
 } from "@heroui/react";
-import { Search, Info, Package, ExternalLink } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { Eye, MoreVertical, Package, CheckCircle2, Clock, Hammer, ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
-type CategoryData = {
-  id: number;
-  name: string;
+type SummaryData = {
+  ready: number;
+  reserved: number;
+  repair: number;
+  sold: number;
+};
+
+type StatusRow = {
+  key: keyof SummaryData;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  bg: string;
   count: number;
-  details: {
-    ready: number;
-    reserved: number;
-    repair: number;
-    sold: number;
-  };
 };
-
-type ImportApiResponse = {
-  summary: {
-    ready: number;
-    reserved: number;
-    repair: number;
-    sold: number;
-  };
-  categories: CategoryData[];
-};
-
-const STATUS_COLUMNS = [
-  { key: "ready", label: "พร้อม", color: "text-emerald-600", bg: "bg-emerald-50" },
-  { key: "reserved", label: "ติดจอง", color: "text-amber-600", bg: "bg-amber-50" },
-  { key: "repair", label: "ซ่อม", color: "text-blue-600", bg: "bg-blue-50" },
-  { key: "sold", label: "ขายแล้ว", color: "text-rose-600", bg: "bg-rose-50" },
-];
-
-function DrillDownButton({
-  cat,
-  status,
-  handleDrillDown
-}: {
-  cat: CategoryData,
-  status: any,
-  handleDrillDown: (name: string, stat: string) => void
-}) {
-  const count = cat.details[status.key as keyof typeof cat.details] || 0;
-  return (
-    <Tooltip content={`คลิกเพื่อดูรายการ "${cat.name}" ที่สถานะ "${status.label}"`}>
-      <button
-        onClick={() => handleDrillDown(cat.name, status.key)}
-        className={`
-          min-w-[50px] py-2 px-3 rounded-2xl font-black text-lg transition-all
-          ${count > 0 ? `${status.color} ${status.bg} hover:scale-110 active:scale-95 cursor-pointer` : "text-gray-200 bg-transparent opacity-30 cursor-default"}
-          flex items-center justify-center gap-2 group/cell
-        `}
-        disabled={count === 0}
-      >
-        {count}
-        {count > 0 && <ExternalLink size={10} className="opacity-0 group-hover/cell:opacity-50 transition-opacity" />}
-      </button>
-    </Tooltip>
-  );
-}
 
 export default function ImportGoods() {
   const router = useRouter();
-  const [categoriesData, setCategoriesData] = useState<CategoryData[]>([]);
-  const [search, setSearch] = useState("");
+  const [summary, setSummary] = useState<SummaryData>({
+    ready: 0,
+    reserved: 0,
+    repair: 0,
+    sold: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       const res = await fetch("/api/import-status");
-      const result: ImportApiResponse = await res.json();
-      setCategoriesData(result.categories || []);
-    } catch (error) {
-      toast.error("โหลดข้อมูลสถานะสินค้าล้มเหลว");
+      const result = await res.json();
+      if (result.summary) {
+        setSummary(result.summary);
+      }
+    } catch {
+      toast.error("โหลดข้อมูลสถานะการนำเข้าล้มเหลว");
     } finally {
       setLoading(false);
     }
@@ -95,133 +64,147 @@ export default function ImportGoods() {
     fetchData();
   }, []);
 
-  const filteredCategories = categoriesData.filter((cat) =>
-    cat.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const rows: StatusRow[] = [
+    {
+      key: "ready",
+      label: "พร้อม",
+      icon: <CheckCircle2 size={18} />,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+      count: summary.ready
+    },
+    {
+      key: "reserved",
+      label: "ติดจอง",
+      icon: <Clock size={18} />,
+      color: "text-amber-600",
+      bg: "bg-amber-50",
+      count: summary.reserved
+    },
+    {
+      key: "repair",
+      label: "ส่งซ่อม",
+      icon: <Hammer size={18} />,
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+      count: summary.repair
+    },
+    {
+      key: "sold",
+      label: "ขายแล้ว",
+      icon: <ShoppingCart size={18} />,
+      color: "text-rose-600",
+      bg: "bg-rose-50",
+      count: summary.sold
+    },
+  ];
 
-  const handleDrillDown = (categoryName: string, statusCode: string) => {
-    const query = new URLSearchParams({
-      category: categoryName,
-      status: statusCode,
-    }).toString();
-    router.push(`/income/history?${query}`);
+  const handleView = (status: string) => {
+    router.push(`/income/history?status=${status}`);
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="w-full sm:max-w-md">
-          <Input
-            placeholder="ค้นหาสถานะการนำเข้า..."
-            startContent={<Search size={20} className="text-gray-400" />}
-            variant="flat"
-            radius="lg"
-            size="lg"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            classNames={{
-              inputWrapper: "bg-gray-100/50 hover:bg-gray-100 transition-colors border-none",
-              input: "text-base",
-            }}
-          />
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-l-4 border-orange-500 pl-4 py-1">
+        <div>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight">สรุปสถานะการนำเข้าสินค้า</h2>
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Inventory Status Dashboard</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 border-l-4 border-red-500 pl-4 py-1">
-        <h2 className="text-2xl font-black text-gray-900 tracking-tight">รายการสถานะการนำเข้าสินค้า</h2>
-        <Tooltip content="รายการสรุปสถานะสินค้าทั้งหมดที่นำเข้ามาในระบบ">
-          <Info size={18} className="text-gray-300 cursor-help" />
-        </Tooltip>
-      </div>
-
-      <div className="overflow-hidden rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-100/50 bg-white">
+      {/* Table Container */}
+      <div className="overflow-hidden rounded-[2.5rem] border border-orange-100 shadow-xl shadow-orange-50 bg-white">
         <Table
-          aria-label="Import status ERP summary table"
+          aria-label="Import Status Summary Table"
           shadow="none"
           classNames={{
-            th: "bg-gray-50/80 backdrop-blur-md text-gray-500 font-black uppercase tracking-widest text-[10px] py-6 border-b border-gray-100 first:pl-10 last:pr-10",
-            td: "py-6 px-4 first:pl-10 last:pr-10 border-b border-gray-50 last:border-0",
-            tr: "group transition-all duration-300",
+            th: "bg-orange-50 text-orange-700 font-black text-xs uppercase tracking-widest py-6 border-b border-orange-100/50 px-8",
+            td: "py-7 px-8",
+            tr: "hover:bg-orange-50/40 transition-all cursor-pointer",
+            base: "bg-white",
           }}
         >
           <TableHeader>
-            <TableColumn width={300}>หมวดหมู่สินค้า</TableColumn>
-            <TableColumn align="center">
-              <div className="flex flex-col items-center gap-1">
-                <span>พร้อม</span>
-                <span className="text-[8px] opacity-40">READY</span>
-              </div>
-            </TableColumn>
-            <TableColumn align="center">
-              <div className="flex flex-col items-center gap-1">
-                <span>ติดจอง</span>
-                <span className="text-[8px] opacity-40">RESERVED</span>
-              </div>
-            </TableColumn>
-            <TableColumn align="center">
-              <div className="flex flex-col items-center gap-1">
-                <span>ซ่อม</span>
-                <span className="text-[8px] opacity-40">REPAIR</span>
-              </div>
-            </TableColumn>
-            <TableColumn align="center">
-              <div className="flex flex-col items-center gap-1">
-                <span>ขายแล้ว</span>
-                <span className="text-[8px] opacity-40">SOLD</span>
-              </div>
-            </TableColumn>
-            <TableColumn align="end" width={100}>รวม</TableColumn>
+            <TableColumn>หมวดหมู่สถานะ</TableColumn>
+            <TableColumn align="center" className="w-48">จำนวนสินค้า</TableColumn>
+            <TableColumn align="center" className="w-32">ดูรายการ</TableColumn>
           </TableHeader>
+
           <TableBody
             isLoading={loading}
-            emptyContent={
-              <div className="flex flex-col items-center justify-center py-24">
-                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                  <Package size={40} className="text-gray-200" />
-                </div>
-                <p className="text-gray-400 font-bold text-lg tracking-tight">ไม่พบข้อมูลการแบ่งหมวดหมู่</p>
-                <p className="text-gray-300 text-sm italic">ระบบยังไม่มีการบันทึกข้อมูลสินค้าในขณะนี้</p>
-              </div>
-            }
+            loadingContent={<Skeleton className="w-full h-12 rounded-xl" />}
           >
-            {filteredCategories.map((cat) => (
-              <TableRow key={cat.id} className="hover:bg-blue-50/30">
+            {rows.map((row) => (
+              <TableRow
+                key={row.key}
+                className="group border-b border-orange-50/50 last:border-none"
+                onClick={() => handleView(row.key)}
+              >
+                {/* หมวดหมู่ */}
                 <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-slate-200">
-                      {cat.name.substring(0, 2)}
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-2xl ${row.bg} ${row.color} flex items-center justify-center shadow-inner transition-transform group-hover:scale-110`}>
+                      {row.icon}
                     </div>
-                    <div className="flex flex-col">
-                      <span className="font-black text-slate-800 text-base">{cat.name}</span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Category ID: {cat.id}</span>
+                    <div>
+                      <span className="font-black text-slate-800 text-xl tracking-tight">
+                        {row.label}
+                      </span>
+                      <p className={`text-[10px] font-black uppercase tracking-widest opacity-60 ${row.color}`}>
+                        Status: {row.key}
+                      </p>
                     </div>
                   </div>
                 </TableCell>
 
+                {/* จำนวนสินค้า */}
                 <TableCell>
-                  <DrillDownButton cat={cat} status={STATUS_COLUMNS[0]} handleDrillDown={handleDrillDown} />
-                </TableCell>
-                <TableCell>
-                  <DrillDownButton cat={cat} status={STATUS_COLUMNS[1]} handleDrillDown={handleDrillDown} />
-                </TableCell>
-                <TableCell>
-                  <DrillDownButton cat={cat} status={STATUS_COLUMNS[2]} handleDrillDown={handleDrillDown} />
-                </TableCell>
-                <TableCell>
-                  <DrillDownButton cat={cat} status={STATUS_COLUMNS[3]} handleDrillDown={handleDrillDown} />
+                  <div className="flex justify-center">
+                    <span className="bg-orange-500 text-white px-6 py-2 rounded-2xl font-black text-xl shadow-lg shadow-orange-100 min-w-[80px] text-center">
+                      {row.count}
+                    </span>
+                  </div>
                 </TableCell>
 
+                {/* ดูรายการ */}
                 <TableCell>
-                  <div className="flex justify-end">
-                    <div className="font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-xl text-sm">
-                      {cat.count}
-                    </div>
+                  <div className="flex justify-center">
+                    <Dropdown>
+                      <DropdownTrigger>
+                        <Button
+                          isIconOnly
+                          variant="light"
+                          className="text-slate-300 hover:text-orange-500 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical size={20} />
+                        </Button>
+                      </DropdownTrigger>
+                      <DropdownMenu aria-label="Action Menu">
+                        <DropdownItem
+                          key="view"
+                          startContent={<Eye size={18} className="text-orange-500" />}
+                          onPress={() => handleView(row.key)}
+                          className="font-bold text-slate-700"
+                        >
+                          ดูรายการสินค้าทั้งหมด
+                        </DropdownItem>
+                      </DropdownMenu>
+                    </Dropdown>
                   </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Hint */}
+      <div className="flex items-center gap-2 justify-center py-4">
+        <div className="w-1.5 h-1.5 rounded-full bg-orange-200 animate-pulse" />
+        <p className="text-[10px] font-black uppercase text-orange-200 tracking-[0.2em]">คลิกทั้งแถวเพื่อเข้าสู่หน้าประวัติข้อมูล</p>
+        <div className="w-1.5 h-1.5 rounded-full bg-orange-200 animate-pulse" />
       </div>
     </div>
   );

@@ -101,6 +101,10 @@ model ConsignmentItem {
   reserveEndDate   String?
   reserveDays      String?
 
+  // Repair details
+  repairStartDate DateTime?
+  repairEndDate   DateTime?
+
   consignmentId String
   consignment   Consignment @relation(fields: [consignmentId], references: [id])
 }

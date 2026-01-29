@@ -171,20 +171,27 @@ export default function ProductHistoryStatus({
                         >
                             <Divider className="opacity-50" />
 
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-amber-600 font-bold text-sm">
+                            <div className="grid grid-cols-[1fr_auto] items-center gap-x-4">
+                                {/* Left: Evidence info */}
+                                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 text-rose-600 font-bold text-sm">
                                     <ImageIcon size={16} />
-                                    <span>อัปโหลดรูปภาพ ({currentImages.length}/6)</span>
+                                    <span>
+                                        หลักฐานความเสียหาย ({currentImages.length}/6)
+                                    </span>
                                 </div>
-                                {/* Checkbox to indicate completeness visually */}
+
+                                {/* Right: Checkbox */}
                                 <Checkbox
                                     isSelected={currentImages.length > 0}
                                     isReadOnly
-                                    color="success"
+                                    color="danger"
                                     size="sm"
-                                    classNames={{ label: "text-xs font-bold text-slate-500" }}
+                                    classNames={{
+                                        base: "px-3 py-1 rounded-full bg-rose-50",
+                                        label: "text-xs font-bold text-slate-500",
+                                    }}
                                 >
-                                    อัปโหลดแล้ว
+                                    มีรูปภาพ
                                 </Checkbox>
                             </div>
 

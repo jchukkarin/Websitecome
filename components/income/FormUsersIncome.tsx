@@ -54,6 +54,9 @@ export interface ConsignmentItem {
   reserveStartDate: string;
   reserveDays: string;
   reserveEndDate: string;
+  // Repair details
+  repairStartDate?: string;
+  repairEndDate?: string;
   imageUrl: string;
   slipImage?: string;
 }
@@ -89,6 +92,8 @@ export default function ImportForm() {
       reserveStartDate: "",
       reserveDays: "",
       reserveEndDate: "",
+      repairStartDate: "",
+      repairEndDate: "",
       imageUrl: "",
     },
   ]);
@@ -109,6 +114,8 @@ export default function ImportForm() {
         reserveStartDate: "",
         reserveDays: "",
         reserveEndDate: "",
+        repairStartDate: "",
+        repairEndDate: "",
         imageUrl: "",
       },
     ]);

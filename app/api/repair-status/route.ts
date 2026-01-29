@@ -2,24 +2,40 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// เราจะมัดรวมกันใน ConsignmentItem.status สำหรับ Repair
 export async function GET() {
-    const items = await db.consignmentItem.findMany({
-        select: { status: true }
-    });
+    try {
+        const statuses = ["REPAIRING", "REPAIRED", "RETURN_CUSTOMER"];
 
-    const counts: Record<string, number> = {};
-    items.forEach(item => {
-        counts[item.status] = (counts[item.status] || 0) + 1;
-    });
+        // เราจะนับแยกตามสถานะ
+        const counts = await Promise.all(
+            statuses.map(async (status) => {
+                const count = await db.consignmentItem.count({
+                    where: {
+                        repairStatus: {
+                            equals: status,
+                            mode: 'insensitive'
+                        }
+                    }
+                });
+                return { status, count };
+            })
+        );
 
-    // เนื่องจากเราไม่มีตาราง Status แยกสำหรับ Repair ใน Prisma 
-    // เราจะแสดงผลสถานะที่มีอยู่จริงในฐานข้อมูล
-    const statuses = Object.keys(counts).map((name, index) => ({
-        id: index + 1,
-        name,
-        count: counts[name]
-    }));
+        const labels: Record<string, string> = {
+            REPAIRING: "🔧 กำลังซ่อม",
+            REPAIRED: "✅ ซ่อมเสร็จสิ้น",
+            RETURN_CUSTOMER: "↩️ ส่งคืนลูกค้า",
+        };
 
-    return NextResponse.json(statuses);
+        const result = counts.map(item => ({
+            status: item.status,
+            label: labels[item.status],
+            count: item.count
+        }));
+
+        return NextResponse.json(result);
+    } catch (error) {
+        console.error("Repair status API Error:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
 }

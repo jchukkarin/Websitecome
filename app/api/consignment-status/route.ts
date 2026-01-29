@@ -4,27 +4,26 @@ import { db } from "@/lib/db";
 
 export async function GET() {
     try {
-        const items = await db.consignmentItem.findMany({
-            select: { status: true }
+        // Count items that are 'ready' (Sellable)
+        const sellableCount = await db.consignmentItem.count({
+            where: { status: "ready" }
         });
 
-        const counts: Record<string, number> = {};
-        items.forEach(item => {
-            const s = item.status.toLowerCase();
-            counts[s] = (counts[s] || 0) + 1;
+        // Count items that are NOT 'ready' (Unsellable/Others)
+        const unsellableCount = await db.consignmentItem.count({
+            where: {
+                status: {
+                    not: "ready"
+                }
+            }
         });
 
-        // We will return the specific counts for the statuses the user wants
-        // but the actual mapping will happen in the frontend or we can do it here.
-        // Let's just return all found statuses and count them.
+        const result = [
+            { key: "SELLABLE", label: "ขายได้", count: sellableCount },
+            { key: "UNSELLABLE", label: "ขายไม่ได้", count: unsellableCount },
+        ];
 
-        const statuses = Object.keys(counts).map((name, index) => ({
-            id: index + 1,
-            name,
-            count: counts[name]
-        }));
-
-        return NextResponse.json(statuses);
+        return NextResponse.json(result);
     } catch (error) {
         console.error("Consignment status fetch error:", error);
         return NextResponse.json({ error: "โหลดข้อมูลล้มเหลว" }, { status: 500 });

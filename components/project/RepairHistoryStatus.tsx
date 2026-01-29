@@ -124,7 +124,7 @@ export default function RepairHistoryStatus({
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                         Repair Status
                     </p>
-                    <h4 className="font-black text-slate-800 text-sm">
+                    <h4 className="text-sm font-black text-slate-800">
                         จัดการสถานะงานซ่อม
                     </h4>
                 </div>
@@ -133,24 +133,30 @@ export default function RepairHistoryStatus({
                 <div className="p-4 space-y-4">
                     {/* Status Buttons */}
                     <div className="grid grid-cols-2 gap-2">
-                        {statusOptions.map((opt) => (
-                            <Button
-                                key={opt.key}
-                                size="sm"
-                                variant={value === opt.key ? "solid" : "bordered"}
-                                color={value === opt.key ? opt.btnColor : "default"}
-                                className={`
-            h-11 rounded-2xl font-bold justify-start gap-2
-            ${value === opt.key
-                                        ? "shadow-md"
-                                        : "text-slate-500 hover:bg-slate-50"}
-          `}
-                                onPress={() => handleStatusSelect(opt.key)}
-                            >
-                                {opt.icon}
-                                <span>{opt.label}</span>
-                            </Button>
-                        ))}
+                        {statusOptions.map((opt) => {
+                            const isActive = value === opt.key;
+
+                            return (
+                                <Button
+                                    key={opt.key}
+                                    size="sm"
+                                    fullWidth
+                                    variant={isActive ? "solid" : "bordered"}
+                                    color={isActive ? opt.btnColor : "default"}
+                                    className={`
+                                        h-11 rounded-xl font-bold justify-start gap-2
+                                        transition-all
+                                        ${isActive
+                                            ? "shadow-md"
+                                            : "text-slate-500 hover:bg-slate-50"}
+                                    `}
+                                    onPress={() => handleStatusSelect(opt.key)}
+                                >
+                                    {opt.icon}
+                                    <span className="text-xs">{opt.label}</span>
+                                </Button>
+                            );
+                        })}
                     </div>
 
                     {/* Repair Date Section */}
@@ -160,7 +166,8 @@ export default function RepairHistoryStatus({
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 8 }}
-                                className="bg-slate-50 rounded-2xl p-4 space-y-3"
+                                transition={{ duration: 0.2 }}
+                                className="bg-slate-50 rounded-xl p-4 space-y-3"
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-blue-600 font-bold text-sm">
@@ -169,7 +176,7 @@ export default function RepairHistoryStatus({
                                     </div>
 
                                     {hasDates && (
-                                        <div className="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                                        <div className="flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
                                             <CheckCircle2 size={12} />
                                             ระบุแล้ว
                                         </div>
@@ -177,42 +184,55 @@ export default function RepairHistoryStatus({
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div>
+                                    <div className="space-y-1">
                                         <label className="text-[10px] font-bold text-slate-400">
                                             เริ่มซ่อม
                                         </label>
                                         <Input
                                             type="date"
                                             size="sm"
-                                            value={item.repairStartDate || ""}
+                                            value={item.repairStartDate ?? ""}
                                             onChange={(e) =>
-                                                onItemChangeAction(item.id, "repairStartDate", e.target.value)
+                                                onItemChangeAction(
+                                                    item.id,
+                                                    "repairStartDate",
+                                                    e.target.value
+                                                )
                                             }
                                             classNames={{
-                                                inputWrapper: "h-9 rounded-xl",
+                                                inputWrapper: "h-9 rounded-lg",
                                                 input: "text-xs font-bold",
                                             }}
                                         />
                                     </div>
 
-                                    <div>
+                                    <div className="space-y-1">
                                         <label className="text-[10px] font-bold text-slate-400">
                                             เสร็จประมาณ
                                         </label>
                                         <Input
                                             type="date"
                                             size="sm"
-                                            value={item.repairEndDate || ""}
+                                            value={item.repairEndDate ?? ""}
                                             onChange={(e) =>
-                                                onItemChangeAction(item.id, "repairEndDate", e.target.value)
+                                                onItemChangeAction(
+                                                    item.id,
+                                                    "repairEndDate",
+                                                    e.target.value
+                                                )
                                             }
                                             classNames={{
-                                                inputWrapper: "h-9 rounded-xl",
+                                                inputWrapper: "h-9 rounded-lg",
                                                 input: "text-xs font-bold",
                                             }}
                                         />
                                     </div>
                                 </div>
+                                {value === "repairing" && !hasDates && (
+                                    <p className="text-[10px] text-red-500 font-bold text-center animate-pulse">
+                                        * กรุณาระบุวันที่เริ่มและสิ้นสุดการซ่อม
+                                    </p>
+                                )}
                             </motion.div>
                         )}
                     </AnimatePresence>
@@ -232,7 +252,8 @@ export default function RepairHistoryStatus({
                     <Button
                         size="sm"
                         color="primary"
-                        className="flex-1 rounded-xl font-bold shadow-md shadow-blue-200 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all border border-slate-200"
+                        isDisabled={value === "repairing" && !hasDates}
+                        className="flex-1 rounded-xl font-bold shadow-md shadow-blue-200 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all border border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 disabled:shadow-none disabled:border-slate-100"
                         onPress={() => setIsOpen(false)}
                     >
                         บันทึก

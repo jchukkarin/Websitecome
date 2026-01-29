@@ -40,9 +40,11 @@ import {
   Tab
 } from "@heroui/react";
 import axios from "axios";
+import { Icon } from "@iconify/react";
+import ReportContainer from "./ReportContainer";
+import { ReportItem } from "./report.types";
 
 // Constants
-const RED_COLORS = ["#dc2626", "#ef4444", "#f87171", "#fee2e2"];
 const THEME_COLORS = {
   import: "#dc2626", // Red-600
   consignment: "#0f172a", // Slate-900
@@ -70,6 +72,19 @@ export default function Reports() {
     }
   };
 
+  // Process data for the new ReportContainer
+  const reportData: ReportItem[] = useMemo(() => {
+    return data.map((item: any) => ({
+      id: item.id,
+      type: item.type === "INCOME" ? "IMPORT" :
+        item.type === "CONSIGNMENT" ? "CONSIGN" :
+          item.type as any,
+      date: item.date,
+      price: item.price,
+      productName: item.productName
+    }));
+  }, [data]);
+
   // 1. Process Stats
   const stats = useMemo(() => {
     const total = data.length;
@@ -88,19 +103,6 @@ export default function Reports() {
     ].filter(item => item.value > 0);
 
     return { total, counts, donutData };
-  }, [data]);
-
-  // 2. Trend Data
-  const areaTrendData = useMemo(() => {
-    const yearlyMap: Record<string, number> = {};
-    data.forEach(d => {
-      const year = new Date(d.date).getFullYear() + 543; // Thai Year
-      yearlyMap[year] = (yearlyMap[year] || 0) + 1;
-    });
-
-    return Object.entries(yearlyMap)
-      .map(([year, value]) => ({ year, value }))
-      .sort((a, b) => a.year.localeCompare(b.year));
   }, [data]);
 
   // 3. User Statistics (Personnel)
@@ -144,7 +146,7 @@ export default function Reports() {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto p-4 md:p-8 space-y-10 animate-in fade-in duration-700">
+    <div className="max-w-[1600px] mx-auto p-4 md:p-8 space-y-12 animate-in fade-in duration-700">
 
       {/* Premium Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -154,14 +156,14 @@ export default function Reports() {
               Business Intelligence
             </Chip>
             <div className="flex items-center gap-1 text-green-500 text-xs font-bold">
-              <TrendingUp size={14} />
+              <Icon icon="mdi:trending-up" />
               <span>Real-time Update</span>
             </div>
           </div>
           <h1 className="text-5xl font-black text-gray-900 tracking-tighter">
-            สถิติการทำงาน <span className="text-red-600">Reports</span>
+            วิเคราะห์ <span className="text-red-600">Statistics</span>
           </h1>
-          <p className="text-gray-500 font-medium text-lg">วิเคราะห์และวางแผนการจัดการข้อมูลผ่านแดชบอร์ดอัจฉริยะ</p>
+          <p className="text-gray-500 font-medium text-lg">ศูนย์กลางข้อมูลเชิงลึกและการบริหารจัดการธุรกิจแบบครบวงจร</p>
         </div>
 
         <div className="flex gap-4">
@@ -174,7 +176,7 @@ export default function Reports() {
             </div>
             <Divider orientation="vertical" className="h-8" />
             <Button isIconOnly variant="flat" color="danger" radius="lg" onClick={fetchData} className="bg-red-50 text-red-600">
-              <RotateCcw size={20} />
+              <Icon icon="mdi:refresh" width={20} />
             </Button>
           </div>
         </div>
@@ -183,28 +185,28 @@ export default function Reports() {
       {/* Overview Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          icon={<Package size={24} />}
+          icon={<Icon icon="mdi:package-variant-closed" width={24} />}
           label="รายการนำเข้า"
           value={stats.counts.INCOME}
           color="danger"
           desc="จำนวนการรับสินค้าเข้าคลัง"
         />
         <StatCard
-          icon={<BadgeDollarSign size={24} />}
+          icon={<Icon icon="mdi:handshake" width={24} />}
           label="รายการฝากขาย"
           value={stats.counts.CONSIGNMENT}
           color="default"
           desc="สินค้าประเภครับฝากขาย"
         />
         <StatCard
-          icon={<Wrench size={24} />}
+          icon={<Icon icon="mdi:wrench" width={24} />}
           label="รายการฝากซ่อม"
           value={stats.counts.REPAIR}
           color="warning"
           desc="สินค้าที่อยู่ระหว่างการซ่อม"
         />
         <StatCard
-          icon={<HandCoins size={24} />}
+          icon={<Icon icon="mdi:hand-coin" width={24} />}
           label="รายการจำนำ"
           value={stats.counts.PAWN}
           color="danger"
@@ -212,92 +214,30 @@ export default function Reports() {
         />
       </div>
 
-      {/* Main Charts Row */}
+      <ReportContainer data={reportData} />
+
+      {/* Target & KPI Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Sales Trend Chart */}
-        <Card className="lg:col-span-8 bg-white border-none shadow-xl shadow-gray-100/50 rounded-[3rem] overflow-hidden">
-          <CardBody className="p-8 md:p-12">
-            <div className="flex justify-between items-center mb-10">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-200">
-                  <TrendingUp size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-gray-900 uppercase">Trend Analysis</h3>
-                  <p className="text-sm text-gray-400 font-medium">สถิติการสะสมข้อมูลแยกตามปีงบประมาณ</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Chip variant="flat" color="danger" className="font-bold">Annual</Chip>
-              </div>
-            </div>
-
-            <div className="h-72 w-full">
-              {areaTrendData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={areaTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#dc2626" stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="5 5" vertical={false} stroke="#f1f5f9" />
-                    <XAxis
-                      dataKey="year"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }}
-                      dy={15}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }}
-                    />
-                    <Tooltip
-                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                      labelStyle={{ fontWeight: 'bold', color: '#111827' }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#dc2626"
-                      strokeWidth={4}
-                      fillOpacity={1}
-                      fill="url(#colorValue)"
-                      animationDuration={2000}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-400 font-bold">ยังไม่มีข้อมูลเพียงพอสำหรับการพล็อตกราฟ</div>
-              )}
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* Target Progress Card */}
-        <Card className="lg:col-span-4 bg-slate-900 border-none shadow-xl shadow-slate-200 rounded-[3rem] overflow-hidden text-white relative">
+        <Card className="lg:col-span-12 bg-slate-900 border-none shadow-xl shadow-slate-200 rounded-[3rem] overflow-hidden text-white relative">
           <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
-            <Target size={200} />
+            <Icon icon="mdi:target" width={200} />
           </div>
-          <CardBody className="p-10 flex flex-col justify-between relative z-10">
-            <div className="space-y-6">
+          <CardBody className="p-10 flex flex-col md:flex-row justify-between items-center relative z-10 gap-10">
+            <div className="space-y-6 flex-1">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-                  <Target size={20} className="text-red-400" />
+                  <Icon icon="mdi:target" width={20} className="text-red-400" />
                 </div>
-                <h3 className="text-lg font-black uppercase tracking-wider">KPI Target</h3>
+                <h3 className="text-lg font-black uppercase tracking-wider">KPI Target Progress</h3>
               </div>
               <div className="space-y-4">
-                <p className="text-4xl font-black">{monthlyProgress}%</p>
-                <p className="text-sm text-slate-400 font-medium">เป้าหมายการทำรายการในเดือนปัจจุบัน (Goal: 100 txn)</p>
+                <p className="text-6xl font-black">{monthlyProgress}%</p>
+                <p className="text-sm text-slate-400 font-medium">เป้าหมายการทำรายการรวมทุกประเภทในเดือนปัจจุบัน (Goal: 100 txn)</p>
               </div>
               <Progress
                 value={monthlyProgress}
                 color="danger"
-                size="md"
+                size="lg"
                 radius="full"
                 className="max-w-md shadow-2xl"
                 classNames={{
@@ -307,16 +247,19 @@ export default function Reports() {
               />
             </div>
 
-            <div className="pt-8 border-t border-white/10 mt-8">
-              <p className="text-xs text-slate-400 font-bold uppercase mb-4 tracking-widest">Top Distribution</p>
-              <div className="space-y-4">
-                {stats.donutData.slice(0, 3).map((item, idx) => (
+            <div className="w-full md:w-80 p-8 bg-white/5 rounded-[2rem] border border-white/10">
+              <p className="text-xs text-slate-400 font-bold uppercase mb-6 tracking-widest text-center">Data Distribution</p>
+              <div className="space-y-5">
+                {stats.donutData.map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="text-xs font-bold text-slate-300">{item.name}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-sm font-bold text-slate-300">{item.name}</span>
                     </div>
-                    <span className="text-xs font-black">{Math.round((item.value / stats.total) * 100)}%</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black">{item.value}</span>
+                      <span className="text-[10px] font-bold text-slate-500">TXN</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -325,23 +268,23 @@ export default function Reports() {
         </Card>
       </div>
 
-      {/* Personnel Statistics (The New Requested Section) */}
-      <div className="space-y-6">
+      {/* Personnel Statistics */}
+      <div className="space-y-8">
         <div className="flex items-center gap-4 border-l-8 border-red-600 pl-6 py-2">
           <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600">
-            <Users size={24} />
+            <Icon icon="mdi:account-group" width={24} />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">รายงานสถิรายชื่อผู้ติดต่อตามบริการ</h2>
-            <p className="text-gray-500 font-medium italic">ข้อมูลสรุปจำนวนครั้งที่ผู้ติดต่อแต่ละรายมาทำรายการในระบบ (ไม่รวมสินค้า)</p>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">ทำเนียบผู้ใช้บริการสูงสุด</h2>
+            <p className="text-gray-500 font-medium">สรุปรายชื่อลูกค้าที่มาใช้บริการบ่อยที่สุดแยกตามแผนก</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
-          <PersonnelCard title="ผู้ติดต่อเบิกสินค้า" data={personnelStats.import} icon={<Package size={18} />} color="bg-red-600" />
-          <PersonnelCard title="ผู้ฝากขายสินค้า" data={personnelStats.consignment} icon={<BadgeDollarSign size={18} />} color="bg-slate-900" />
-          <PersonnelCard title="ผู้ฝากซ่อมสินค้า" data={personnelStats.repair} icon={<Wrench size={18} />} color="bg-slate-600" />
-          <PersonnelCard title="ผู้มาจำนำสินค้า" data={personnelStats.pawn} icon={<HandCoins size={18} />} color="bg-slate-400" />
+          <PersonnelCard title="นำเข้าสินค้า" data={personnelStats.import} icon={<Icon icon="mdi:package-variant-closed" />} color="bg-red-600" />
+          <PersonnelCard title="ฝากขายสินค้า" data={personnelStats.consignment} icon={<Icon icon="mdi:handshake" />} color="bg-slate-900" />
+          <PersonnelCard title="ฝากซ่อมสินค้า" data={personnelStats.repair} icon={<Icon icon="mdi:wrench" />} color="bg-slate-600" />
+          <PersonnelCard title="รับจำนำสินค้า" data={personnelStats.pawn} icon={<Icon icon="mdi:hand-coin" />} color="bg-slate-400" />
         </div>
       </div>
     </div>
@@ -388,7 +331,7 @@ function PersonnelCard({ title, data, icon, color }: any) {
             </div>
             <h4 className="text-base font-black text-slate-900">{title}</h4>
           </div>
-          <Users size={16} className="text-slate-200" />
+          <Icon icon="mdi:account-group" className="text-slate-200" width={16} />
         </div>
 
         <div className="space-y-4">
@@ -407,7 +350,7 @@ function PersonnelCard({ title, data, icon, color }: any) {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                {idx === 0 && <Crown size={12} className="text-amber-500" />}
+                {idx === 0 && <Icon icon="mdi:crown" className="text-amber-500" width={14} />}
                 <div className="bg-slate-100 px-3 py-1 rounded-full text-[10px] font-black text-slate-600">
                   {person.count} <span className="text-[8px] opacity-70">ครั้ง</span>
                 </div>
@@ -415,7 +358,7 @@ function PersonnelCard({ title, data, icon, color }: any) {
             </div>
           )) : (
             <div className="py-10 text-center space-y-3">
-              <UserIcon size={32} className="mx-auto text-slate-100" />
+              <Icon icon="mdi:account-off" width={32} className="mx-auto text-slate-100" />
               <p className="text-xs text-slate-300 font-bold uppercase tracking-widest">ยังไม่มีข้อมูล</p>
             </div>
           )}

@@ -1,4 +1,5 @@
 "use client"
+
 // components/income/RepairDetailMenu.tsx
 import React from "react";
 import { motion } from "framer-motion";

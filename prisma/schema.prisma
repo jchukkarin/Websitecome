@@ -7,23 +7,17 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  MANAGER
-  EMPLOYEE
-}
-
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  password  String?
-  role      Role     @default(EMPLOYEE)
-  image     String?
-  username  String?  @unique
-  createdAt DateTime @default(now())
-
-  notifications Notification[]
+  id            String         @id @default(uuid())
+  name          String?
+  email         String         @unique
+  password      String?
+  createdAt     DateTime       @default(now())
+  image         String?
+  username      String?        @unique
+  role          Role           @default(EMPLOYEE)
   consignments  Consignment[]
+  notifications Notification[]
 }
 
 model Notification {
@@ -31,41 +25,35 @@ model Notification {
   userId    String
   title     String
   message   String
-  type      String // เช่น ORDER, PAYMENT, SYSTEM
+  type      String
   isSent    Boolean   @default(false)
   sentAt    DateTime?
   createdAt DateTime  @default(now())
-
-  user User @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
 }
 
 model Consignment {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   date          DateTime
   lot           String
   consignorName String
   contactNumber String
   address       String
   totalPrice    Float
-  type          String   @default("INCOME")
-  createdAt     DateTime @default(now())
-
-  userId String? // ✅ Tracking owner
-  user   User?   @relation(fields: [userId], references: [id])
-
-  // ✅ เชื่อมกับ ConsignmentStatus (หมวดหมู่สถานะ)
-  statusId Int?
-  status   ConsignmentStatus? @relation(fields: [statusId], references: [id])
-
-  images ConsignmentImage[]
-  items  ConsignmentItem[]
+  createdAt     DateTime           @default(now())
+  type          String             @default("INCOME")
+  userId        String?
+  statusId      Int?
+  status        ConsignmentStatus? @relation(fields: [statusId], references: [id])
+  user          User?              @relation(fields: [userId], references: [id])
+  images        ConsignmentImage[]
+  items         ConsignmentItem[]
 }
 
-// ✅ เพิ่ม Model สำหรับสถานะการจำนำ (4 สถานะ: ยังไม่กำหนด, ครบกำหนด, ต่อยอด, ปิดยอด)
 model ConsignmentStatus {
   id           Int           @id @default(autoincrement())
-  name         String        @unique // ชื่อสถานะ เช่น "ยังไม่กำหนด", "ครบกำหนด"
-  consignments Consignment[] // 1 สถานะ มีรายการจำนำได้หลายรายการ
+  name         String        @unique
+  consignments Consignment[]
 }
 
 model ConsignmentImage {
@@ -75,38 +63,27 @@ model ConsignmentImage {
   consignment   Consignment @relation(fields: [consignmentId], references: [id])
 }
 
-enum RepairStatus {
-  NOT_REPAIR
-  REPAIRING
-  REPAIRED
-}
-
 model ConsignmentItem {
-  id             String    @id @default(uuid())
-  productName    String
-  category       String
-  year           String
-  status         String    @default("ready") // ready, reserved, sold, repair
-  repairStatus   String    @default("NOT_REPAIR") // NOT_REPAIR, REPAIRING, REPAIRED
-  confirmedPrice Float     @default(0)
-  salesPrice     Float?    @default(0)
-  salesChannel   String?
-  imageUrl       String?
-  slipImage      String?
-  soldAt         DateTime?
-
-  // Reservation details
-  isReserveOpen    String? @default("false")
-  reserveStartDate String?
-  reserveEndDate   String?
+  id               String      @id @default(uuid())
+  productName      String
+  category         String
+  year             String
+  status           String      @default("ready")
+  confirmedPrice   Float       @default(0)
+  salesChannel     String?
+  imageUrl         String?
+  consignmentId    String
+  slipImage        String?
+  soldAt           DateTime?
+  isReserveOpen    String?     @default("false")
+  repairStatus     String      @default("NOT_REPAIR")
   reserveDays      String?
-
-  // Repair details
-  repairStartDate DateTime?
-  repairEndDate   DateTime?
-
-  consignmentId String
-  consignment   Consignment @relation(fields: [consignmentId], references: [id])
+  reserveEndDate   String?
+  reserveStartDate String?
+  salesPrice       Float?      @default(0)
+  repairEndDate    DateTime?
+  repairStartDate  DateTime?
+  consignment      Consignment @relation(fields: [consignmentId], references: [id])
 }
 
 model ShopProfile {
@@ -125,41 +102,42 @@ model ShopProfile {
 }
 
 model ImportStatus {
-  id       Int       @id @default(autoincrement())
-  name     String
-  products Product[]
-
-  createdAt DateTime @default(now())
+  id        Int       @id @default(autoincrement())
+  name      String
+  createdAt DateTime  @default(now())
+  products  Product[]
 }
 
 model Product {
-  id   Int    @id @default(autoincrement())
-  name String
-
-  // สถานะนำเข้า
+  id             Int           @id @default(autoincrement())
+  name           String
   importStatusId Int
-  importStatus   ImportStatus @relation(fields: [importStatusId], references: [id])
-
-  // สถานะการเบิกจ่าย
+  createdAt      DateTime      @default(now())
+  isSold         Boolean       @default(false)
   payoutStatusId Int?
+  soldAt         DateTime?
+  defectImages   String[]
+  images         String[]
+  slipImage      String?
+  status         String        @default("ready")
+  importStatus   ImportStatus  @relation(fields: [importStatusId], references: [id])
   payoutStatus   PayoutStatus? @relation(fields: [payoutStatusId], references: [id])
-
-  // สถานะขายจริง
-  isSold Boolean   @default(false)
-  soldAt DateTime?
-
-  // New fields for extended status tracking
-  status       String   @default("ready") // ready, reserved, repair, sold
-  images       String[] // Array of image URLs
-  defectImages String[] // Array of defect image URLs
-  slipImage    String? // URL of payment slip
-
-  createdAt DateTime @default(now())
 }
 
 model PayoutStatus {
   id        Int       @id @default(autoincrement())
   name      String
-  products  Product[]
   createdAt DateTime  @default(now())
+  products  Product[]
+}
+
+enum Role {
+  MANAGER
+  EMPLOYEE
+}
+
+enum RepairStatus {
+  NOT_REPAIR
+  REPAIRING
+  REPAIRED
 }

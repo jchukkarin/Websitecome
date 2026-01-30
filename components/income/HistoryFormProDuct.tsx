@@ -34,8 +34,11 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import UnifiedPersonView from "../history/UnifiedPersonView";
+import { useRouter } from "next/navigation";
+import { exportExcel } from "@/lib/export/exportExcel";
 
 export default function ConsignmentHistory() {
+    const router = useRouter();
     const [view, setView] = useState<"product" | "consignor">("product");
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -173,7 +176,11 @@ export default function ConsignmentHistory() {
                                     )}
                                 </Select>
 
-                                <Button className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black shadow-lg shadow-slate-200" startContent={<FileSpreadsheet size={18} />}>
+                                <Button
+                                    className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black shadow-lg shadow-slate-200 hover:scale-105 active:scale-95 transition-all"
+                                    startContent={<FileSpreadsheet size={18} />}
+                                    onPress={() => exportExcel(filteredData)}
+                                >
                                     Export Excel
                                 </Button>
                             </div>
@@ -207,7 +214,11 @@ export default function ConsignmentHistory() {
                                     emptyContent={!loading && "ไม่มีข้อมูลที่ตรงกับการค้นหา"}
                                 >
                                     {(item) => (
-                                        <TableRow key={item.id} className="group transition-all hover:bg-slate-50/50">
+                                        <TableRow
+                                            key={item.id}
+                                            className="group transition-all hover:bg-slate-50/70 cursor-pointer"
+                                            onClick={() => router.push(`/history/${item.id}`)}
+                                        >
                                             <TableCell>
                                                 <div className="w-16 h-12 rounded-xl border border-slate-100 overflow-hidden bg-slate-50 shadow-sm">
                                                     {item.displayImage ? (

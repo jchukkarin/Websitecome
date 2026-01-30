@@ -37,8 +37,11 @@ import {
 import axios from "axios";
 import HistoryForm from "./HistoryForm";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { exportImportExcel } from "@/lib/export/exportImportExcel";
 
 export default function History() {
+    const router = useRouter();
     const { data: session } = useSession();
     const searchParams = useSearchParams();
     const [view, setView] = useState<"product" | "importer">("product");
@@ -223,7 +226,11 @@ export default function History() {
                                         <SelectItem key={status.key} textValue={status.label}>{status.label}</SelectItem>
                                     )}
                                 </Select>
-                                <Button className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black shadow-lg shadow-slate-200" startContent={<FileSpreadsheet size={18} />}>
+                                <Button
+                                    className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black shadow-lg shadow-slate-200 hover:scale-105 active:scale-95 transition-all"
+                                    startContent={<FileSpreadsheet size={18} />}
+                                    onPress={() => exportImportExcel(filteredData)}
+                                >
                                     Export Excel
                                 </Button>
                             </div>
@@ -259,7 +266,11 @@ export default function History() {
                                     emptyContent={!loading && "ไม่มีข้อมูลที่ตรงกับการค้นหา"}
                                 >
                                     {(item) => (
-                                        <TableRow key={item.id} className="group transition-all hover:bg-slate-50/50">
+                                        <TableRow
+                                            key={item.id}
+                                            className="group transition-all hover:bg-slate-50/70 cursor-pointer"
+                                            onClick={() => router.push(`/history/${item.id}`)}
+                                        >
                                             {/* 1. Image */}
                                             <TableCell>
                                                 <div className="w-16 h-12 rounded-xl border border-slate-100 overflow-hidden bg-slate-50 shadow-sm">

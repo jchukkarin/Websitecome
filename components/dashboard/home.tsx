@@ -21,7 +21,7 @@ import DownloadExcelButton from "../downloadfile/DownloadExcelButton"
 import toast, { Toaster } from "react-hot-toast"
 import axios from "axios"
 import { useSession } from "next-auth/react"
-import EditBox from "./EditBox"
+import ProductDetailModal from "../modal/ProductDetailModal"
 
 // Types
 export type ConsignmentImage = {
@@ -55,7 +55,8 @@ export type DashboardItem = ConsignmentItem & {
     date: string
     lot: string
     type: string
-    userId: string // ✅ Added
+    userId: string
+    user: any; // ✅ Combined user data
     parentImages: ConsignmentImage[]
 }
 
@@ -124,7 +125,8 @@ export default function DashboardHome() {
                     }),
                     lot: c.lot,
                     type: c.type,
-                    userId: c.userId, // ✅ Keep userId for check
+                    userId: c.userId,
+                    user: (c as any).user, // ✅ Include user info for the modal
                     parentImages: c.images || []
                 }))
             )
@@ -167,19 +169,27 @@ export default function DashboardHome() {
         }
     }
 
-    const handleSave = () => {
-        // In a real app, this would be a PUT request to /api/consignments/items/[id]
-        // Since we don't have that yet, we'll just show the success toast as requested.
-        toast.success("บันทึกเสร็จสิ้น", {
-            icon: '✅',
-            style: {
-                borderRadius: '10px',
-                background: '#333',
-                color: '#fff',
-                fontWeight: 'bold'
-            },
-        })
-        onOpenChange()
+    const handleSave = async (formData: any) => {
+        try {
+            const res = await axios.patch(`/api/consignments/items/${formData.id}`, formData)
+            if (res.data.success) {
+                toast.success("บันทึกการเปลี่ยนแปลงเสร็จสิ้น", {
+                    icon: '✅',
+                    style: {
+                        borderRadius: '10px',
+                        background: '#333',
+                        color: '#fff',
+                        fontWeight: 'bold'
+                    },
+                })
+                fetchData() // Refresh list
+                onOpenChange() // Close modal
+            }
+        } catch (error: any) {
+            console.error("Save error:", error)
+            const errMsg = error.response?.data?.error || "ไม่สามารถบันทึกข้อมูลได้"
+            toast.error(errMsg)
+        }
     }
 
     // Filter Logic
@@ -433,12 +443,13 @@ export default function DashboardHome() {
                 </div>
             </div>
 
-            {/* ===== New EditBox Component ===== */}
-            <EditBox
+            {/* ===== New Modern Detail Modal ===== */}
+            <ProductDetailModal
                 isOpen={isOpen}
-                onOpenChange={onOpenChange}
-                selectedItem={selectedItem}
-                onSave={handleSave}
+                onOpenChangeAction={onOpenChange}
+                item={selectedItem}
+                onSaveAction={handleSave}
+                isManager={isManager}
             />
         </div>
     )

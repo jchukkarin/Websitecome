@@ -35,8 +35,11 @@ import {
 import axios from "axios";
 import UnifiedPersonView from "../history/UnifiedPersonView";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { exportRepairExcel } from "@/lib/export/exportRepairExcel";
 
 export default function RepairServiceHistory() {
+    const router = useRouter();
     const { data: session } = useSession();
     const [view, setView] = useState<"product" | "repair_person">("product");
     const [data, setData] = useState<any[]>([]);
@@ -188,7 +191,11 @@ export default function RepairServiceHistory() {
                                     )}
                                 </Select>
 
-                                <Button className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black shadow-lg shadow-slate-200" startContent={<FileSpreadsheet size={18} />}>
+                                <Button
+                                    className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black shadow-lg shadow-slate-200 hover:scale-105 active:scale-95 transition-all"
+                                    startContent={<FileSpreadsheet size={18} />}
+                                    onPress={() => exportRepairExcel(filteredData)}
+                                >
                                     Export Excel
                                 </Button>
                             </div>
@@ -222,7 +229,11 @@ export default function RepairServiceHistory() {
                                     emptyContent={!loading && "ไม่มีข้อมูลที่ตรงกับการค้นหา"}
                                 >
                                     {(item) => (
-                                        <TableRow key={item.id} className="group transition-all hover:bg-slate-50/50">
+                                        <TableRow
+                                            key={item.id}
+                                            className="group transition-all hover:bg-blue-50/70 cursor-pointer"
+                                            onClick={() => router.push(`/history/${item.id}`)}
+                                        >
                                             <TableCell>
                                                 <div className="w-16 h-12 rounded-xl border border-slate-100 overflow-hidden bg-slate-50 shadow-sm">
                                                     {item.displayImage ? (

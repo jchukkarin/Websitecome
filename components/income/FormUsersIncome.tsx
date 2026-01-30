@@ -36,6 +36,8 @@ import {
   Image as ImageIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { exportFormItemsExcel } from "@/lib/export/exportFormItemsExcel";
+import { FileSpreadsheet } from "lucide-react";
 
 // Components
 import RepairStatusCell from "./RepairStatusCell";
@@ -286,6 +288,14 @@ export default function ImportForm() {
               className="bg-white border border-slate-200 font-bold text-slate-600 h-12 px-6 rounded-2xl hover:bg-slate-50 transition-all"
             >
               ล้างฟอร์ม
+            </Button>
+            <Button
+              variant="flat"
+              startContent={<FileSpreadsheet size={18} />}
+              onPress={() => exportFormItemsExcel(formData, items)}
+              className="bg-slate-900 border border-slate-800 font-bold text-white h-12 px-6 rounded-2xl hover:bg-slate-800 transition-all"
+            >
+              ส่งออก Excel
             </Button>
             <Button
               color="primary"

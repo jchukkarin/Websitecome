@@ -270,12 +270,12 @@ export default function HistoryDetailPage() {
                                             variant="bordered"
                                             className="font-bold"
                                         >
-                                            <SelectItem key="กล้อง" value="กล้อง">กล้อง</SelectItem>
-                                            <SelectItem key="เลนส์" value="เลนส์">เลนส์</SelectItem>
-                                            <SelectItem key="ขาตั้งกล้อง" value="ขาตั้งกล้อง">ขาตั้งกล้อง</SelectItem>
-                                            <SelectItem key="แบต" value="แบต">แบต</SelectItem>
-                                            <SelectItem key="ฟิลม์" value="ฟิลม์">ฟิลม์</SelectItem>
-                                            <SelectItem key="อื่นๆ" value="อื่นๆ">อื่นๆ</SelectItem>
+                                            <SelectItem key="กล้อง">กล้อง</SelectItem>
+                                            <SelectItem key="เลนส์">เลนส์</SelectItem>
+                                            <SelectItem key="ขาตั้งกล้อง">ขาตั้งกล้อง</SelectItem>
+                                            <SelectItem key="แบต">แบต</SelectItem>
+                                            <SelectItem key="ฟิลม์">ฟิลม์</SelectItem>
+                                            <SelectItem key="อื่นๆ">อื่นๆ</SelectItem>
                                         </Select>
                                         <Input
                                             label="ปีที่ผลิต / สภาพ"
@@ -293,10 +293,10 @@ export default function HistoryDetailPage() {
                                             variant="bordered"
                                             className="font-bold"
                                         >
-                                            <SelectItem key="ready" value="ready">พร้อมขาย</SelectItem>
-                                            <SelectItem key="reserved" value="reserved">ติดจอง</SelectItem>
-                                            <SelectItem key="sold" value="sold">ขายแล้ว</SelectItem>
-                                            <SelectItem key="repair" value="repair">ส่งซ่อม</SelectItem>
+                                            <SelectItem key="ready">พร้อมขาย</SelectItem>
+                                            <SelectItem key="reserved">ติดจอง</SelectItem>
+                                            <SelectItem key="sold">ขายแล้ว</SelectItem>
+                                            <SelectItem key="repair">ส่งซ่อม</SelectItem>
                                         </Select>
                                         <Select
                                             label="สถานะการซ่อม"
@@ -305,9 +305,9 @@ export default function HistoryDetailPage() {
                                             variant="bordered"
                                             className="font-bold"
                                         >
-                                            <SelectItem key="NOT_REPAIR" value="NOT_REPAIR">ไม่ซ่อม</SelectItem>
-                                            <SelectItem key="REPAIRING" value="REPAIRING">กำลังซ่อม</SelectItem>
-                                            <SelectItem key="REPAIRED" value="REPAIRED">ซ่อมเสร็จแล้ว</SelectItem>
+                                            <SelectItem key="NOT_REPAIR">ไม่ซ่อม</SelectItem>
+                                            <SelectItem key="REPAIRING">กำลังซ่อม</SelectItem>
+                                            <SelectItem key="REPAIRED">ซ่อมเสร็จแล้ว</SelectItem>
                                         </Select>
                                     </div>
                                     <Input

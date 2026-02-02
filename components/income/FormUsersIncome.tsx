@@ -554,214 +554,216 @@ export default function ImportForm() {
           </div>
 
           <Card className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white overflow-hidden" radius="lg">
-            <Table
-              aria-label="Items List"
-              removeWrapper
-              className="text-sm font-medium"
-            >
-              <TableHeader>
-                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] text-center w-24">IMAGE</TableColumn>
-                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px]">PRODUCT DETAILS</TableColumn>
-                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-48">CATEGORY</TableColumn>
-                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-24">YEAR</TableColumn>
-                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-40">COST / CONFIRMED</TableColumn>
-                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-40">SELLING PRICE</TableColumn>
-                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-44">PRODUCT STATUS</TableColumn>
-                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-44">REPAIR STATUS</TableColumn>
-                <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] text-center w-20">ACTIONS</TableColumn>
-              </TableHeader>
-              <TableBody items={items}>
-                {(item) => (
-                  <TableRow key={item.id} className="group border-b border-slate-50 last:border-none transition-colors hover:bg-slate-50/30">
-                    {/* Image Column */}
-                    <TableCell>
-                      <div
-                        className="mx-auto w-16 h-16 rounded-2xl border-2 border-dashed border-slate-100 bg-slate-50/50 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-white transition-all group/img relative overflow-hidden shadow-inner"
-                        onClick={() => document.getElementById(`file-${item.id}`)?.click()}
-                      >
-                        {item.imageUrl ? (
-                          <img src={item.imageUrl} className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-500" alt="product" />
-                        ) : (
-                          <Plus className="text-slate-300 group-hover/img:text-blue-500 group-hover/img:scale-125 transition-all" size={20} />
-                        )}
-                        <input
-                          id={`file-${item.id}`}
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          onChange={(e) => {
-                            handleItemImageUpload(item.id, e);
-                            setErrors((prev) => ({
-                              ...prev,
-                              [`item.${item.id}.imageUrl`]: "",
-                            }));
-                          }}
-                        />
-                      </div>
-                      {errors[`item.${item.id}.imageUrl`] && (
-                        <div className="mt-1 flex justify-center">
-                          <Chip color="danger" size="sm" variant="flat" className="h-[20px] text-[10px] px-1">
-                            {errors[`item.${item.id}.imageUrl`]}
-                          </Chip>
+            <div className="overflow-x-auto no-scrollbar w-full">
+              <Table
+                aria-label="Items List"
+                removeWrapper
+                className="text-sm font-medium min-w-[1200px]"
+              >
+                <TableHeader>
+                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] text-center w-24">IMAGE</TableColumn>
+                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px]">PRODUCT DETAILS</TableColumn>
+                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-48">CATEGORY</TableColumn>
+                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-24">YEAR</TableColumn>
+                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-40">COST / CONFIRMED</TableColumn>
+                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-40">SELLING PRICE</TableColumn>
+                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-44">PRODUCT STATUS</TableColumn>
+                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-44">REPAIR STATUS</TableColumn>
+                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] text-center w-20">ACTIONS</TableColumn>
+                </TableHeader>
+                <TableBody items={items}>
+                  {(item) => (
+                    <TableRow key={item.id} className="group border-b border-slate-50 last:border-none transition-colors hover:bg-slate-50/30">
+                      {/* Image Column */}
+                      <TableCell>
+                        <div
+                          className="mx-auto w-16 h-16 rounded-2xl border-2 border-dashed border-slate-100 bg-slate-50/50 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-white transition-all group/img relative overflow-hidden shadow-inner"
+                          onClick={() => document.getElementById(`file-${item.id}`)?.click()}
+                        >
+                          {item.imageUrl ? (
+                            <img src={item.imageUrl} className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-500" alt="product" />
+                          ) : (
+                            <Plus className="text-slate-300 group-hover/img:text-blue-500 group-hover/img:scale-125 transition-all" size={20} />
+                          )}
+                          <input
+                            id={`file-${item.id}`}
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => {
+                              handleItemImageUpload(item.id, e);
+                              setErrors((prev) => ({
+                                ...prev,
+                                [`item.${item.id}.imageUrl`]: "",
+                              }));
+                            }}
+                          />
                         </div>
-                      )}
-                    </TableCell>
+                        {errors[`item.${item.id}.imageUrl`] && (
+                          <div className="mt-1 flex justify-center">
+                            <Chip color="danger" size="sm" variant="flat" className="h-[20px] text-[10px] px-1">
+                              {errors[`item.${item.id}.imageUrl`]}
+                            </Chip>
+                          </div>
+                        )}
+                      </TableCell>
 
-                    {/* Product Name */}
-                    <TableCell>
-                      <Input
-                        variant="faded"
-                        placeholder="ระบุชื่อรุ่น / แบรนด์สินค้า"
-                        value={item.productName}
-                        isInvalid={!!errors[`item.${item.id}.productName`]}
-                        errorMessage={errors[`item.${item.id}.productName`]}
-                        classNames={{
-                          input: "text-slate-800",
-                          inputWrapper: "border-none bg-transparent hover:bg-white focus-within:bg-white transition-all rounded-xl",
-                        }}
-                        onChange={(e) => {
-                          handleItemChange(item.id, "productName", e.target.value);
-                          setErrors((prev) => ({
-                            ...prev,
-                            [`item.${item.id}.productName`]: "",
-                          }));
-                        }}
-                      />
-                    </TableCell>
-
-                    {/* Category */}
-                    <TableCell>
-                      <Select
-                        variant="faded"
-                        placeholder="เลือกหมวดหมู่"
-                        className="font-bold"
-                        selectedKeys={item.category ? new Set([item.category]) : new Set()}
-                        isInvalid={!!errors[`item.${item.id}.category`]}
-                        errorMessage={errors[`item.${item.id}.category`]}
-                        classNames={{
-                          trigger: "bg-white border-none shadow-none hover:bg-slate-50 transition-all rounded-xl h-10",
-                          value: "font-bold text-slate-700",
-                          popoverContent: "bg-white border-none shadow-2xl rounded-2xl p-1",
-                          listbox: "bg-white",
-                        }}
-                        onSelectionChange={(keys) => {
-                          handleItemChange(item.id, "category", Array.from(keys)[0] as string);
-                          setErrors((prev) => ({
-                            ...prev,
-                            [`item.${item.id}.category`]: "",
-                          }));
-                        }}
-                      >
-                        <SelectItem key="Camera" className="font-bold py-3 rounded-xl" startContent={<ImageIcon size={18} className="text-blue-500" />}>กล้อง</SelectItem>
-                        <SelectItem key="Lens" className="font-bold py-3 rounded-xl" startContent={<Package size={18} className="text-emerald-500" />}>เลนส์</SelectItem>
-                        <SelectItem key="Tripod" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-amber-500" />}>ขาตั้งกล้อง</SelectItem>
-                        <SelectItem key="Battery" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-rose-500" />}>แบต</SelectItem>
-                        <SelectItem key="Film" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-violet-500" />}>ฟิลม์</SelectItem>
-                        <SelectItem key="Accessory" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-indigo-500" />}>อุปกรณ์เสริม</SelectItem>
-                        <SelectItem key="Other" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-slate-400" />}>อื่นๆ</SelectItem>
-                      </Select>
-                    </TableCell>
-
-                    {/* Year */}
-                    <TableCell>
-                      <Input
-                        variant="faded"
-                        placeholder="ปีที่ผลิต"
-                        value={item.year}
-                        className="font-bold w-20"
-                        classNames={{
-                          input: "text-center",
-                          inputWrapper: "border-none bg-transparent hover:bg-white rounded-xl h-10 shadow-none",
-                        }}
-                        onChange={(e) => handleItemChange(item.id, "year", e.target.value)}
-                      />
-                    </TableCell>
-
-                    {/* Cost Price */}
-                    <TableCell>
-                      <div className="relative group/price">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">฿</span>
+                      {/* Product Name */}
+                      <TableCell>
                         <Input
-                          type="number"
                           variant="faded"
-                          placeholder="0.00"
-                          value={item.confirmedPrice}
-                          isInvalid={!!errors[`item.${item.id}.confirmedPrice`]}
-                          errorMessage={errors[`item.${item.id}.confirmedPrice`]}
+                          placeholder="ระบุชื่อรุ่น / แบรนด์สินค้า"
+                          value={item.productName}
+                          isInvalid={!!errors[`item.${item.id}.productName`]}
+                          errorMessage={errors[`item.${item.id}.productName`]}
                           classNames={{
-                            input: "text-right font-black text-blue-600 pr-1",
-                            inputWrapper: "border-none bg-slate-50 group-hover/price:bg-blue-50 transition-all rounded-xl pl-6",
+                            input: "text-slate-800",
+                            inputWrapper: "border-none bg-transparent hover:bg-white focus-within:bg-white transition-all rounded-xl",
                           }}
                           onChange={(e) => {
-                            handleItemChange(item.id, "confirmedPrice", e.target.value);
+                            handleItemChange(item.id, "productName", e.target.value);
                             setErrors((prev) => ({
                               ...prev,
-                              [`item.${item.id}.confirmedPrice`]: "",
+                              [`item.${item.id}.productName`]: "",
                             }));
                           }}
                         />
-                      </div>
-                    </TableCell>
+                      </TableCell>
 
-                    {/* Sale Price */}
-                    <TableCell>
-                      <div className="relative group/price">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">฿</span>
-                        <Input
-                          type="number"
+                      {/* Category */}
+                      <TableCell>
+                        <Select
                           variant="faded"
-                          placeholder="0.00"
-                          value={item.salesPrice}
-                          isInvalid={!!errors[`item.${item.id}.salesPrice`]}
-                          errorMessage={errors[`item.${item.id}.salesPrice`]}
+                          placeholder="เลือกหมวดหมู่"
+                          className="font-bold"
+                          selectedKeys={item.category ? new Set([item.category]) : new Set()}
+                          isInvalid={!!errors[`item.${item.id}.category`]}
+                          errorMessage={errors[`item.${item.id}.category`]}
                           classNames={{
-                            input: "text-right font-black text-green-600 pr-1",
-                            inputWrapper: "border-none bg-slate-50 group-hover/price:bg-green-50 transition-all rounded-xl pl-6",
+                            trigger: "bg-white border-none shadow-none hover:bg-slate-50 transition-all rounded-xl h-10",
+                            value: "font-bold text-slate-700",
+                            popoverContent: "bg-white border-none shadow-2xl rounded-2xl p-1",
+                            listbox: "bg-white",
                           }}
-                          onChange={(e) => {
-                            handleItemChange(item.id, "salesPrice", e.target.value);
+                          onSelectionChange={(keys) => {
+                            handleItemChange(item.id, "category", Array.from(keys)[0] as string);
                             setErrors((prev) => ({
                               ...prev,
-                              [`item.${item.id}.salesPrice`]: "",
+                              [`item.${item.id}.category`]: "",
                             }));
                           }}
+                        >
+                          <SelectItem key="Camera" className="font-bold py-3 rounded-xl" startContent={<ImageIcon size={18} className="text-blue-500" />}>กล้อง</SelectItem>
+                          <SelectItem key="Lens" className="font-bold py-3 rounded-xl" startContent={<Package size={18} className="text-emerald-500" />}>เลนส์</SelectItem>
+                          <SelectItem key="Tripod" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-amber-500" />}>ขาตั้งกล้อง</SelectItem>
+                          <SelectItem key="Battery" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-rose-500" />}>แบต</SelectItem>
+                          <SelectItem key="Film" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-violet-500" />}>ฟิลม์</SelectItem>
+                          <SelectItem key="Accessory" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-indigo-500" />}>อุปกรณ์เสริม</SelectItem>
+                          <SelectItem key="Other" className="font-bold py-3 rounded-xl" startContent={<Plus size={18} className="text-slate-400" />}>อื่นๆ</SelectItem>
+                        </Select>
+                      </TableCell>
+
+                      {/* Year */}
+                      <TableCell>
+                        <Input
+                          variant="faded"
+                          placeholder="ปีที่ผลิต"
+                          value={item.year}
+                          className="font-bold w-20"
+                          classNames={{
+                            input: "text-center",
+                            inputWrapper: "border-none bg-transparent hover:bg-white rounded-xl h-10 shadow-none",
+                          }}
+                          onChange={(e) => handleItemChange(item.id, "year", e.target.value)}
                         />
-                      </div>
-                    </TableCell>
+                      </TableCell>
 
-                    <TableCell>
-                      <ProductStatusCell
-                        item={item}
-                        onItemChangeAction={handleItemChange}
-                      />
-                    </TableCell>
+                      {/* Cost Price */}
+                      <TableCell>
+                        <div className="relative group/price">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">฿</span>
+                          <Input
+                            type="number"
+                            variant="faded"
+                            placeholder="0.00"
+                            value={item.confirmedPrice}
+                            isInvalid={!!errors[`item.${item.id}.confirmedPrice`]}
+                            errorMessage={errors[`item.${item.id}.confirmedPrice`]}
+                            classNames={{
+                              input: "text-right font-black text-blue-600 pr-1",
+                              inputWrapper: "border-none bg-slate-50 group-hover/price:bg-blue-50 transition-all rounded-xl pl-6",
+                            }}
+                            onChange={(e) => {
+                              handleItemChange(item.id, "confirmedPrice", e.target.value);
+                              setErrors((prev) => ({
+                                ...prev,
+                                [`item.${item.id}.confirmedPrice`]: "",
+                              }));
+                            }}
+                          />
+                        </div>
+                      </TableCell>
 
-                    <TableCell>
-                      <RepairStatusCell item={item} onItemChangeAction={handleItemChange} />
-                    </TableCell>
+                      {/* Sale Price */}
+                      <TableCell>
+                        <div className="relative group/price">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">฿</span>
+                          <Input
+                            type="number"
+                            variant="faded"
+                            placeholder="0.00"
+                            value={item.salesPrice}
+                            isInvalid={!!errors[`item.${item.id}.salesPrice`]}
+                            errorMessage={errors[`item.${item.id}.salesPrice`]}
+                            classNames={{
+                              input: "text-right font-black text-green-600 pr-1",
+                              inputWrapper: "border-none bg-slate-50 group-hover/price:bg-green-50 transition-all rounded-xl pl-6",
+                            }}
+                            onChange={(e) => {
+                              handleItemChange(item.id, "salesPrice", e.target.value);
+                              setErrors((prev) => ({
+                                ...prev,
+                                [`item.${item.id}.salesPrice`]: "",
+                              }));
+                            }}
+                          />
+                        </div>
+                      </TableCell>
 
-                    {/* Actions */}
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <Tooltip content="ลบรายการนี้" color="danger">
-                          <Button
-                            isIconOnly
-                            color="danger"
-                            variant="light"
-                            size="md"
-                            radius="lg"
-                            className="hover:bg-red-50"
-                            onPress={() => handleRemoveItem(item.id)}
-                          >
-                            <Trash2 size={20} />
-                          </Button>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                      <TableCell>
+                        <ProductStatusCell
+                          item={item}
+                          onItemChangeAction={handleItemChange}
+                        />
+                      </TableCell>
+
+                      <TableCell>
+                        <RepairStatusCell item={item} onItemChangeAction={handleItemChange} />
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Tooltip content="ลบรายการนี้" color="danger">
+                            <Button
+                              isIconOnly
+                              color="danger"
+                              variant="light"
+                              size="md"
+                              radius="lg"
+                              className="hover:bg-red-50"
+                              onPress={() => handleRemoveItem(item.id)}
+                            >
+                              <Trash2 size={20} />
+                            </Button>
+                          </Tooltip>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </Card>
 
           {/* Empty State */}

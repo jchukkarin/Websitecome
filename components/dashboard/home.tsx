@@ -291,143 +291,145 @@ export default function DashboardHome() {
 
             {/* ===== Table ===== */}
             <div className="bg-white rounded-[1.5rem] border border-gray-100 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="bg-gray-50/50 text-gray-400 font-bold text-[11px] uppercase tracking-wider border-b border-gray-100">
-                            <th className="p-4 text-left font-bold">ข้อมูลสินค้า</th>
-                            <th className="p-4 text-center font-bold">รหัสกำกับ</th>
-                            <th className="p-4 text-center font-bold">วันที่บันทึก</th>
-                            <th className="p-4 text-center font-bold">ล็อต</th>
-                            <th className="p-4 text-center font-bold">สถานะสินค้า</th>
-                            <th className="p-4 text-center font-bold">สถานะซ่อม</th>
-                            <th className="p-4 text-center font-bold">สถานะการจอง</th>
-                            <th className="p-4 text-center font-bold">ราคาทุน</th>
-                            <th className="p-4 text-center font-bold">ราคาขาย</th>
-                            <th className="p-4 text-right pr-6 font-bold">จัดการ</th>
-                        </tr>
-                    </thead>
+                <div className="overflow-x-auto no-scrollbar w-full">
+                    <table className="w-full text-sm min-w-[1200px]">
+                        <thead>
+                            <tr className="bg-gray-50/50 text-gray-400 font-bold text-[11px] uppercase tracking-wider border-b border-gray-100">
+                                <th className="p-4 text-left font-bold">ข้อมูลสินค้า</th>
+                                <th className="p-4 text-center font-bold">รหัสกำกับ</th>
+                                <th className="p-4 text-center font-bold">วันที่บันทึก</th>
+                                <th className="p-4 text-center font-bold">ล็อต</th>
+                                <th className="p-4 text-center font-bold">สถานะสินค้า</th>
+                                <th className="p-4 text-center font-bold">สถานะซ่อม</th>
+                                <th className="p-4 text-center font-bold">สถานะการจอง</th>
+                                <th className="p-4 text-center font-bold">ราคาทุน</th>
+                                <th className="p-4 text-center font-bold">ราคาขาย</th>
+                                <th className="p-4 text-right pr-6 font-bold">จัดการ</th>
+                            </tr>
+                        </thead>
 
-                    <tbody className="divide-y divide-gray-50">
-                        {filteredItems.length > 0 ? (
-                            filteredItems.map((item, index) => (
-                                <tr key={`${item.id}-${index}`} className="group hover:bg-blue-50/30 transition-all duration-300">
-                                    <td className="p-4 min-w-[300px]">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-14 h-14 relative flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden border border-gray-100 shadow-sm group-hover:scale-105 transition-transform duration-300">
-                                                {item.imageUrl ? (
-                                                    <Image
-                                                        src={item.imageUrl}
-                                                        alt={item.productName}
-                                                        fill
-                                                        className="object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="flex items-center justify-center h-full bg-gray-50">
-                                                        <Package size={20} className="text-gray-300" />
+                        <tbody className="divide-y divide-gray-50">
+                            {filteredItems.length > 0 ? (
+                                filteredItems.map((item, index) => (
+                                    <tr key={`${item.id}-${index}`} className="group hover:bg-blue-50/30 transition-all duration-300">
+                                        <td className="p-4 min-w-[300px]">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-14 h-14 relative flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden border border-gray-100 shadow-sm group-hover:scale-105 transition-transform duration-300">
+                                                    {item.imageUrl ? (
+                                                        <Image
+                                                            src={item.imageUrl}
+                                                            alt={item.productName}
+                                                            fill
+                                                            className="object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex items-center justify-center h-full bg-gray-50">
+                                                            <Package size={20} className="text-gray-300" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col space-y-0.5">
+                                                    <p className="font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors" title={item.productName}>
+                                                        {item.productName}
+                                                    </p>
+                                                    <div className="flex items-center gap-2 overflow-hidden">
+                                                        <span className="text-[10px] font-black text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                                                            {item.category}
+                                                        </span>
+                                                        <span className="text-xs text-gray-400 font-medium truncate italic">
+                                                            Year: {item.year}
+                                                        </span>
                                                     </div>
-                                                )}
-                                            </div>
-                                            <div className="flex flex-col space-y-0.5">
-                                                <p className="font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors" title={item.productName}>
-                                                    {item.productName}
-                                                </p>
-                                                <div className="flex items-center gap-2 overflow-hidden">
-                                                    <span className="text-[10px] font-black text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">
-                                                        {item.category}
-                                                    </span>
-                                                    <span className="text-xs text-gray-400 font-medium truncate italic">
-                                                        Year: {item.year}
-                                                    </span>
                                                 </div>
                                             </div>
+                                        </td>
+
+                                        <td className="text-center p-4">
+                                            <span className="font-mono text-[11px] font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                                                #{item.id.slice(0, 8)}
+                                            </span>
+                                        </td>
+                                        <td className="text-center p-4 font-bold text-gray-600">{item.date}</td>
+                                        <td className="text-center p-4">
+                                            <div className="inline-flex items-center justify-center min-w-[60px] h-7 bg-blue-50 text-blue-600 text-xs font-black rounded-lg border border-blue-100">
+                                                {item.lot}
+                                            </div>
+                                        </td>
+
+                                        <td className="text-center p-4">
+                                            <span
+                                                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight shadow-sm inline-block ${statusColor[item.status] || "bg-gray-100 text-gray-600"
+                                                    }`}
+                                            >
+                                                {item.status}
+                                            </span>
+                                        </td>
+
+                                        <td className="text-center p-4">-</td>
+                                        <td className="text-center p-4">-</td>
+
+                                        <td className="text-center p-4">
+                                            <span className="text-orange-600 font-black text-base">
+                                                {isManager || item.userId === user?.id ? `฿${item.confirmedPrice.toLocaleString()}` : '***'}
+                                            </span>
+                                        </td>
+
+                                        <td className="text-center p-4">
+                                            <span className="text-blue-600 font-black text-base">
+                                                -
+                                            </span>
+                                        </td>
+
+                                        <td className="text-right p-4 pr-6">
+                                            {(isManager || item.userId === user?.id) && (
+                                                <Dropdown placement="bottom-end" shadow="lg" className="rounded-2xl border border-gray-100">
+                                                    <DropdownTrigger>
+                                                        <Button
+                                                            isIconOnly
+                                                            variant="light"
+                                                            size="sm"
+                                                            className="rounded-full text-gray-400 hover:text-gray-900 transition-colors"
+                                                        >
+                                                            <MoreVertical size={18} />
+                                                        </Button>
+                                                    </DropdownTrigger>
+                                                    <DropdownMenu aria-label="Action menu" variant="faded" className="p-2 gap-1">
+                                                        <DropdownItem
+                                                            key="edit"
+                                                            startContent={<Pencil size={16} className="text-blue-500" />}
+                                                            className="rounded-xl h-10 px-3 hover:bg-blue-50"
+                                                            onPress={() => handleEdit(item)}
+                                                        >
+                                                            <span className="font-bold text-gray-700">ดูข้อมูล / แก้ไข</span>
+                                                        </DropdownItem>
+                                                        <DropdownItem
+                                                            key="delete"
+                                                            className="rounded-xl h-10 px-3 hover:bg-red-50 text-red-500"
+                                                            color="danger"
+                                                            startContent={<Trash2 size={16} />}
+                                                            onPress={() => handleDelete(item)}
+                                                        >
+                                                            <span className="font-bold">ลบรายการนี้</span>
+                                                        </DropdownItem>
+                                                    </DropdownMenu>
+                                                </Dropdown>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={10} className="text-center py-20">
+                                        <div className="flex flex-col items-center justify-center space-y-3 opacity-30">
+                                            <Layers size={48} className="text-gray-400" />
+                                            <p className="font-bold text-gray-500 text-lg">ไม่พบข้อมูลสินค้า</p>
                                         </div>
-                                    </td>
-
-                                    <td className="text-center p-4">
-                                        <span className="font-mono text-[11px] font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
-                                            #{item.id.slice(0, 8)}
-                                        </span>
-                                    </td>
-                                    <td className="text-center p-4 font-bold text-gray-600">{item.date}</td>
-                                    <td className="text-center p-4">
-                                        <div className="inline-flex items-center justify-center min-w-[60px] h-7 bg-blue-50 text-blue-600 text-xs font-black rounded-lg border border-blue-100">
-                                            {item.lot}
-                                        </div>
-                                    </td>
-
-                                    <td className="text-center p-4">
-                                        <span
-                                            className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight shadow-sm inline-block ${statusColor[item.status] || "bg-gray-100 text-gray-600"
-                                                }`}
-                                        >
-                                            {item.status}
-                                        </span>
-                                    </td>
-
-                                    <td className="text-center p-4">-</td>
-                                    <td className="text-center p-4">-</td>
-
-                                    <td className="text-center p-4">
-                                        <span className="text-orange-600 font-black text-base">
-                                            {isManager || item.userId === user?.id ? `฿${item.confirmedPrice.toLocaleString()}` : '***'}
-                                        </span>
-                                    </td>
-
-                                    <td className="text-center p-4">
-                                        <span className="text-blue-600 font-black text-base">
-                                            -
-                                        </span>
-                                    </td>
-
-                                    <td className="text-right p-4 pr-6">
-                                        {(isManager || item.userId === user?.id) && (
-                                            <Dropdown placement="bottom-end" shadow="lg" className="rounded-2xl border border-gray-100">
-                                                <DropdownTrigger>
-                                                    <Button
-                                                        isIconOnly
-                                                        variant="light"
-                                                        size="sm"
-                                                        className="rounded-full text-gray-400 hover:text-gray-900 transition-colors"
-                                                    >
-                                                        <MoreVertical size={18} />
-                                                    </Button>
-                                                </DropdownTrigger>
-                                                <DropdownMenu aria-label="Action menu" variant="faded" className="p-2 gap-1">
-                                                    <DropdownItem
-                                                        key="edit"
-                                                        startContent={<Pencil size={16} className="text-blue-500" />}
-                                                        className="rounded-xl h-10 px-3 hover:bg-blue-50"
-                                                        onPress={() => handleEdit(item)}
-                                                    >
-                                                        <span className="font-bold text-gray-700">ดูข้อมูล / แก้ไข</span>
-                                                    </DropdownItem>
-                                                    <DropdownItem
-                                                        key="delete"
-                                                        className="rounded-xl h-10 px-3 hover:bg-red-50 text-red-500"
-                                                        color="danger"
-                                                        startContent={<Trash2 size={16} />}
-                                                        onPress={() => handleDelete(item)}
-                                                    >
-                                                        <span className="font-bold">ลบรายการนี้</span>
-                                                    </DropdownItem>
-                                                </DropdownMenu>
-                                            </Dropdown>
-                                        )}
                                     </td>
                                 </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={10} className="text-center py-20">
-                                    <div className="flex flex-col items-center justify-center space-y-3 opacity-30">
-                                        <Layers size={48} className="text-gray-400" />
-                                        <p className="font-bold text-gray-500 text-lg">ไม่พบข้อมูลสินค้า</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Pagination / Info Footer */}

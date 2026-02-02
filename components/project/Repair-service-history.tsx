@@ -203,87 +203,88 @@ export default function RepairServiceHistory() {
 
                         {/* Data Table */}
                         <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden ring-1 ring-slate-200/50">
-                            <Table
-                                aria-label="Repair product history table"
-                                removeWrapper
-                                className="min-w-full"
-                                classNames={{
-                                    th: "bg-slate-50/50 text-slate-400 font-bold uppercase text-[10px] tracking-widest py-6 border-b border-slate-100 first:pl-10 last:pr-10",
-                                    td: "py-6 text-slate-600 font-medium first:pl-10 last:pr-10 border-b border-slate-50 group-hover:bg-slate-50/30 transition-colors",
-                                }}
-                            >
-                                <TableHeader>
-                                    <TableColumn>รูปภาพ</TableColumn>
-                                    <TableColumn>รหัสสินค้า</TableColumn>
-                                    <TableColumn>ล็อต</TableColumn>
-                                    <TableColumn>วันที่รับซ่อม</TableColumn>
-                                    <TableColumn>ชื่อสินค้า</TableColumn>
-                                    <TableColumn>ผู้ฝากซ่อม</TableColumn>
-                                    <TableColumn>สถานะ</TableColumn>
-                                    <TableColumn align="end">ราคาซ่อม (บาท)</TableColumn>
-                                </TableHeader>
-                                <TableBody
-                                    items={filteredData}
-                                    loadingContent={<Spinner label="กำลังจัดเตรียมข้อมูล..." color="primary" />}
-                                    isLoading={loading}
-                                    emptyContent={!loading && "ไม่มีข้อมูลที่ตรงกับการค้นหา"}
+                            <div className="overflow-x-auto no-scrollbar w-full">
+                                <Table
+                                    aria-label="Repair product history table"
+                                    removeWrapper
+                                    className="min-w-[1200px]"
+                                    classNames={{
+                                        th: "bg-slate-50/50 text-slate-400 font-bold uppercase text-[10px] tracking-widest py-6 border-b border-slate-100 first:pl-10 last:pr-10",
+                                        td: "py-6 text-slate-600 font-medium first:pl-10 last:pr-10 border-b border-slate-50 group-hover:bg-slate-50/30 transition-colors",
+                                    }}
                                 >
-                                    {(item) => (
-                                        <TableRow
-                                            key={item.id}
-                                            className="group transition-all hover:bg-blue-50/70 cursor-pointer"
-                                            onClick={() => router.push(`/history/${item.id}`)}
-                                        >
-                                            <TableCell>
-                                                <div className="w-16 h-12 rounded-xl border border-slate-100 overflow-hidden bg-slate-50 shadow-sm">
-                                                    {item.displayImage ? (
-                                                        <img src={item.displayImage} alt={item.productName} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                                            <Package size={20} />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-tighter bg-slate-100 px-2 py-1 rounded-md">
-                                                    #{item.id.slice(0, 8)}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-blue-600 font-black text-sm">{item.lot}</span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-slate-900 font-bold whitespace-nowrap">
-                                                    {new Date(item.date).toLocaleDateString("th-TH")}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-slate-900 font-black">{item.productName}</span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-slate-500 font-bold italic">{item.consignorName}</span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Chip
-                                                    variant="flat"
-                                                    size="sm"
-                                                    className="font-black text-[10px] uppercase"
-                                                    color={item.status === "ขายได้" ? "success" : "warning"}
-                                                >
-                                                    {item.status}
-                                                </Chip>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-blue-700 font-black text-lg">
-                                                    {isManager || item.userId === user?.id ? item.confirmedPrice?.toLocaleString() : '***'}
-                                                </span>
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-
+                                    <TableHeader>
+                                        <TableColumn>รูปภาพ</TableColumn>
+                                        <TableColumn>รหัสสินค้า</TableColumn>
+                                        <TableColumn>ล็อต</TableColumn>
+                                        <TableColumn>วันที่รับซ่อม</TableColumn>
+                                        <TableColumn>ชื่อสินค้า</TableColumn>
+                                        <TableColumn>ผู้ฝากซ่อม</TableColumn>
+                                        <TableColumn>สถานะ</TableColumn>
+                                        <TableColumn align="end">ราคาซ่อม (บาท)</TableColumn>
+                                    </TableHeader>
+                                    <TableBody
+                                        items={filteredData}
+                                        loadingContent={<Spinner label="กำลังจัดเตรียมข้อมูล..." color="primary" />}
+                                        isLoading={loading}
+                                        emptyContent={!loading && "ไม่มีข้อมูลที่ตรงกับการค้นหา"}
+                                    >
+                                        {(item) => (
+                                            <TableRow
+                                                key={item.id}
+                                                className="group transition-all hover:bg-blue-50/70 cursor-pointer"
+                                                onClick={() => router.push(`/history/${item.id}`)}
+                                            >
+                                                <TableCell>
+                                                    <div className="w-16 h-12 rounded-xl border border-slate-100 overflow-hidden bg-slate-50 shadow-sm">
+                                                        {item.displayImage ? (
+                                                            <img src={item.displayImage} alt={item.productName} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                                <Package size={20} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-tighter bg-slate-100 px-2 py-1 rounded-md">
+                                                        #{item.id.slice(0, 8)}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="text-blue-600 font-black text-sm">{item.lot}</span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="text-slate-900 font-bold whitespace-nowrap">
+                                                        {new Date(item.date).toLocaleDateString("th-TH")}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="text-slate-900 font-black">{item.productName}</span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="text-slate-500 font-bold italic">{item.consignorName}</span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        variant="flat"
+                                                        size="sm"
+                                                        className="font-black text-[10px] uppercase"
+                                                        color={item.status === "ขายได้" ? "success" : "warning"}
+                                                    >
+                                                        {item.status}
+                                                    </Chip>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="text-blue-700 font-black text-lg">
+                                                        {isManager || item.userId === user?.id ? item.confirmedPrice?.toLocaleString() : '***'}
+                                                    </span>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
                             {/* Footer */}
                             <div className="flex flex-col sm:flex-row justify-between items-center px-10 py-8 bg-slate-50/30 border-t border-slate-100 gap-6">
                                 <span className="text-sm font-black text-slate-900/40 uppercase tracking-[0.2em]">

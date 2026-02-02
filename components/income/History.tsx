@@ -238,144 +238,145 @@ export default function History() {
 
                         {/* Data Table */}
                         <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden ring-1 ring-slate-200/50">
-                            <Table
-                                aria-label="Product history table"
-                                removeWrapper
-                                className="min-w-full"
-                                classNames={{
-                                    th: "bg-slate-50/50 text-slate-400 font-bold uppercase text-[10px] tracking-widest py-6 border-b border-slate-100 first:pl-10 last:pr-10",
-                                    td: "py-6 text-slate-600 font-medium first:pl-10 last:pr-10 border-b border-slate-50 group-hover:bg-slate-50/30 transition-colors",
-                                }}
-                            >
-                                <TableHeader>
-                                    <TableColumn>รูปภาพ</TableColumn>
-                                    <TableColumn>รหัสสินค้า</TableColumn>
-                                    <TableColumn>ล็อตสินค้า</TableColumn>
-                                    <TableColumn>ปีที่ผลิต</TableColumn>
-                                    <TableColumn>วันที่นำเข้า</TableColumn>
-                                    <TableColumn>ชื่อสินค้า</TableColumn>
-                                    <TableColumn>สถานะสินค้า</TableColumn>
-                                    <TableColumn>สถานะการซ่อมแซม</TableColumn>
-                                    <TableColumn>หมวดหมู่</TableColumn>
-                                    <TableColumn align="end">ราคาทุน (บาท)</TableColumn>
-                                </TableHeader>
-                                <TableBody
-                                    items={filteredData}
-                                    loadingContent={<Spinner label="กำลังจัดเตรียมข้อมูล..." color="danger" />}
-                                    isLoading={loading}
-                                    emptyContent={!loading && "ไม่มีข้อมูลที่ตรงกับการค้นหา"}
+                            <div className="overflow-x-auto no-scrollbar w-full">
+                                <Table
+                                    aria-label="Product history table"
+                                    removeWrapper
+                                    className="min-w-[1200px]"
+                                    classNames={{
+                                        th: "bg-slate-50/50 text-slate-400 font-bold uppercase text-[10px] tracking-widest py-6 border-b border-slate-100 first:pl-10 last:pr-10",
+                                        td: "py-6 text-slate-600 font-medium first:pl-10 last:pr-10 border-b border-slate-50 group-hover:bg-slate-50/30 transition-colors",
+                                    }}
                                 >
-                                    {(item) => (
-                                        <TableRow
-                                            key={item.id}
-                                            className="group transition-all hover:bg-slate-50/70 cursor-pointer"
-                                            onClick={() => router.push(`/history/${item.id}`)}
-                                        >
-                                            {/* 1. Image */}
-                                            <TableCell>
-                                                <div className="w-16 h-12 rounded-xl border border-slate-100 overflow-hidden bg-slate-50 shadow-sm">
-                                                    {item.displayImage ? (
-                                                        <img src={item.displayImage} alt={item.productName} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                                            <Package size={20} />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </TableCell>
+                                    <TableHeader>
+                                        <TableColumn>รูปภาพ</TableColumn>
+                                        <TableColumn>รหัสสินค้า</TableColumn>
+                                        <TableColumn>ล็อตสินค้า</TableColumn>
+                                        <TableColumn>ปีที่ผลิต</TableColumn>
+                                        <TableColumn>วันที่นำเข้า</TableColumn>
+                                        <TableColumn>ชื่อสินค้า</TableColumn>
+                                        <TableColumn>สถานะสินค้า</TableColumn>
+                                        <TableColumn>สถานะการซ่อมแซม</TableColumn>
+                                        <TableColumn>หมวดหมู่</TableColumn>
+                                        <TableColumn align="end">ราคาทุน (บาท)</TableColumn>
+                                    </TableHeader>
+                                    <TableBody
+                                        items={filteredData}
+                                        loadingContent={<Spinner label="กำลังจัดเตรียมข้อมูล..." color="danger" />}
+                                        isLoading={loading}
+                                        emptyContent={!loading && "ไม่มีข้อมูลที่ตรงกับการค้นหา"}
+                                    >
+                                        {(item) => (
+                                            <TableRow
+                                                key={item.id}
+                                                className="group transition-all hover:bg-slate-50/70 cursor-pointer"
+                                                onClick={() => router.push(`/history/${item.id}`)}
+                                            >
+                                                {/* 1. Image */}
+                                                <TableCell>
+                                                    <div className="w-16 h-12 rounded-xl border border-slate-100 overflow-hidden bg-slate-50 shadow-sm">
+                                                        {item.displayImage ? (
+                                                            <img src={item.displayImage} alt={item.productName} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                                <Package size={20} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
 
-                                            {/* 2. ID */}
-                                            <TableCell>
-                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-tighter bg-slate-100 px-2 py-1 rounded-md">
-                                                    #{item.id.slice(0, 8)}
-                                                </span>
-                                            </TableCell>
-
-                                            {/* 3. Lot */}
-                                            <TableCell>
-                                                <span className="text-blue-600 font-black text-sm">{item.lot}</span>
-                                            </TableCell>
-
-                                            {/* 4. Year */}
-                                            <TableCell>
-                                                <span className="text-slate-900 font-bold">{item.year || '-'}</span>
-                                            </TableCell>
-
-                                            {/* 5. Import Date */}
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span className="text-slate-900 font-bold whitespace-nowrap">
-                                                        {new Date(item.createdAt).toLocaleDateString("th-TH", {
-                                                            day: 'numeric',
-                                                            month: 'short',
-                                                            year: 'numeric'
-                                                        })}
+                                                {/* 2. ID */}
+                                                <TableCell>
+                                                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-tighter bg-slate-100 px-2 py-1 rounded-md">
+                                                        #{item.id.slice(0, 8)}
                                                     </span>
-                                                    <span className="text-[10px] text-slate-400 font-medium">
-                                                        {new Date(item.createdAt).toLocaleTimeString("th-TH", {
-                                                            hour: '2-digit',
-                                                            minute: '2-digit',
-                                                            hour12: false
-                                                        })} น.
+                                                </TableCell>
+
+                                                {/* 3. Lot */}
+                                                <TableCell>
+                                                    <span className="text-blue-600 font-black text-sm">{item.lot}</span>
+                                                </TableCell>
+
+                                                {/* 4. Year */}
+                                                <TableCell>
+                                                    <span className="text-slate-900 font-bold">{item.year || '-'}</span>
+                                                </TableCell>
+
+                                                {/* 5. Import Date */}
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-slate-900 font-bold whitespace-nowrap">
+                                                            {new Date(item.createdAt).toLocaleDateString("th-TH", {
+                                                                day: 'numeric',
+                                                                month: 'short',
+                                                                year: 'numeric'
+                                                            })}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 font-medium">
+                                                            {new Date(item.createdAt).toLocaleTimeString("th-TH", {
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                hour12: false
+                                                            })} น.
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+
+                                                {/* 6. Product Name */}
+                                                <TableCell>
+                                                    <span className="text-slate-900 font-black">{item.productName}</span>
+                                                </TableCell>
+
+                                                {/* 7. Product Status */}
+                                                <TableCell>
+                                                    <Chip
+                                                        variant="flat"
+                                                        size="sm"
+                                                        className="font-black text-[10px] uppercase"
+                                                        color={
+                                                            item.status === "ready" ? "success" :
+                                                                item.status === "reserved" ? "warning" :
+                                                                    item.status === "repair" ? "primary" : "danger"
+                                                        }
+                                                    >
+                                                        {item.status === "ready" ? "พร้อมขาย" :
+                                                            item.status === "reserved" ? "ติดจอง" :
+                                                                item.status === "repair" ? "กำลังซ่อม" : "ขายแล้ว"}
+                                                    </Chip>
+                                                </TableCell>
+
+                                                {/* 8. Repair Status */}
+                                                <TableCell>
+                                                    <Chip
+                                                        variant="flat"
+                                                        size="sm"
+                                                        className="font-black text-[10px]"
+                                                        color={
+                                                            item.repairStatus === "REPAIRING" ? "warning" :
+                                                                item.repairStatus === "REPAIRED" ? "primary" : "default"
+                                                        }
+                                                    >
+                                                        {item.repairStatus === "NOT_REPAIR" ? "ไม่ซ่อม" :
+                                                            item.repairStatus === "REPAIRING" ? "กำลังซ่อม" : "ซ่อมเสร็จแล้ว"}
+                                                    </Chip>
+                                                </TableCell>
+
+                                                {/* 9. Category */}
+                                                <TableCell>
+                                                    <span className="text-slate-500 font-bold italic">{item.category}</span>
+                                                </TableCell>
+
+                                                {/* 10. Cost Price */}
+                                                <TableCell align="right">
+                                                    <span className="text-slate-900 font-black text-lg">
+                                                        ฿{isManager || item.userId === user?.id ? Number(item.confirmedPrice || 0).toLocaleString() : '***'}
                                                     </span>
-                                                </div>
-                                            </TableCell>
-
-                                            {/* 6. Product Name */}
-                                            <TableCell>
-                                                <span className="text-slate-900 font-black">{item.productName}</span>
-                                            </TableCell>
-
-                                            {/* 7. Product Status */}
-                                            <TableCell>
-                                                <Chip
-                                                    variant="flat"
-                                                    size="sm"
-                                                    className="font-black text-[10px] uppercase"
-                                                    color={
-                                                        item.status === "ready" ? "success" :
-                                                            item.status === "reserved" ? "warning" :
-                                                                item.status === "repair" ? "primary" : "danger"
-                                                    }
-                                                >
-                                                    {item.status === "ready" ? "พร้อมขาย" :
-                                                        item.status === "reserved" ? "ติดจอง" :
-                                                            item.status === "repair" ? "กำลังซ่อม" : "ขายแล้ว"}
-                                                </Chip>
-                                            </TableCell>
-
-                                            {/* 8. Repair Status */}
-                                            <TableCell>
-                                                <Chip
-                                                    variant="flat"
-                                                    size="sm"
-                                                    className="font-black text-[10px]"
-                                                    color={
-                                                        item.repairStatus === "REPAIRING" ? "warning" :
-                                                            item.repairStatus === "REPAIRED" ? "primary" : "default"
-                                                    }
-                                                >
-                                                    {item.repairStatus === "NOT_REPAIR" ? "ไม่ซ่อม" :
-                                                        item.repairStatus === "REPAIRING" ? "กำลังซ่อม" : "ซ่อมเสร็จแล้ว"}
-                                                </Chip>
-                                            </TableCell>
-
-                                            {/* 9. Category */}
-                                            <TableCell>
-                                                <span className="text-slate-500 font-bold italic">{item.category}</span>
-                                            </TableCell>
-
-                                            {/* 10. Cost Price */}
-                                            <TableCell align="right">
-                                                <span className="text-slate-900 font-black text-lg">
-                                                    ฿{isManager || item.userId === user?.id ? Number(item.confirmedPrice || 0).toLocaleString() : '***'}
-                                                </span>
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
                             {/* Footer */}
                             <div className="flex flex-col sm:flex-row justify-between items-center px-10 py-8 bg-slate-50/30 border-t border-slate-100 gap-6">
                                 <span className="text-sm font-black text-slate-900/40 uppercase tracking-[0.2em]">

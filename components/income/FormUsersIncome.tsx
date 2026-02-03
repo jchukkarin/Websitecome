@@ -130,7 +130,7 @@ export default function ImportForm() {
   };
 
   const handleItemChange = (id: string, field: keyof ConsignmentItem, value: string) => {
-    setItems(items.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+    setItems((prevItems) => prevItems.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
   const handleItemImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -288,14 +288,6 @@ export default function ImportForm() {
               className="bg-white border border-slate-200 font-bold text-slate-600 h-12 px-6 rounded-2xl hover:bg-slate-50 transition-all"
             >
               ล้างฟอร์ม
-            </Button>
-            <Button
-              variant="flat"
-              startContent={<FileSpreadsheet size={18} />}
-              onPress={() => exportFormItemsExcel(formData, items)}
-              className="bg-slate-900 border border-slate-800 font-bold text-white h-12 px-6 rounded-2xl hover:bg-slate-800 transition-all"
-            >
-              ส่งออก Excel
             </Button>
             <Button
               color="primary"

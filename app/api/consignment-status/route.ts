@@ -4,17 +4,29 @@ import { db } from "@/lib/db";
 
 export async function GET() {
     try {
-        // Count items that are 'ready' (Sellable)
+        // Count items that are 'ready' or 'พร้อม' (Sellable)
         const sellableCount = await db.consignmentItem.count({
-            where: { status: "ready" }
+            where: {
+                OR: [
+                    { status: "ready" },
+                    { status: "พร้อม" }
+                ]
+            }
         });
 
-        // Count items that are NOT 'ready' (Unsellable/Others)
+        const PAWN_STATUSES = [
+            "ACTIVE", "DUE", "EXTENDED", "CLOSED",
+            "active", "extended", "redeemed", "due", "closed",
+            "ยังไม่ครบกำหนด", "ครบกำหนด", "ต่อยอด", "ปิดยอด"
+        ];
+
+        // Count items that are NOT 'ready' and NOT 'พร้อม' and NOT in pawn statuses
         const unsellableCount = await db.consignmentItem.count({
             where: {
-                status: {
-                    not: "ready"
-                }
+                AND: [
+                    { status: { notIn: ["ready", "พร้อม"] } },
+                    { status: { notIn: PAWN_STATUSES } }
+                ]
             }
         });
 

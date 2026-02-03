@@ -33,14 +33,10 @@ export async function GET() {
       const catItems = importItems.filter(item => item.category === catName);
 
       const details = {
-        ready: catItems.filter(item => item.status === "ready").length,
-        reserved: catItems.filter(item => item.status === "reserved").length,
-        // If status is 'sold' or its already sold out
+        ready: catItems.filter(item => item.status === "ready" || item.status === "พร้อม").length,
+        reserved: catItems.filter(item => item.status === "reserved" || item.status === "ติดจอง").length,
         sold: catItems.filter(item => item.status === "sold" || item.status === "ขายแล้ว").length,
-        // For repair, we check if repairStatus is 'repairing'
-        // wait, ConsignmentItem model might not have repairStatus on DB yet? 
-        // Let's check the schema again.
-        repair: catItems.filter(item => (item as any).repairStatus === "REPAIRING").length
+        repair: catItems.filter(item => item.status === "repair" || item.status === "ส่งซ่อม" || item.repairStatus === "REPAIRING").length
       };
 
       summary.ready += details.ready;

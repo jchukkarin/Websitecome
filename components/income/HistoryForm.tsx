@@ -111,16 +111,6 @@ export default function HistoryForm() {
         <div className="p-4 sm:p-8 bg-[#F8FAFC]">
             <div className="w-full mx-auto">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-                    <div>
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                            <span className="w-2 h-10 bg-red-600 rounded-full inline-block"></span>
-                            ประวัติการนำเข้าของผู้นำเข้า
-                        </h1>
-                        <p className="text-slate-500 mt-2 text-lg font-light">
-                            รายละเอียดและสถานะการบันทึกข้อมูลนำเข้าสินค้า (History)
-                        </p>
-                    </div>
-
                     <div className="flex items-center gap-3">
                         <div className="relative group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-red-600 transition-colors" />
@@ -139,14 +129,6 @@ export default function HistoryForm() {
                             onPress={handleExportFullExcel}
                         >
                             Export สินค้าทั้งหมด (Excel)
-                        </Button>
-                        <Button
-                            color="danger"
-                            className="rounded-2xl font-black px-6 shadow-xl shadow-red-200 h-11"
-                            startContent={<FileSpreadsheet size={18} />}
-                            onPress={() => exportBatchExcel(filteredConsignments)}
-                        >
-                            ส่งออก Excel
                         </Button>
                     </div>
                 </div>

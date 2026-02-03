@@ -11,7 +11,8 @@ import {
     Camera,
     Tag,
     Edit3,
-    Save
+    Save,
+    ImageOff
 } from "lucide-react";
 import {
     Button,
@@ -135,7 +136,7 @@ export default function HistoryDetailPage() {
                         <Button
                             className="h-14 px-8 rounded-2xl bg-red-50 text-red-600 font-black border border-red-100 hover:bg-red-100 hover:scale-105 active:scale-95 transition-all"
                             startContent={<FileText size={18} />}
-                            onPress={() => exportProductPDF(data)}
+                            onPress={async () => await exportProductPDF(data)}
                         >
                             Export PDF
                         </Button>
@@ -145,101 +146,147 @@ export default function HistoryDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Left Side: Photo & Quick Status */}
                     <div className="lg:col-span-4 space-y-8">
-                        <div className="bg-white p-4 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden group">
-                            <div className="aspect-square rounded-[2rem] overflow-hidden bg-slate-50 border border-slate-100 relative">
+                        <div className="
+                            bg-white 
+                            rounded-[2.5rem] 
+                            shadow-[0_20px_60px_rgba(0,0,0,0.06)] 
+                            hover:shadow-[0_40px_100px_rgba(0,0,0,0.1)] 
+                            hover:-translate-y-2 
+                            transition-all duration-700 
+                            overflow-hidden 
+                            group
+                        ">
+                            <div className="relative aspect-square bg-gradient-to-br from-slate-50 to-white/30">
                                 {data.displayImage ? (
                                     <Image
                                         src={data.displayImage}
                                         alt={data.productName}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        className="w-full h-full object-contain p-10 transition-transform duration-1000 group-hover:scale-105"
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                        <Camera size={64} strokeWidth={1} />
+                                    <div className="w-full h-full flex items-center justify-center text-slate-200">
+                                        <Camera size={80} strokeWidth={1} />
                                     </div>
                                 )}
-                                <div className="absolute top-4 right-4 z-10">
+
+                                <div className="absolute top-6 right-6">
                                     <Chip
-                                        color={data.status === "ready" ? "success" : "warning"}
-                                        variant="shadow"
-                                        className="font-black px-4 h-8 uppercase"
+                                        color={
+                                            data.status === "ready" ? "success" :
+                                                data.status === "reserved" ? "warning" :
+                                                    data.status === "repair" ? "primary" : "danger"
+                                        }
+                                        className="
+                                            font-black 
+                                            px-5 
+                                            h-10 
+                                            uppercase 
+                                            backdrop-blur-xl 
+                                            bg-white/70 
+                                            border border-white/50 
+                                            shadow-2xl 
+                                            text-xs
+                                        "
                                     >
-                                        {data.status}
+                                        {data.status === 'ready' ? 'พร้อมขาย' :
+                                            data.status === 'reserved' ? 'ติดจอง' :
+                                                data.status === 'repair' ? 'ส่งซ่อม' :
+                                                    data.status === 'sold' ? 'ขายแล้ว' : data.status}
                                     </Chip>
                                 </div>
                             </div>
                         </div>
 
-                        <Card className="rounded-[2.5rem] border-none shadow-xl shadow-slate-200/50 overflow-hidden">
-                            <CardBody className="p-8 space-y-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-                                        <User size={20} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Recorded By</p>
-                                        <p className="text-sm font-black text-slate-700">{data.user?.name || "System"}</p>
-                                    </div>
+                        <div className="bg-white rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.06)] hover:shadow-[0_40px_100px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-700 p-8 space-y-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center">
+                                    <User size={24} />
                                 </div>
-                                <Divider className="bg-slate-100" />
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
-                                        <Clock size={20} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Entry Date</p>
-                                        <p className="text-sm font-black text-slate-700">{new Date(data.date).toLocaleDateString("th-TH", { dateStyle: 'long' })}</p>
-                                    </div>
+                                <div className="space-y-0.5">
+                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">ผู้บันทึกข้อมูล</p>
+                                    <p className="text-base font-black text-slate-800">{data.user?.name || "ระบบอัตโนมัติ"}</p>
                                 </div>
-                            </CardBody>
-                        </Card>
+                            </div>
+                            <div className="h-px bg-slate-50" />
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center">
+                                    <Clock size={24} />
+                                </div>
+                                <div className="space-y-0.5">
+                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">วันที่ลงระบบ</p>
+                                    <p className="text-base font-black text-slate-800">{new Date(data.date).toLocaleDateString("th-TH", { dateStyle: 'long' })}</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Right Side: Primary Info */}
                     <div className="lg:col-span-8 space-y-8">
-                        <div className="bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/50 border border-slate-100 space-y-10">
+                        <div className="bg-white p-10 rounded-[3rem] shadow-[0_20px_60px_rgba(0,0,0,0.06)] space-y-12 h-full">
 
-                            <div className="space-y-2">
-                                <p className="text-sm font-black text-slate-400 uppercase tracking-[0.3em]">#{data.id?.slice(0, 8) || "N/A"}</p>
-                                <h2 className="text-4xl font-black text-slate-900 leading-tight">{data.productName}</h2>
-                                <div className="flex flex-wrap gap-2 mt-4">
-                                    <Chip color="secondary" variant="flat" className="font-black uppercase text-[10px]" startContent={<Tag size={12} className="ml-1" />}>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black tracking-widest uppercase">ID: {data.id?.slice(0, 8) || "N/A"}</span>
+                                </div>
+                                <h1 className="text-5xl font-black text-slate-900 leading-tight tracking-tight">{data.productName}</h1>
+                                <div className="flex flex-wrap gap-3 mt-6">
+                                    <Chip color="secondary" variant="flat" className="font-black px-4 h-9 text-xs" startContent={<Tag size={14} className="ml-1" />}>
                                         {data.category}
                                     </Chip>
-                                    <Chip className="bg-slate-100 text-slate-600 font-black uppercase text-[10px]" startContent={<Package size={12} className="ml-1" />}>
-                                        Lot: {data.lot}
+                                    <Chip className="bg-blue-50 text-blue-600 font-black px-4 h-9 text-xs" startContent={<Package size={14} className="ml-1" />}>
+                                        ล็อต: {data.lot}
                                     </Chip>
-                                    <Chip className="bg-orange-100 text-orange-600 font-black uppercase text-[10px]">
-                                        Repair: {data.repairStatus}
+                                    <Chip
+                                        variant="dot"
+                                        color={data.repairStatus === "NOT_REPAIR" ? "default" : data.repairStatus === "REPAIRED" ? "success" : "warning"}
+                                        className="font-black px-4 h-9 text-xs bg-slate-50/50"
+                                    >
+                                        สถานะการซ่อม: {
+                                            data.repairStatus === "NOT_REPAIR" ? "ปกติ" :
+                                                data.repairStatus === "REPAIRING" ? "กำลังซ่อม" :
+                                                    data.repairStatus === "REPAIRED" ? "ซ่อมแล้ว" : data.repairStatus
+                                        }
                                     </Chip>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
-                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Confirmed Price</p>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-4xl font-black text-purple-600">฿{data.confirmedPrice?.toLocaleString()}</span>
-                                        <span className="text-slate-400 font-bold">THB</span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <div className="bg-gradient-to-br from-purple-50/50 to-blue-50/30 p-10 rounded-[2.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-white">
+                                    <div className="text-xs font-black text-purple-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse"></div>
+                                        ราคาที่ตกลง (Confirmed Price)
+                                    </div>
+                                    <div className="flex items-baseline gap-3">
+                                        <span className="text-5xl font-black text-purple-600 tracking-tighter">฿{data.confirmedPrice?.toLocaleString()}</span>
+                                        <span className="text-slate-400 font-black text-lg">บาท</span>
                                     </div>
                                 </div>
 
-                                <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
-                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Consignor Name</p>
-                                    <p className="text-2xl font-black text-slate-800">{data.consignorName}</p>
+                                <div className="bg-slate-50/30 p-10 rounded-[2.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-white">
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">ชื่อผู้ฝากขาย (Consignor)</p>
+                                    <p className="text-3xl font-black text-slate-800 flex items-center gap-3">
+                                        <User className="text-slate-300" size={28} />
+                                        {data.consignorName}
+                                    </p>
                                 </div>
                             </div>
 
-                            <div className="space-y-6">
-                                <div className="flex items-center gap-3">
-                                    <h4 className="font-black text-slate-800 uppercase tracking-wider">Specifications</h4>
-                                    <div className="h-px flex-1 bg-slate-100"></div>
+                            <div className="space-y-8">
+                                <div className="flex items-center gap-4">
+                                    <h4 className="font-black text-slate-800 text-xl tracking-tight">ข้อมูลทางเทคนิค (Specifications)</h4>
+                                    <div className="h-0.5 flex-1 bg-gradient-to-r from-slate-100 to-transparent"></div>
                                 </div>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Condition/Year</p>
-                                        <p className="font-bold text-slate-700">{data.year || "-"}</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                                    <div className="p-6 bg-white rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 border border-transparent hover:border-slate-50">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="p-2 bg-slate-50 text-slate-400 rounded-xl">
+                                                <ImageOff size={18} />
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">ปีผลิต/สภาพ</p>
+                                        </div>
+                                        <p className="text-lg font-black text-slate-700 ml-1">{data.year || "-"}</p>
                                     </div>
+                                    {/* Add more spec items here if needed in the future */}
                                 </div>
                             </div>
                         </div>
@@ -247,80 +294,106 @@ export default function HistoryDetailPage() {
                 </div>
 
                 {/* Edit Modal */}
-                <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl" backdrop="blur">
-                    <ModalContent className="rounded-[2.5rem] p-4">
+                <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl" backdrop="opaque">
+                    <ModalContent className="rounded-[2.5rem] p-4 bg-white shadow-2xl">
                         {(onClose) => (
                             <>
-                                <ModalHeader className="flex flex-col gap-1">
+                                <ModalHeader className="flex flex-col gap-1 border-b border-slate-200 pb-4">
                                     <h3 className="text-2xl font-black text-slate-900">แก้ไขข้อมูลสินค้า</h3>
                                 </ModalHeader>
                                 <ModalBody className="space-y-4">
                                     <Input
-                                        label="ชื่อสินค้า"
+                                        labelPlacement="outside"
                                         value={editData.productName}
                                         onChange={(e) => setEditData({ ...editData, productName: e.target.value })}
                                         variant="bordered"
-                                        className="font-bold"
+                                        placeholder="ชื่อสินค้า: ระบุชื่อรุ่น / แบรนด์"
+                                        classNames={{
+                                            input: "font-bold text-slate-700",
+                                            inputWrapper: "h-12 rounded-xl bg-slate-50/50 border-slate-200"
+                                        }}
                                     />
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 gap-6 pt-2">
                                         <Select
-                                            label="หมวดหมู่"
+                                            labelPlacement="outside"
+                                            placeholder="หมวดหมู่: เลือกหมวดหมู่"
                                             selectedKeys={editData.category ? [editData.category] : []}
                                             onSelectionChange={(keys) => setEditData({ ...editData, category: Array.from(keys)[0] })}
                                             variant="bordered"
-                                            className="font-bold"
+                                            classNames={{
+                                                value: "font-bold text-slate-700",
+                                                trigger: "h-12 rounded-xl bg-slate-50/50 border-slate-200"
+                                            }}
                                         >
-                                            <SelectItem key="กล้อง">กล้อง</SelectItem>
-                                            <SelectItem key="เลนส์">เลนส์</SelectItem>
-                                            <SelectItem key="ขาตั้งกล้อง">ขาตั้งกล้อง</SelectItem>
-                                            <SelectItem key="แบต">แบต</SelectItem>
-                                            <SelectItem key="ฟิลม์">ฟิลม์</SelectItem>
-                                            <SelectItem key="อื่นๆ">อื่นๆ</SelectItem>
+                                            <SelectItem key="กล้อง" className="bg-white">กล้อง</SelectItem>
+                                            <SelectItem key="เลนส์" className="bg-white">เลนส์</SelectItem>
+                                            <SelectItem key="ขาตั้งกล้อง" className="bg-white">ขาตั้งกล้อง</SelectItem>
+                                            <SelectItem key="แบต" className="bg-white">แบต</SelectItem>
+                                            <SelectItem key="ฟิลม์" className="bg-white">ฟิลม์</SelectItem>
+                                            <SelectItem key="อื่นๆ" className="bg-white">อื่นๆ</SelectItem>
                                         </Select>
                                         <Input
-                                            label="ปีที่ผลิต / สภาพ"
+                                            labelPlacement="outside"
+                                            placeholder="ปีที่ผลิต / สภาพ"
                                             value={editData.year}
                                             onChange={(e) => setEditData({ ...editData, year: e.target.value })}
                                             variant="bordered"
-                                            className="font-bold"
+                                            classNames={{
+                                                input: "font-bold text-slate-700",
+                                                inputWrapper: "h-12 rounded-xl bg-slate-50/50 border-slate-200"
+                                            }}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 gap-6 pt-2">
                                         <Select
-                                            label="สถานะสินค้า"
+                                            labelPlacement="outside"
+                                            placeholder="สถานะสินค้า"
                                             selectedKeys={editData.status ? [editData.status] : []}
                                             onSelectionChange={(keys) => setEditData({ ...editData, status: Array.from(keys)[0] })}
                                             variant="bordered"
-                                            className="font-bold"
+                                            classNames={{
+                                                value: "font-bold text-slate-700",
+                                                trigger: "h-12 rounded-xl bg-slate-50/50 border-slate-200"
+                                            }}
                                         >
-                                            <SelectItem key="ready">พร้อมขาย</SelectItem>
-                                            <SelectItem key="reserved">ติดจอง</SelectItem>
-                                            <SelectItem key="sold">ขายแล้ว</SelectItem>
-                                            <SelectItem key="repair">ส่งซ่อม</SelectItem>
+                                            <SelectItem key="ready" className="bg-white">พร้อมขาย</SelectItem>
+                                            <SelectItem key="reserved" className="bg-white">ติดจอง</SelectItem>
+                                            <SelectItem key="sold" className="bg-white">ขายแล้ว</SelectItem>
+                                            <SelectItem key="repair" className="bg-white">ส่งซ่อม</SelectItem>
                                         </Select>
                                         <Select
-                                            label="สถานะการซ่อม"
+                                            labelPlacement="outside"
+                                            placeholder="สถานะการซ่อม"
                                             selectedKeys={editData.repairStatus ? [editData.repairStatus] : []}
                                             onSelectionChange={(keys) => setEditData({ ...editData, repairStatus: Array.from(keys)[0] })}
                                             variant="bordered"
-                                            className="font-bold"
+                                            classNames={{
+                                                value: "font-bold text-slate-700",
+                                                trigger: "h-12 rounded-xl bg-slate-50/50 border-slate-200"
+                                            }}
                                         >
-                                            <SelectItem key="NOT_REPAIR">ไม่ซ่อม</SelectItem>
-                                            <SelectItem key="REPAIRING">กำลังซ่อม</SelectItem>
-                                            <SelectItem key="REPAIRED">ซ่อมเสร็จแล้ว</SelectItem>
+                                            <SelectItem key="NOT_REPAIR" className="bg-white">ไม่ซ่อม</SelectItem>
+                                            <SelectItem key="REPAIRING" className="bg-white">กำลังซ่อม</SelectItem>
+                                            <SelectItem key="REPAIRED" className="bg-white">ซ่อมเสร็จแล้ว</SelectItem>
                                         </Select>
                                     </div>
-                                    <Input
-                                        label="ราคาประกัน / ราคาทุน"
-                                        type="number"
-                                        value={editData.confirmedPrice}
-                                        onChange={(e) => setEditData({ ...editData, confirmedPrice: parseFloat(e.target.value) })}
-                                        variant="bordered"
-                                        className="font-bold"
-                                        startContent={<span className="text-slate-400">฿</span>}
-                                    />
+                                    <div className="pt-2">
+                                        <Input
+                                            labelPlacement="outside"
+                                            placeholder="ราคาประกัน / ราคาทุน"
+                                            type="number"
+                                            value={editData.confirmedPrice}
+                                            onChange={(e) => setEditData({ ...editData, confirmedPrice: parseFloat(e.target.value) })}
+                                            variant="bordered"
+                                            startContent={<span className="text-slate-400 font-bold">฿</span>}
+                                            classNames={{
+                                                input: "font-bold text-slate-700",
+                                                inputWrapper: "h-12 rounded-xl bg-slate-50/50 border-slate-200"
+                                            }}
+                                        />
+                                    </div>
                                 </ModalBody>
-                                <ModalFooter>
+                                <ModalFooter className="border-t border-slate-200 pt-4">
                                     <Button variant="flat" onPress={onClose} className="rounded-2xl font-black">
                                         ยกเลิก
                                     </Button>

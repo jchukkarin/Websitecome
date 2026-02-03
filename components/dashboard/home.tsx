@@ -35,7 +35,11 @@ export type ConsignmentItem = {
     category: string
     year: string
     status: string
+    repairStatus?: string
+    isReserveOpen?: string
+    reserveEndDate?: string
     confirmedPrice: number
+    salesPrice: number // ✅ Added
     imageUrl: string | null
     salesChannel: string
     consignmentId: string
@@ -60,13 +64,41 @@ export type DashboardItem = ConsignmentItem & {
     parentImages: ConsignmentImage[]
 }
 
+const statusTranslation: Record<string, string> = {
+    // General Status
+    "READY": "พร้อม",
+    "READY_SALE": "พร้อมขาย",
+    "RESERVED": "ติดจอง",
+    "SOLD": "ขายแล้ว",
+    "REPAIR": "ซ่อม",
+    "RETURN_CUSTOMER": "ส่งคืนลูกค้า",
+    "ยังไม่ถึงกำหนด": "ยังไม่ถึงกำหนด",
+    "ขายได้": "พร้อม",
+    "ขายไม่ได้": "ขายไม่ได้",
+    "READY_TO_SELL": "พร้อมขาย",
+    "EXTENDED": "ขยายเวลา",
+
+    // Repair Status
+    "REPAIRING": "กำลังซ่อม",
+    "REPAIRED": "ซ่อมเสร็จสิ้น",
+    "NOT_REPAIR": "-",
+    "COMPLETED": "สำเร็จ",
+    "PENDING": "รอดำเนินการ",
+    "REPAIR_DONE": "ซ่อมเสร็จสิ้น",
+};
+
 const statusColor: Record<string, string> = {
     "พร้อม": "bg-green-100 text-green-700",
+    "พร้อมขาย": "bg-green-100 text-green-700",
     "ติดจอง": "bg-yellow-100 text-yellow-700",
     "ซ่อม": "bg-red-100 text-red-700",
+    "กำลังซ่อม": "bg-blue-100 text-blue-700",
+    "ซ่อมเสร็จสิ้น": "bg-emerald-100 text-emerald-700",
     "ขายแล้ว": "bg-gray-100 text-gray-700",
-    "ส่งคืนลูกค้า": "bg-emerald-100 text-emerald-700",
+    "ส่งคืนลูกค้า": "bg-purple-100 text-purple-700",
     "ยังไม่ถึงกำหนด": "bg-orange-100 text-orange-700",
+    "รอดำเนินการ": "bg-yellow-50 text-yellow-600",
+    "ขยายเวลา": "bg-indigo-100 text-indigo-700",
 }
 
 export default function DashboardHome() {
@@ -88,9 +120,18 @@ export default function DashboardHome() {
     const [selectedType, setSelectedType] = useState("ทั้งหมด")
     const [selectedStatus, setSelectedStatus] = useState("ทั้งหมด")
 
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 10
+
     useEffect(() => {
         fetchData()
     }, [])
+
+    // Reset pagination when search or filters change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchTerm, selectedCategory, selectedType, selectedStatus])
 
     const fetchData = async () => {
         try {
@@ -213,6 +254,12 @@ export default function DashboardHome() {
         return matchesSearch && matchesCategory && matchesType && matchesStatus
     })
 
+    const totalPages = Math.ceil(filteredItems.length / itemsPerPage)
+    const paginatedItems = filteredItems.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    )
+
     if (loading) return (
         <div className="flex flex-col items-center justify-center p-12 space-y-4">
             <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -309,8 +356,8 @@ export default function DashboardHome() {
                         </thead>
 
                         <tbody className="divide-y divide-gray-50">
-                            {filteredItems.length > 0 ? (
-                                filteredItems.map((item, index) => (
+                            {paginatedItems.length > 0 ? (
+                                paginatedItems.map((item, index) => (
                                     <tr key={`${item.id}-${index}`} className="group hover:bg-blue-50/30 transition-all duration-300">
                                         <td className="p-4 min-w-[300px]">
                                             <div className="flex items-center gap-4">
@@ -357,16 +404,43 @@ export default function DashboardHome() {
                                         </td>
 
                                         <td className="text-center p-4">
-                                            <span
-                                                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight shadow-sm inline-block ${statusColor[item.status] || "bg-gray-100 text-gray-600"
-                                                    }`}
-                                            >
-                                                {item.status}
-                                            </span>
+                                            {(() => {
+                                                // 🔥 Normalize status to uppercase to prevent case mismatch
+                                                const normalizedStatus = item.status?.toUpperCase() || "";
+                                                const displayStatus = statusTranslation[normalizedStatus] || item.status;
+                                                return (
+                                                    <span
+                                                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight shadow-sm inline-block ${statusColor[displayStatus] || "bg-gray-100 text-gray-600"
+                                                            }`}
+                                                    >
+                                                        {displayStatus}
+                                                    </span>
+                                                )
+                                            })()}
                                         </td>
 
-                                        <td className="text-center p-4">-</td>
-                                        <td className="text-center p-4">-</td>
+                                        <td className="text-center p-4">
+                                            {item.repairStatus && item.repairStatus !== "NOT_REPAIR" ? (
+                                                (() => {
+                                                    // 🔥 Normalize repair status to uppercase
+                                                    const normalizedRepairStatus = item.repairStatus?.toUpperCase() || "";
+                                                    const displayRepairStatus = statusTranslation[normalizedRepairStatus] || item.repairStatus;
+                                                    return (
+                                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black ${statusColor[displayRepairStatus] || "bg-blue-50 text-blue-600"}`}>
+                                                            {displayRepairStatus}
+                                                        </span>
+                                                    )
+                                                })()
+                                            ) : "-"}
+                                        </td>
+                                        <td className="text-center p-4">
+                                            {item.isReserveOpen === "true" ? (
+                                                <div className="flex flex-col items-center">
+                                                    <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-lg text-[10px] font-black uppercase">ติดจอง</span>
+                                                    {item.reserveEndDate && <span className="text-[9px] text-gray-400 font-bold mt-1">{new Date(item.reserveEndDate).toLocaleDateString("th-TH")}</span>}
+                                                </div>
+                                            ) : "-"}
+                                        </td>
 
                                         <td className="text-center p-4">
                                             <span className="text-orange-600 font-black text-base">
@@ -376,7 +450,7 @@ export default function DashboardHome() {
 
                                         <td className="text-center p-4">
                                             <span className="text-blue-600 font-black text-base">
-                                                -
+                                                {item.salesPrice > 0 ? `฿${item.salesPrice.toLocaleString()}` : "-"}
                                             </span>
                                         </td>
 
@@ -433,15 +507,48 @@ export default function DashboardHome() {
             </div>
 
             {/* Pagination / Info Footer */}
-            <div className="flex justify-between items-center px-4">
-                <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
-                    Showing {filteredItems.length} records in total
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-4">
+                <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest order-2 sm:order-1">
+                    Showing {paginatedItems.length} of {filteredItems.length} records in total
                 </p>
-                <div className="flex gap-2">
-                    <Button size="sm" variant="flat" className="rounded-xl font-bold bg-white border border-gray-100 h-9">Previous</Button>
-                    <Button size="sm" variant="flat" className="rounded-xl font-bold bg-blue-600 text-white h-9 shadow-lg shadow-blue-200">1</Button>
-                    <Button size="sm" variant="flat" className="rounded-xl font-bold bg-white border border-gray-100 h-9">2</Button>
-                    <Button size="sm" variant="flat" className="rounded-xl font-bold bg-white border border-gray-100 h-9">Next</Button>
+                <div className="flex items-center gap-1 order-1 sm:order-2">
+                    <Button
+                        size="sm"
+                        variant="flat"
+                        className="rounded-xl font-bold bg-white border border-gray-100 h-9 disabled:opacity-50"
+                        onPress={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        isDisabled={currentPage === 1}
+                    >
+                        Previous
+                    </Button>
+
+                    <div className="flex gap-1 mx-2">
+                        {[...Array(totalPages)].map((_, i) => (
+                            <Button
+                                key={i + 1}
+                                size="sm"
+                                isIconOnly
+                                variant={currentPage === i + 1 ? "solid" : "flat"}
+                                className={`rounded-xl font-bold h-9 w-9 ${currentPage === i + 1
+                                    ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                                    : "bg-white border border-gray-100"
+                                    }`}
+                                onPress={() => setCurrentPage(i + 1)}
+                            >
+                                {i + 1}
+                            </Button>
+                        )).slice(Math.max(0, currentPage - 3), Math.min(totalPages, currentPage + 2))}
+                    </div>
+
+                    <Button
+                        size="sm"
+                        variant="flat"
+                        className="rounded-xl font-bold bg-white border border-gray-100 h-9 disabled:opacity-50"
+                        onPress={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        isDisabled={currentPage === totalPages || totalPages === 0}
+                    >
+                        Next
+                    </Button>
                 </div>
             </div>
 

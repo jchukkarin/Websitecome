@@ -23,21 +23,21 @@ export default function RepairingForm({
 }: RepairingFormProps) {
     const statusOptions: StatusOption[] = [
         {
-            key: "READY",
-            label: "พร้อม",
+            key: "NOT_REPAIR",
+            label: "ไม่ต้องซ่อม",
             icon: <Clock size={16} className="text-slate-500" />,
             color: "text-slate-600",
             bg: "bg-slate-50",
         },
         {
-            key: "BOOKED",
-            label: "ติดจอง",
+            key: "REPAIRING",
+            label: "กำลังซ่อม",
             icon: <Wrench size={16} className="text-amber-500" />,
             color: "text-amber-600",
             bg: "bg-amber-50",
         },
         {
-            key: "REPAIR_DONE",
+            key: "REPAIRED",
             label: "ซ่อมเสร็จ",
             icon: <CheckCircle2 size={16} className="text-emerald-500" />,
             color: "text-emerald-600",

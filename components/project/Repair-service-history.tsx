@@ -47,12 +47,38 @@ export default function RepairServiceHistory() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string>("");
 
+    const statusTranslation: Record<string, string> = {
+        "ready": "พร้อมขาย",
+        "reserved": "ติดจอง",
+        "RESERVED": "ติดจอง",
+        "repair": "ซ่อม",
+        "REPAIR": "ซ่อม",
+        "sold": "ขายแล้ว",
+        "RETURN_CUSTOMER": "ส่งคืนลูกค้า",
+        "REPAIR_DONE": "ซ่อมเสร็จสิ้น",
+        "REPAIRED": "ซ่อมเสร็จสิ้น",
+        "EXTENDED": "ขยายเวลา",
+        "REPAIRING": "กำลังซ่อม",
+        "repairing": "กำลังซ่อม",
+        "ขายได้": "พร้อมขาย",
+        "ขายไม่ได้": "ขายไม่ได้",
+    };
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
     const user = session?.user as any;
     const isManager = user?.role === "MANAGER";
 
     useEffect(() => {
         fetchData();
     }, [session]);
+
+    // Reset pagination when search or filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedCategory]);
 
     const fetchData = async () => {
         if (!session) return;
@@ -86,15 +112,29 @@ export default function RepairServiceHistory() {
     };
 
     const filteredData = useMemo(() => {
-        return data.filter((item) =>
-            item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.lot?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        return data.filter((item) => {
+            const matchesSearch = item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.lot?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.consignorName?.toLowerCase().includes(searchQuery.toLowerCase())) &&
-            (selectedCategory === "" || selectedCategory === "all" || item.category === selectedCategory)
-        );
-    }, [data, searchQuery]);
+                item.consignorName?.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesCategory = (selectedCategory === "" || selectedCategory === "all" || item.category === selectedCategory);
+            return matchesSearch && matchesCategory;
+        });
+    }, [data, searchQuery, selectedCategory]);
+
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+    const paginatedData = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        return filteredData.slice(start, end);
+    }, [filteredData, currentPage, itemsPerPage]);
+
+    // ✅ Ensure currentPage doesn't exceed totalPages after filtering
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [filteredData.length, totalPages, currentPage]);
 
     return (
         <div className="p-4 sm:p-8 bg-[#FAFBFC] min-h-screen">
@@ -224,7 +264,7 @@ export default function RepairServiceHistory() {
                                         <TableColumn align="end">ราคาซ่อม (บาท)</TableColumn>
                                     </TableHeader>
                                     <TableBody
-                                        items={filteredData}
+                                        items={paginatedData}
                                         loadingContent={<Spinner label="กำลังจัดเตรียมข้อมูล..." color="primary" />}
                                         isLoading={loading}
                                         emptyContent={!loading && "ไม่มีข้อมูลที่ตรงกับการค้นหา"}
@@ -270,9 +310,9 @@ export default function RepairServiceHistory() {
                                                         variant="flat"
                                                         size="sm"
                                                         className="font-black text-[10px] uppercase"
-                                                        color={item.status === "ขายได้" ? "success" : "warning"}
+                                                        color={(item.status === "ขายได้" || item.status === "ready" || item.status === "พร้อมขาย") ? "success" : "warning"}
                                                     >
-                                                        {item.status}
+                                                        {statusTranslation[item.status] || item.status}
                                                     </Chip>
                                                 </TableCell>
                                                 <TableCell>
@@ -288,14 +328,37 @@ export default function RepairServiceHistory() {
                             {/* Footer */}
                             <div className="flex flex-col sm:flex-row justify-between items-center px-10 py-8 bg-slate-50/30 border-t border-slate-100 gap-6">
                                 <span className="text-sm font-black text-slate-900/40 uppercase tracking-[0.2em]">
-                                    {filteredData.length} records in total
+                                    Showing {paginatedData.length} of {filteredData.length} records in total
                                 </span>
                                 <div className="flex items-center gap-4">
-                                    <Button isIconOnly variant="flat" size="md" className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm">
+                                    <Button
+                                        isIconOnly
+                                        variant="flat"
+                                        size="md"
+                                        className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm disabled:opacity-50"
+                                        onPress={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        isDisabled={currentPage === 1}
+                                    >
                                         <ChevronLeft size={20} />
                                     </Button>
-                                    <Pagination total={1} initialPage={1} size="md" radius="full" classNames={{ cursor: "bg-blue-600 text-white font-black" }} />
-                                    <Button isIconOnly variant="flat" size="md" className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm">
+
+                                    <Pagination
+                                        total={totalPages > 0 ? totalPages : 1}
+                                        page={currentPage}
+                                        onChange={setCurrentPage}
+                                        size="md"
+                                        radius="full"
+                                        classNames={{ cursor: "bg-blue-600 text-white font-black" }}
+                                    />
+
+                                    <Button
+                                        isIconOnly
+                                        variant="flat"
+                                        size="md"
+                                        className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm disabled:opacity-50"
+                                        onPress={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        isDisabled={currentPage === totalPages || totalPages === 0}
+                                    >
                                         <ChevronRight size={20} />
                                     </Button>
                                 </div>

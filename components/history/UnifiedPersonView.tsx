@@ -98,13 +98,19 @@ export default function UnifiedPersonView({
         );
     }, [consignments, searchQuery]);
 
+    // ✅ Reset หน้ากลับไปที่ 1 เมื่อมีการค้นหาใหม่
+    useEffect(() => {
+        setPage(1);
+    }, [searchQuery]);
+
     const pages = Math.ceil(filteredConsignments.length / rowsPerPage);
 
     const items = useMemo(() => {
         const start = (page - 1) * rowsPerPage;
         const end = start + rowsPerPage;
+        // ดึงข้อมูลมาแค่ 5 รายการตามหน้าปัจจุบัน
         return filteredConsignments.slice(start, end);
-    }, [page, filteredConsignments]);
+    }, [page, filteredConsignments, rowsPerPage]);
 
     const handleExportFullExcel = () => {
         const allItems = filteredConsignments.flatMap(c =>
@@ -163,15 +169,6 @@ export default function UnifiedPersonView({
                     >
                         Export สินค้าทั้งหมด (Excel)
                     </Button>
-                    <Button
-                        className={`h-14 px-8 rounded-2xl text-white font-black shadow-lg ${shadowClass} transition-all active:scale-95`}
-                        style={{ backgroundColor: `var(--${themeColor.split('-')[0]}-600, ${themeColor.split('-')[0]})` }}
-                        startContent={<FileSpreadsheet size={18} />}
-                        onPress={() => exportBatchExcel(filteredConsignments)}
-                        color={nextUIColor}
-                    >
-                        ส่งออก Excel
-                    </Button>
                 </div>
             </div>
 
@@ -205,7 +202,7 @@ export default function UnifiedPersonView({
                         isLoading={loading}
                         emptyContent={!loading && `ไม่พบข้อมูล${title}`}
                     >
-                        {(item) => (
+                        {(item: any) => (
                             <TableRow key={item.id} className="group transition-all hover:bg-slate-50/50">
                                 <TableCell>
                                     <div className="flex -space-x-4 overflow-hidden">
@@ -323,13 +320,16 @@ export default function UnifiedPersonView({
                             <ChevronLeft size={20} />
                         </Button>
                         <Pagination
-                            total={pages || 1}
+                            total={pages > 0 ? pages : 1}
                             page={page}
-                            onChange={setPage}
+                            onChange={(p) => setPage(p)}
                             size="md"
                             radius="full"
                             color={nextUIColor}
-                            classNames={{ cursor: `text-white shadow-2xl ${shadowClass} font-black` }}
+                            classNames={{
+                                cursor: `text-white shadow-2xl ${shadowClass} font-black`,
+                                base: "flex justify-center",
+                            }}
                         />
                         <Button isIconOnly variant="flat" size="md" isDisabled={page === pages} onPress={() => setPage(p => Math.min(pages, p + 1))} className="bg-white border rounded-2xl shadow-sm">
                             <ChevronRight size={20} />

@@ -10,12 +10,25 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Status is required" }, { status: 400 });
         }
 
-        // SELLABLE = ready
-        // UNSELLABLE = not ready
+        // SELLABLE = ready or พร้อม
+        // UNSELLABLE = anything else (but excluded Pawn statuses)
+        const PAWN_STATUSES = [
+            "ACTIVE", "DUE", "EXTENDED", "CLOSED",
+            "active", "extended", "redeemed", "due", "closed",
+            "ยังไม่ครบกำหนด", "ครบกำหนด", "ต่อยอด", "ปิดยอด"
+        ];
+
+        const whereClause = status === "SELLABLE"
+            ? { status: { in: ["ready", "พร้อม"] } }
+            : {
+                AND: [
+                    { status: { notIn: ["ready", "พร้อม"] } },
+                    { status: { notIn: PAWN_STATUSES } }
+                ]
+            };
+
         const items = await prisma.consignmentItem.findMany({
-            where: {
-                status: status === "SELLABLE" ? "ready" : { not: "ready" }
-            },
+            where: whereClause,
             include: {
                 consignment: {
                     select: {

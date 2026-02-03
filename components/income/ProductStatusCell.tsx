@@ -31,9 +31,10 @@ export default function ProductStatusCell({ item, onItemChangeAction }: ProductS
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const statusOptions = [
-        { label: "ไม่ซ่อม", value: "reserved", color: "warning" as const },
-        { label: "กำลังซ่อม", value: "repair", color: "primary" as const },
-        { label: "ซ่อมเสร็จสิ้น", value: "sold", color: "danger" as const },
+        { label: "พร้อม", value: "ready", color: "success" as const },
+        { label: "ติดจอง", value: "reserved", color: "warning" as const },
+        { label: "ส่งซ่อม", value: "repair", color: "primary" as const },
+        { label: "ขายแล้ว", value: "sold", color: "danger" as const },
     ];
 
     const currentOption = statusOptions.find((opt) => opt.value === (item as any).status) || statusOptions[0];
@@ -41,14 +42,25 @@ export default function ProductStatusCell({ item, onItemChangeAction }: ProductS
     const handleStatusSelect = (value: string) => {
         onItemChangeAction(item.id, "status" as any, value);
 
-        if (value === "reserved") {
-            // เคลียร์ข้อมูลที่เกี่ยวกับการซ่อม / การจอง
+        if (value !== "repair") {
+            // เคลียร์ข้อมูลที่เกี่ยวกับการซ่อม ถ้าไม่ใช่สถานะส่งซ่อม
             onItemChangeAction(item.id, "repairStartDate", "");
             onItemChangeAction(item.id, "repairEndDate", "");
+        }
+
+        if (value !== "reserved") {
+            // เคลียร์ข้อมูลการจอง ถ้าไม่ใช่สถานะติดจอง
             onItemChangeAction(item.id, "isReserveOpen", "false");
             onItemChangeAction(item.id, "reserveStartDate", "");
+        }
 
-            // ปิด popover ทันที
+        if (value !== "sold") {
+            // เคลียร์สลิป ถ้าไม่ใช่สถานะขายแล้ว
+            onItemChangeAction(item.id, "slipImage", "");
+        }
+
+        // ปิด popover ทันทีหากไม่ใช่สถานะที่ต้องกรอกข้อมูลเพิ่ม (แต่ในโค้ดเดิมมีให้กรอกวันที่ซ่อมและสลิป)
+        if (value === "ready") {
             setIsOpen(false);
         }
     };

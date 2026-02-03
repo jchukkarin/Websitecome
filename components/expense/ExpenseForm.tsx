@@ -46,6 +46,10 @@ export default function PawnHistory() {
     const [selectedCategory, setSelectedCategory] = useState<string>("");
     const [isMounted, setIsMounted] = useState(false);
 
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
     useEffect(() => {
         setIsMounted(true);
         fetchData();
@@ -81,6 +85,26 @@ export default function PawnHistory() {
             (selectedCategory === "" || selectedCategory === "all" || item.category === selectedCategory)
         );
     }, [data, searchQuery, selectedCategory]);
+
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+    const paginatedData = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        return filteredData.slice(start, end);
+    }, [filteredData, currentPage, itemsPerPage]);
+
+    // ✅ Reset pagination when search or filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedCategory]);
+
+    // ✅ Ensure currentPage doesn't exceed totalPages after filtering
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [filteredData.length, totalPages, currentPage]);
 
     return (
         <div className="p-4 sm:p-8 bg-[#FAFBFC] min-h-screen">
@@ -203,7 +227,7 @@ export default function PawnHistory() {
                                 <TableHeader>
                                     <TableColumn>รูปภาพ</TableColumn>
                                     <TableColumn>รหัสสินค้า</TableColumn>
-                                    <TableColumn>ล็อต</TableColumn>
+                                    <TableColumn>ชื่อผู้รับจำนำ</TableColumn>
                                     <TableColumn>วันที่รับจำนำ</TableColumn>
                                     <TableColumn>ชื่อสินค้า</TableColumn>
                                     <TableColumn>ผู้นำมาจำนำ</TableColumn>
@@ -211,7 +235,7 @@ export default function PawnHistory() {
                                     <TableColumn align="end">ยอดจำนำ (บาท)</TableColumn>
                                 </TableHeader>
                                 <TableBody
-                                    items={filteredData}
+                                    items={paginatedData}
                                     loadingContent={<Spinner label="กำลังจัดเตรียมข้อมูล..." color="danger" />}
                                     isLoading={loading}
                                     emptyContent={!loading && "ไม่มีข้อมูลที่ตรงกับการค้นหา"}
@@ -275,14 +299,37 @@ export default function PawnHistory() {
                             {/* Footer */}
                             <div className="flex flex-col sm:flex-row justify-between items-center px-10 py-8 bg-slate-50/30 border-t border-slate-100 gap-6">
                                 <span className="text-sm font-black text-slate-900/40 uppercase tracking-[0.2em]">
-                                    {filteredData.length} records in total
+                                    Showing {paginatedData.length} of {filteredData.length} records in total
                                 </span>
                                 <div className="flex items-center gap-4">
-                                    <Button isIconOnly variant="flat" size="md" className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm">
+                                    <Button
+                                        isIconOnly
+                                        variant="flat"
+                                        size="md"
+                                        className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm disabled:opacity-50"
+                                        onPress={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        isDisabled={currentPage === 1}
+                                    >
                                         <ChevronLeft size={20} />
                                     </Button>
-                                    <Pagination total={1} initialPage={1} size="md" radius="full" classNames={{ cursor: "bg-red-600 text-white font-black" }} />
-                                    <Button isIconOnly variant="flat" size="md" className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm">
+
+                                    <Pagination
+                                        total={totalPages > 0 ? totalPages : 1}
+                                        page={currentPage}
+                                        onChange={setCurrentPage}
+                                        size="md"
+                                        radius="full"
+                                        classNames={{ cursor: "bg-red-600 text-white font-black" }}
+                                    />
+
+                                    <Button
+                                        isIconOnly
+                                        variant="flat"
+                                        size="md"
+                                        className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm disabled:opacity-50"
+                                        onPress={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        isDisabled={currentPage === totalPages || totalPages === 0}
+                                    >
                                         <ChevronRight size={20} />
                                     </Button>
                                 </div>

@@ -51,10 +51,10 @@ export default function ProductDetailModal({
         setIsEdit(!isEdit);
     };
 
-    const handleExportPDF = () => {
+    const handleExportPDF = async () => {
         try {
             setIsExporting(true);
-            exportProductPDF(form);
+            await exportProductPDF(form);
             toast.success("ส่งออกรายงาน PDF สำเร็จ");
         } catch (error) {
             console.error("PDF Export error:", error);

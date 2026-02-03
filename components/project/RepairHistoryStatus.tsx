@@ -40,21 +40,21 @@ export default function RepairHistoryStatus({
 
     const statusOptions: StatusOption[] = [
         {
-            key: "repairing",
+            key: "REPAIRING",
             label: "กำลังซ่อม",
             icon: <Wrench size={16} className="text-blue-500" />,
             color: "text-blue-600",
             btnColor: "primary",
         },
         {
-            key: "repair_done",
+            key: "REPAIRED",
             label: "ซ่อมเสร็จสิ้น",
             icon: <CheckCircle2 size={16} className="text-emerald-500" />,
             color: "text-emerald-600",
             btnColor: "success",
         },
         {
-            key: "return_customer",
+            key: "RETURN_CUSTOMER",
             label: "ส่งคืนลูกค้า",
             icon: <AlertCircle size={16} className="text-purple-500" />,
             color: "text-purple-600",
@@ -62,13 +62,20 @@ export default function RepairHistoryStatus({
         },
     ];
 
-    const value = item?.status;
+    const value = item?.repairStatus || "NOT_REPAIR";
     const currentOption = statusOptions.find((o) => o.key === value);
 
     const handleStatusSelect = (key: string) => {
-        onItemChangeAction(item.id, "status", key);
-        // Keep popover open if "repairing" to allow date input, otherwise close
-        if (key !== "repairing") {
+        const option = statusOptions.find(opt => opt.key === key);
+        onItemChangeAction(item.id, "repairStatus", key);
+
+        // Sync with general status if label matches known labels in Dashboard
+        if (option) {
+            onItemChangeAction(item.id, "status", option.label);
+        }
+
+        // Keep popover open if "REPAIRING" to allow date input, otherwise close
+        if (key !== "REPAIRING") {
             setIsOpen(false);
         }
     };
@@ -104,7 +111,7 @@ export default function RepairHistoryStatus({
                             <span className="text-slate-400 font-bold">เลือกสถานะ</span>
                         )}
                         {/* Indicator for configured dates */}
-                        {value === "repairing" && hasDates && (
+                        {value === "REPAIRING" && hasDates && (
                             <div className="flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded-full">
                                 <Calendar size={10} className="text-blue-500" />
                                 <span className="text-[10px] font-bold text-blue-600">นัดหมายแล้ว</span>
@@ -161,7 +168,7 @@ export default function RepairHistoryStatus({
 
                     {/* Repair Date Section */}
                     <AnimatePresence>
-                        {value === "repairing" && (
+                        {value === "REPAIRING" && (
                             <motion.div
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -228,7 +235,7 @@ export default function RepairHistoryStatus({
                                         />
                                     </div>
                                 </div>
-                                {value === "repairing" && !hasDates && (
+                                {value === "REPAIRING" && !hasDates && (
                                     <p className="text-[10px] text-red-500 font-bold text-center animate-pulse">
                                         * กรุณาระบุวันที่เริ่มและสิ้นสุดการซ่อม
                                     </p>

@@ -102,7 +102,7 @@ export default function PawnRecording() {
   };
 
   const handleItemChange = (id: string, field: string, value: any) => {
-    setItems(items.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+    setItems((prevItems) => prevItems.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
   const handleItemImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {

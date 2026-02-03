@@ -40,6 +40,13 @@ export default function IncomeProductStatus({
 
     const statusOptions = [
         {
+            key: "ready",
+            label: "พร้อม",
+            icon: <CheckCircle2 size={16} className="text-emerald-500" />,
+            color: "text-emerald-600",
+            btnColor: "success" as const,
+        },
+        {
             key: "ขายได้",
             label: "ขายได้",
             icon: <CheckCircle2 size={16} className="text-emerald-500" />,

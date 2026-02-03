@@ -51,6 +51,23 @@ export default function History() {
     const [selectedCategory, setSelectedCategory] = useState<string>("");
     const [selectedStatus, setSelectedStatus] = useState<string>("");
 
+    const statusTranslation: Record<string, string> = {
+        "ready": "พร้อมขาย",
+        "reserved": "ติดจอง",
+        "RESERVED": "ติดจอง",
+        "repair": "ซ่อม",
+        "REPAIR": "ซ่อม",
+        "sold": "ขายแล้ว",
+        "RETURN_CUSTOMER": "ส่งคืนลูกค้า",
+        "REPAIR_DONE": "ซ่อมเสร็จสิ้น",
+        "REPAIRED": "ซ่อมเสร็จสิ้น",
+        "EXTENDED": "ขยายเวลา",
+        "REPAIRING": "กำลังซ่อม",
+        "repairing": "กำลังซ่อม",
+    };
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
     // Initial filter from URL
     useEffect(() => {
         const catParam = searchParams.get("category");
@@ -58,6 +75,11 @@ export default function History() {
         if (catParam) setSelectedCategory(catParam);
         if (statusParam) setSelectedStatus(statusParam);
     }, [searchParams]);
+
+    // Reset pagination when search or filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedCategory, selectedStatus]);
 
     const user = session?.user as any;
     const isManager = user?.role === "MANAGER";
@@ -109,6 +131,21 @@ export default function History() {
             return matchesSearch && matchesCategory && matchesStatus;
         });
     }, [data, searchQuery, selectedCategory, selectedStatus]);
+
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+    const paginatedData = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        return filteredData.slice(start, end);
+    }, [filteredData, currentPage, itemsPerPage]);
+
+    // ✅ Reset page if current page exceeds total pages after filtering
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [filteredData.length, totalPages, currentPage]);
 
     return (
         <div className="p-4 sm:p-8 bg-[#FAFBFC] min-h-screen">
@@ -261,7 +298,7 @@ export default function History() {
                                         <TableColumn align="end">ราคาทุน (บาท)</TableColumn>
                                     </TableHeader>
                                     <TableBody
-                                        items={filteredData}
+                                        items={paginatedData}
                                         loadingContent={<Spinner label="กำลังจัดเตรียมข้อมูล..." color="danger" />}
                                         isLoading={loading}
                                         emptyContent={!loading && "ไม่มีข้อมูลที่ตรงกับการค้นหา"}
@@ -334,14 +371,12 @@ export default function History() {
                                                         size="sm"
                                                         className="font-black text-[10px] uppercase"
                                                         color={
-                                                            item.status === "ready" ? "success" :
-                                                                item.status === "reserved" ? "warning" :
-                                                                    item.status === "repair" ? "primary" : "danger"
+                                                            item.status === "ready" || item.status === "พร้อมขาย" ? "success" :
+                                                                (item.status === "reserved" || item.status === "RESERVED" || item.status === "ติดจอง") ? "warning" :
+                                                                    (item.status === "repair" || item.status === "REPAIR" || item.status === "ซ่อม") ? "primary" : "secondary"
                                                         }
                                                     >
-                                                        {item.status === "ready" ? "พร้อมขาย" :
-                                                            item.status === "reserved" ? "ติดจอง" :
-                                                                item.status === "repair" ? "กำลังซ่อม" : "ขายแล้ว"}
+                                                        {statusTranslation[item.status] || item.status}
                                                     </Chip>
                                                 </TableCell>
 
@@ -380,14 +415,37 @@ export default function History() {
                             {/* Footer */}
                             <div className="flex flex-col sm:flex-row justify-between items-center px-10 py-8 bg-slate-50/30 border-t border-slate-100 gap-6">
                                 <span className="text-sm font-black text-slate-900/40 uppercase tracking-[0.2em]">
-                                    {filteredData.length} records in total
+                                    Showing {paginatedData.length} of {filteredData.length} records in total
                                 </span>
                                 <div className="flex items-center gap-4">
-                                    <Button isIconOnly variant="flat" size="md" className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm">
+                                    <Button
+                                        isIconOnly
+                                        variant="flat"
+                                        size="md"
+                                        className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm disabled:opacity-50"
+                                        onPress={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        isDisabled={currentPage === 1}
+                                    >
                                         <ChevronLeft size={20} />
                                     </Button>
-                                    <Pagination total={1} initialPage={1} size="md" radius="full" classNames={{ cursor: "bg-red-600 text-white font-black" }} />
-                                    <Button isIconOnly variant="flat" size="md" className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm">
+
+                                    <Pagination
+                                        total={totalPages > 0 ? totalPages : 1}
+                                        page={currentPage}
+                                        onChange={setCurrentPage}
+                                        size="md"
+                                        radius="full"
+                                        classNames={{ cursor: "bg-red-600 text-white font-black" }}
+                                    />
+
+                                    <Button
+                                        isIconOnly
+                                        variant="flat"
+                                        size="md"
+                                        className="bg-white border border-slate-200 text-slate-600 rounded-2xl shadow-sm disabled:opacity-50"
+                                        onPress={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        isDisabled={currentPage === totalPages || totalPages === 0}
+                                    >
                                         <ChevronRight size={20} />
                                     </Button>
                                 </div>

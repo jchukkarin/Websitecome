@@ -191,10 +191,16 @@ function ConsignmentListContent() {
                                 </TableCell>
                                 <TableCell>
                                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight shadow-sm ${item.status === 'ready' ? 'bg-green-100 text-green-700' :
-                                        item.status === 'reserved' ? 'bg-yellow-100 text-yellow-700' :
-                                            'bg-gray-100 text-gray-700'
+                                            item.status === 'reserved' ? 'bg-yellow-100 text-yellow-700' :
+                                                item.status === 'repair' ? 'bg-blue-100 text-blue-700' :
+                                                    item.status === 'sold' ? 'bg-rose-100 text-rose-700' :
+                                                        'bg-gray-100 text-gray-700'
                                         }`}>
-                                        {item.status}
+                                        {item.status === 'ready' ? 'พร้อม' :
+                                            item.status === 'reserved' ? 'ติดจอง' :
+                                                item.status === 'repair' ? 'ส่งซ่อม' :
+                                                    item.status === 'sold' ? 'ขายแล้ว' :
+                                                        item.status}
                                     </span>
                                 </TableCell>
                                 <TableCell>

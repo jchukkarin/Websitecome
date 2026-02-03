@@ -53,6 +53,7 @@ interface RepairItem {
   category: string;
   year: string;
   status: string;
+  repairStatus: string;
   productStatus: string; // เพิ่มมาใหม่ สำหรับ RepairHistoryStatus
   confirmedPrice: string;
   salesChannel: string;
@@ -85,6 +86,7 @@ export default function Projects() {
       category: "",
       year: "",
       status: "pending",
+      repairStatus: "NOT_REPAIR",
       productStatus: "normal",
       confirmedPrice: "",
       salesChannel: "",
@@ -101,6 +103,7 @@ export default function Projects() {
         category: "",
         year: "",
         status: "pending",
+        repairStatus: "NOT_REPAIR",
         productStatus: "normal",
         confirmedPrice: "",
         salesChannel: "",
@@ -116,7 +119,7 @@ export default function Projects() {
   };
 
   const handleItemChange = (id: string, field: string, value: any) => {
-    setItems(items.map((item) => (item.id === id ? { ...item, [field as keyof RepairItem]: value } : item)));
+    setItems((prevItems) => prevItems.map((item) => (item.id === id ? { ...item, [field as keyof RepairItem]: value } : item)));
   };
 
   const handleItemImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,6 +150,7 @@ export default function Projects() {
         category: "",
         year: "",
         status: "pending",
+        repairStatus: "NOT_REPAIR",
         productStatus: "normal",
         confirmedPrice: "",
         salesChannel: "",

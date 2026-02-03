@@ -140,4 +140,5 @@ enum RepairStatus {
   NOT_REPAIR
   REPAIRING
   REPAIRED
+  RETURN_CUSTOMER
 }

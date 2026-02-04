@@ -348,7 +348,6 @@ export default function DashboardHome() {
                                 <th className="p-4 text-center font-bold">ล็อต</th>
                                 <th className="p-4 text-center font-bold">สถานะสินค้า</th>
                                 <th className="p-4 text-center font-bold">สถานะซ่อม</th>
-                                <th className="p-4 text-center font-bold">สถานะการจอง</th>
                                 <th className="p-4 text-center font-bold">ราคาทุน</th>
                                 <th className="p-4 text-center font-bold">ราคาขาย</th>
                                 <th className="p-4 text-right pr-6 font-bold">จัดการ</th>
@@ -404,25 +403,33 @@ export default function DashboardHome() {
                                         </td>
 
                                         <td className="text-center p-4">
-                                            {(() => {
-                                                // 🔥 Normalize status to uppercase to prevent case mismatch
-                                                const normalizedStatus = item.status?.toUpperCase() || "";
-                                                const displayStatus = statusTranslation[normalizedStatus] || item.status;
-                                                return (
-                                                    <span
-                                                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight shadow-sm inline-block ${statusColor[displayStatus] || "bg-gray-100 text-gray-600"
-                                                            }`}
-                                                    >
-                                                        {displayStatus}
-                                                    </span>
-                                                )
-                                            })()}
+                                            <div className="flex flex-col items-center gap-1">
+                                                {(() => {
+                                                    const normalizedStatus = item.status?.toUpperCase() || "";
+                                                    const isActuallyReserved = item.isReserveOpen === "true" || normalizedStatus === "RESERVED";
+                                                    const displayStatus = isActuallyReserved ? "ติดจอง" : (statusTranslation[normalizedStatus] || item.status);
+
+                                                    return (
+                                                        <>
+                                                            <span
+                                                                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight shadow-sm inline-block ${statusColor[displayStatus] || "bg-gray-100 text-gray-600"}`}
+                                                            >
+                                                                {displayStatus}
+                                                            </span>
+                                                            {isActuallyReserved && item.reserveEndDate && (
+                                                                <span className="text-[9px] text-gray-400 font-bold">
+                                                                    จนถึง: {new Date(item.reserveEndDate).toLocaleDateString("th-TH")}
+                                                                </span>
+                                                            )}
+                                                        </>
+                                                    )
+                                                })()}
+                                            </div>
                                         </td>
 
                                         <td className="text-center p-4">
                                             {item.repairStatus && item.repairStatus !== "NOT_REPAIR" ? (
                                                 (() => {
-                                                    // 🔥 Normalize repair status to uppercase
                                                     const normalizedRepairStatus = item.repairStatus?.toUpperCase() || "";
                                                     const displayRepairStatus = statusTranslation[normalizedRepairStatus] || item.repairStatus;
                                                     return (
@@ -431,14 +438,6 @@ export default function DashboardHome() {
                                                         </span>
                                                     )
                                                 })()
-                                            ) : "-"}
-                                        </td>
-                                        <td className="text-center p-4">
-                                            {item.isReserveOpen === "true" ? (
-                                                <div className="flex flex-col items-center">
-                                                    <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-lg text-[10px] font-black uppercase">ติดจอง</span>
-                                                    {item.reserveEndDate && <span className="text-[9px] text-gray-400 font-bold mt-1">{new Date(item.reserveEndDate).toLocaleDateString("th-TH")}</span>}
-                                                </div>
                                             ) : "-"}
                                         </td>
 
@@ -467,7 +466,7 @@ export default function DashboardHome() {
                                                             <MoreVertical size={18} />
                                                         </Button>
                                                     </DropdownTrigger>
-                                                    <DropdownMenu aria-label="Action menu" variant="faded" className="p-2 gap-1">
+                                                    <DropdownMenu aria-label="Action menu" variant="faded" className="p-2 gap-1 bg-white border border-gray-100 shadow-lg rounded-2xl">
                                                         <DropdownItem
                                                             key="edit"
                                                             startContent={<Pencil size={16} className="text-blue-500" />}

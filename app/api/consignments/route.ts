@@ -52,7 +52,9 @@ export async function POST(req: Request) {
 
         const {
             date,
+            endDate,
             lot,
+            receiverId,
             consignorName,
             contactNumber,
             address,
@@ -74,16 +76,29 @@ export async function POST(req: Request) {
             }))
         );
 
+        // 🔥 Create or find the lot record
+        const lotRecord = await prisma.lot.upsert({
+            where: { lotNumber: lot },
+            update: {},
+            create: {
+                lotNumber: lot,
+                userId: (session.user as any).id,
+            },
+        });
+
         const consignment = await prisma.consignment.create({
             data: {
                 date: new Date(date),
+                endDate: endDate ? new Date(endDate) : null,
                 lot,
+                lotId: lotRecord.id,
                 consignorName,
                 contactNumber,
                 address,
                 totalPrice: Number(totalPrice),
                 type: type || "INCOME",
                 userId: (session.user as any).id, // ✅ Store owner
+                receiverId: receiverId || null,
 
                 images: {
                     create: processedImagesUrls.map((url: string) => ({
@@ -100,6 +115,7 @@ export async function POST(req: Request) {
                         repairStatus: item.repairStatus || "NOT_REPAIR",
                         confirmedPrice: Number(item.confirmedPrice) || 0,
                         salesPrice: Number(item.salesPrice) || 0,
+                        redemptionPrice: Number(item.redemptionPrice) || 0,
                         salesChannel: item.salesChannel || "",
                         imageUrl: item.imageUrl ?? "",
                         slipImage: item.slipImage ?? null,
@@ -137,11 +153,18 @@ export async function GET(req: Request) {
             include: {
                 items: true,
                 images: true,
-                user: { // ✅ Include user info if needed
+                user: { // ✅ Creator
                     select: {
                         id: true,
                         name: true,
                         email: true,
+                        role: true,
+                    }
+                },
+                receiver: { // ✅ Receiver/Staff
+                    select: {
+                        id: true,
+                        name: true,
                         role: true,
                     }
                 }

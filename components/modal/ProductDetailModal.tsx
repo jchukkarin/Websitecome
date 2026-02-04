@@ -74,11 +74,11 @@ export default function ProductDetailModal({
             backdrop="blur"
             scrollBehavior="inside"
             classNames={{
-                base: "bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl overflow-hidden",
-                header: "border-b border-slate-100 py-6 px-10 bg-slate-50/50",
+                base: "bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl overflow-visible",
+                header: "border-b border-slate-100 py-6 px-10 bg-slate-50/50 relative",
                 body: "p-0",
                 footer: "border-t border-slate-100 py-6 px-10 bg-slate-50/20",
-                closeButton: "hover:bg-red-50 hover:text-red-500 transition-all p-2 top-6 right-6"
+                closeButton: "absolute -top-4 -right-4 z-50 bg-white shadow-2xl rounded-full p-3 border border-slate-100 hover:bg-red-50 hover:text-red-500 transition-all hover:scale-110 active:scale-95"
             }}
         >
             <ModalContent>

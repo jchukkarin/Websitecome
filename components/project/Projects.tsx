@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import { useSession } from "next-auth/react";
 import {
   Button,
   Input,
@@ -46,7 +47,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import ProductHistoryStatus from "./ProductHistoryStatus";
 import RepairingHistoryStatus from "./RepairHistoryStatus";
 
-
 interface RepairItem {
   id: string;
   productName: string;
@@ -54,7 +54,7 @@ interface RepairItem {
   year: string;
   status: string;
   repairStatus: string;
-  productStatus: string; // เพิ่มมาใหม่ สำหรับ RepairHistoryStatus
+  productStatus: string;
   confirmedPrice: string;
   salesChannel: string;
   imageUrl: string;
@@ -65,6 +65,8 @@ interface RepairItem {
 }
 
 export default function Projects() {
+  const { data: session } = useSession();
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -93,6 +95,27 @@ export default function Projects() {
       imageUrl: "",
     },
   ]);
+
+  useEffect(() => {
+    setMounted(true);
+    fetchRepairLot();
+  }, []);
+
+  const fetchRepairLot = async () => {
+    try {
+      const res = await axios.get("/api/lots/generate?prefix=RC");
+      setFormData(prev => ({ ...prev, lot: res.data.lot }));
+    } catch (error) {
+      console.error("Fetch Repair LOT failed", error);
+      toast.error("ไม่สามารถสร้างรหัส RC LOT ได้อัตโนมัติ");
+    }
+  };
+
+  // 🔥 Auto-calculate total estimate
+  useEffect(() => {
+    const total = items.reduce((sum, item) => sum + (Number(item.confirmedPrice) || 0), 0);
+    setFormData(prev => ({ ...prev, totalPrice: total.toString() }));
+  }, [items]);
 
   const handleAddItem = () => {
     setItems([
@@ -157,6 +180,7 @@ export default function Projects() {
         imageUrl: "",
       },
     ]);
+    fetchRepairLot();
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,54 +208,32 @@ export default function Projects() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-
-    // -------- Form หลัก --------
     if (!formData.date) newErrors.date = "กรุณาเลือกวันที่";
-    if (!formData.lot) newErrors.lot = "กรุณากรอกรหัสล๊อต";
+    if (!formData.lot) newErrors.lot = "กรุณาตรวจสอบรหัสล๊อต";
     if (!formData.consignorName) newErrors.consignorName = "กรุณากรอกชื่อผู้ฝากซ่อม";
     if (!formData.contactNumber) newErrors.contactNumber = "กรุณากรอกเบอร์โทร";
     if (!formData.totalPrice) newErrors.totalPrice = "กรุณากรอกยอดรวม";
 
-    // -------- Items --------
-    if (items.length === 0) {
-      toast.error("ต้องมีสินค้าอย่างน้อย 1 รายการ");
-      return false;
-    }
-
     items.forEach((item, index) => {
-      if (!item.productName)
-        newErrors[`item.${item.id}.productName`] = `กรุณากรอกชื่อสินค้า (แถว ${index + 1})`;
-
-      if (!item.category)
-        newErrors[`item.${item.id}.category`] = `กรุณาเลือกหมวดหมู่ (แถว ${index + 1})`;
-
-      if (!item.confirmedPrice)
-        newErrors[`item.${item.id}.confirmedPrice`] = `กรุณากรอกราคา (แถว ${index + 1})`;
-
-      if (!item.imageUrl)
-        newErrors[`item.${item.id}.imageUrl`] = `กรุณาเพิ่มรูปสินค้า (แถว ${index + 1})`;
+      if (!item.productName) newErrors[`item.${item.id}.productName`] = `กรุณากรอกชื่อสินค้า (แถว ${index + 1})`;
+      if (!item.category) newErrors[`item.${item.id}.category`] = `กรุณาเลือกหมวดหมู่ (แถว ${index + 1})`;
+      if (!item.confirmedPrice) newErrors[`item.${item.id}.confirmedPrice`] = `กรุณากรอกราคาทุน (แถว ${index + 1})`;
+      if (!item.imageUrl) newErrors[`item.${item.id}.imageUrl`] = `กรุณาเพิ่มรูปสินค้า (แถว ${index + 1})`;
     });
 
     setErrors(newErrors);
-
     if (Object.keys(newErrors).length > 0) {
       toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
       return false;
     }
-
     return true;
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-
     setLoading(true);
     try {
-      const payload = {
-        ...formData,
-        items,
-        type: "REPAIR",
-      };
+      const payload = { ...formData, items, type: "REPAIR" };
       await axios.post("/api/consignments", payload);
       toast.success("บันทึกข้อมูลการฝากซ่อมสำเร็จ!");
       handleClear();
@@ -243,44 +245,41 @@ export default function Projects() {
     }
   };
 
-  const statusOptions = [
-    { label: "รอดำเนินการ", value: "pending", color: "warning" as const },
-    { label: "กำลังซ่อม", value: "repairing", color: "primary" as const },
-    { label: "ซ่อมเสร็จแล้ว", value: "completed", color: "success" as const },
-  ];
+  if (!mounted) return null;
 
   return (
     <div className="p-4 md:p-8 bg-[#F8FAFC] min-h-screen font-sans text-slate-800">
       <Toaster richColors position="top-right" />
       <div className="max-w-[1600px] mx-auto space-y-8">
+
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
             <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-purple-600 mb-1">
               <span>Repair Management</span>
               <span className="w-1 h-1 rounded-full bg-purple-200" />
               <span>Service Record</span>
             </nav>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
               บันทึกการฝากซ่อม
             </h1>
-            <p className="text-sm text-slate-500 font-medium">จัดการข้อมูลและรายละเอียดการรับฝากซ่อมสินค้า</p>
+            <p className="text-sm text-slate-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis">จัดการข้อมูลและรายละเอียดการรับฝากซ่อมสินค้า</p>
           </div>
-          <div className="flex gap-3">
+          <div className="hidden md:flex gap-3">
             <Button
               variant="flat"
-              startContent={<RotateCcw size={18} />}
+              startContent={<RotateCcw size={20} />}
               onPress={handleClear}
-              className="bg-white border border-slate-200 font-bold text-slate-600 h-12 px-6 rounded-2xl hover:bg-slate-50 transition-all"
+              className="bg-white border border-slate-200 font-bold text-slate-600 h-14 px-8 rounded-2xl hover:bg-slate-50 transition-all"
             >
               ล้างฟอร์ม
             </Button>
             <Button
               color="primary"
-              startContent={<Save size={18} />}
+              startContent={<Save size={20} />}
               onPress={handleSubmit}
               isLoading={loading}
-              className="bg-purple-600 font-black text-white h-12 px-10 rounded-2xl shadow-xl shadow-purple-100 transition-all active:scale-95"
+              className="bg-purple-600 font-black text-white h-14 px-12 rounded-2xl shadow-xl shadow-purple-100 transition-all active:scale-95"
             >
               บันทึกรายการ
             </Button>
@@ -289,7 +288,6 @@ export default function Projects() {
 
         {/* Top Forms Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Info Card */}
           <Card className="lg:col-span-2 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/80 backdrop-blur-xl" radius="lg">
             <CardBody className="p-8 space-y-10">
               <div className="flex items-center gap-4 border-b border-slate-50 pb-6">
@@ -309,49 +307,42 @@ export default function Projects() {
                     type="date"
                     variant="bordered"
                     labelPlacement="outside"
-                    placeholder=" "
                     value={formData.date}
                     isInvalid={!!errors.date}
                     errorMessage={errors.date}
                     startContent={<Calendar className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
-                      label: "font-bold text-slate-700",
                       inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
                     }}
-                    onChange={(e) => {
-                      setFormData({ ...formData, date: e.target.value });
-                      setErrors((prev) => ({ ...prev, date: "" }));
-                    }}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-lg font-bold text-slate-700">รหัสล๊อตสินค้า</label>
+                  <label className="text-lg font-bold text-slate-700">รหัสล๊อต (อัตโนมัติ)</label>
                   <Input
-                    placeholder="ระบุล๊อต (e.g. REPAIR-2024-001)"
+                    placeholder="RC-YYYY-XXXX"
                     variant="bordered"
                     labelPlacement="outside"
                     value={formData.lot}
+                    isReadOnly
                     isInvalid={!!errors.lot}
                     errorMessage={errors.lot}
-                    startContent={<Hash className="text-slate-400" size={18} />}
+                    startContent={<Hash className="text-slate-400 font-black" size={18} />}
                     className="font-medium"
                     classNames={{
-                      label: "font-bold text-slate-700",
-                      inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
-                    }}
-                    onChange={(e) => {
-                      setFormData({ ...formData, lot: e.target.value });
-                      setErrors((prev) => ({ ...prev, lot: "" }));
+                      inputWrapper: "h-14 border-slate-100 bg-slate-100/50 rounded-2xl focus-within:!border-purple-500 transition-all cursor-not-allowed",
+                      input: "font-black text-purple-600"
                     }}
                   />
+                  <p className="text-[10px] text-purple-500 font-bold px-1 italic text-center">Gen อัตโนมัติ: RC (Repair Consignment)</p>
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-lg font-bold text-slate-700">ชื่อผู้ฝากซ่อม</label>
                   <Input
-                    placeholder="กรอกชื่อ-นามสกุล ผู้ฝากซ่อม"
+                    placeholder="ชื่อ-นามสกุล ผู้ฝากซ่อม"
                     variant="bordered"
                     labelPlacement="outside"
                     value={formData.consignorName}
@@ -360,13 +351,9 @@ export default function Projects() {
                     startContent={<UserIcon className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
-                      label: "font-bold text-slate-700",
                       inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white",
                     }}
-                    onChange={(e) => {
-                      setFormData({ ...formData, consignorName: e.target.value });
-                      setErrors((prev) => ({ ...prev, consignorName: "" }));
-                    }}
+                    onChange={(e) => setFormData({ ...formData, consignorName: e.target.value })}
                   />
                 </div>
 
@@ -382,19 +369,15 @@ export default function Projects() {
                     startContent={<Phone className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
-                      label: "font-bold text-slate-700",
                       inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-purple-500 transition-all group-data-[focus=true]:bg-white ",
                     }}
-                    onChange={(e) => {
-                      setFormData({ ...formData, contactNumber: e.target.value });
-                      setErrors((prev) => ({ ...prev, contactNumber: "" }));
-                    }}
+                    onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
                   />
                 </div>
               </div>
 
               <Textarea
-                label="ที่อยู่ติดต่อ"
+                label="ที่อยู่ติดต่อ (สำหรับการส่งคืน)"
                 placeholder="ระบุที่อยู่สำหรับการจัดส่งคืน..."
                 variant="bordered"
                 labelPlacement="outside"
@@ -419,24 +402,32 @@ export default function Projects() {
                   <input
                     type="number"
                     placeholder="0.00"
-                    className="bg-transparent text-4xl font-black text-right outline-none w-48 pl-6 placeholder:text-slate-700"
+                    readOnly
+                    className="bg-transparent text-4xl font-black text-right outline-none w-48 pl-6 placeholder:text-slate-700 cursor-default"
                     value={formData.totalPrice}
-                    onChange={(e) => {
-                      setFormData({ ...formData, totalPrice: e.target.value });
-                      setErrors((prev) => ({ ...prev, totalPrice: "" }));
-                    }}
                   />
-                  {errors.totalPrice && (
-                    <p className="text-red-500 text-xs font-semibold mt-2 flex items-center gap-1 absolute top-full right-0">
-                      <AlertCircle size={14} /> {errors.totalPrice}
-                    </p>
-                  )}
+                </div>
+              </div>
+
+              {/* Recorder Display */}
+              <div className="flex items-center gap-3 px-6 py-4 bg-purple-50/50 rounded-2xl border border-purple-100/50">
+                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white">
+                  <UserIcon size={14} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-purple-400 font-black uppercase tracking-widest">Recorded By (System Internal)</span>
+                  <span className="text-xs font-black text-slate-700">
+                    {(session as any)?.user?.name || "Initializing..."} ({(session as any)?.user?.role || "STAFF"})
+                  </span>
+                </div>
+                <div className="ml-auto flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[10px] font-black text-green-600 uppercase">Verified Session</span>
                 </div>
               </div>
             </CardBody>
           </Card>
 
-          {/* Master Image Upload Section */}
           <Card className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/80 backdrop-blur-xl" radius="lg">
             <CardBody className="p-8 space-y-6">
               <div className="flex items-center gap-4 border-b border-slate-50 pb-6">
@@ -451,51 +442,27 @@ export default function Projects() {
 
               <div className="flex flex-col items-center justify-center py-12 rounded-[2.5rem] bg-slate-50/50 border-2 border-dashed border-slate-100 relative group overflow-hidden">
                 <input
-                  type="file"
-                  multiple
-                  accept="image/*"
+                  type="file" multiple accept="image/*"
                   className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                  ref={fileInputRef}
                   onChange={handleImageUpload}
                 />
                 <div className="w-20 h-20 rounded-full bg-white shadow-xl shadow-slate-200/50 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all duration-500">
                   <PlusCircle size={32} />
                 </div>
                 <div className="text-center space-y-2">
-                  <p className="text-base font-bold text-slate-700 tracking-tight">เพิ่มรูปภาพสินค้าฝากซ่อม</p>
+                  <p className="text-base font-bold text-slate-700 tracking-tight">เพิ่มรูปอาการเสียรวม</p>
                   <p className="text-xs text-slate-400 font-medium">PNG, JPG up to 10MB</p>
-                </div>
-
-                {/* Visual decoration */}
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
-                  <ImageIcon size={64} className="text-slate-300" />
                 </div>
               </div>
 
               <AnimatePresence>
                 {formData.images.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="grid grid-cols-2 gap-4 mt-2"
-                  >
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-4 mt-2">
                     {formData.images.map((src, index) => (
-                      <motion.div
-                        key={index}
-                        layout
-                        className="relative group aspect-square rounded-[2rem] overflow-hidden border-4 border-white shadow-lg shadow-slate-100"
-                      >
+                      <motion.div key={index} layout className="relative group aspect-square rounded-[2rem] overflow-hidden border-4 border-white shadow-lg shadow-slate-100">
                         <img src={src} alt={`Preview ${index}`} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-sm">
-                          <Button
-                            isIconOnly
-                            size="md"
-                            color="danger"
-                            radius="full"
-                            variant="shadow"
-                            className="scale-0 group-hover:scale-100 transition-transform duration-300"
-                            onPress={() => removeImage(index)}
-                          >
+                          <Button isIconOnly size="md" color="danger" radius="full" variant="shadow" onPress={() => removeImage(index)}>
                             <Trash2 size={20} />
                           </Button>
                         </div>
@@ -523,218 +490,61 @@ export default function Projects() {
             <Button
               variant="shadow"
               color="primary"
-              startContent={<PlusCircle size={20} />}
+              startContent={<PlusCircle size={24} />}
               onPress={handleAddItem}
-              className="font-black h-12 px-8 rounded-2xl bg-slate-900 text-white shadow-xl shadow-slate-200"
+              className="font-black h-14 px-10 rounded-2xl bg-slate-900 text-white shadow-xl shadow-slate-200 w-full md:w-auto"
             >
               เพิ่มสินค้าใหม่
             </Button>
           </div>
 
-          <Card className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white overflow-hidden" radius="lg">
+          <Card className="hidden md:block border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white overflow-hidden" radius="lg">
             <div className="overflow-x-auto no-scrollbar w-full">
-              <Table
-                aria-label="Items List"
-                removeWrapper
-                className="text-sm font-medium min-w-[1200px]"
-              >
+              <Table aria-label="Items List" removeWrapper className="text-sm font-medium min-w-[1200px]">
                 <TableHeader>
                   <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] text-center w-24">IMAGE</TableColumn>
                   <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px]">PRODUCT DETAILS</TableColumn>
                   <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-48">CATEGORY</TableColumn>
                   <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-24">YEAR</TableColumn>
-                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-40">ESTIMATED COST</TableColumn>
-                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-24">REPAIR STATUS</TableColumn>
+                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-40">EST. COST</TableColumn>
+                  <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-44">REPAIR STATUS</TableColumn>
                   <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] w-44">PRODUCT STATUS</TableColumn>
                   <TableColumn className="bg-slate-50/50 py-6 text-slate-400 font-black uppercase tracking-widest text-[10px] text-center w-20">ACTIONS</TableColumn>
                 </TableHeader>
                 <TableBody items={items}>
                   {(item) => (
-                    <TableRow key={item.id} className="group border-b border-slate-50 last:border-none transition-colors hover:bg-slate-50/30">
-                      {/* Image Column */}
+                    <TableRow key={item.id} className="group border-b border-slate-50 transition-colors hover:bg-slate-50/30">
                       <TableCell>
-                        <div
-                          className="mx-auto w-16 h-16 rounded-2xl border-2 border-dashed border-slate-100 bg-slate-50/50 flex items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-white transition-all group/img relative overflow-hidden shadow-inner"
-                          onClick={() => document.getElementById(`file-${item.id}`)?.click()}
-                        >
-                          {item.imageUrl ? (
-                            <img src={item.imageUrl} className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-500" alt="product" />
-                          ) : (
-                            <Plus className="text-slate-300 group-hover/img:text-purple-500 group-hover/img:scale-125 transition-all" size={20} />
-                          )}
-                          <input
-                            id={`file-${item.id}`}
-                            type="file"
-                            className="hidden"
-                            accept="image/*"
-                            onChange={(e) => {
-                              handleItemImageUpload(item.id, e);
-                              setErrors((prev) => ({
-                                ...prev,
-                                [`item.${item.id}.imageUrl`]: "",
-                              }));
-                            }}
-                          />
+                        <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-slate-100 bg-slate-50/50 flex items-center justify-center cursor-pointer overflow-hidden shadow-inner" onClick={() => document.getElementById(`file-${item.id}`)?.click()}>
+                          {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="product" /> : <Plus className="text-slate-300" size={20} />}
+                          <input id={`file-${item.id}`} type="file" className="hidden" accept="image/*" onChange={(e) => handleItemImageUpload(item.id, e)} />
                         </div>
-                        {errors[`item.${item.id}.imageUrl`] && (
-                          <div className="mt-1 flex justify-center">
-                            <Chip color="danger" size="sm" variant="flat" className="h-[20px] text-[10px] px-1">
-                              {errors[`item.${item.id}.imageUrl`]}
-                            </Chip>
-                          </div>
-                        )}
                       </TableCell>
-
-                      {/* Product Name */}
                       <TableCell>
-                        <Input
-                          variant="faded"
-                          placeholder="ระบุชื่อรุ่น / แบรนด์สินค้า"
-                          value={item.productName}
-                          className="font-bold"
-                          isInvalid={!!errors[`item.${item.id}.productName`]}
-                          errorMessage={errors[`item.${item.id}.productName`]}
-                          classNames={{
-                            input: "text-slate-800",
-                            inputWrapper: "border-none bg-transparent hover:bg-white focus-within:bg-white transition-all rounded-xl",
-                          }}
-                          onChange={(e) => {
-                            handleItemChange(item.id, "productName", e.target.value);
-                            setErrors((prev) => ({
-                              ...prev,
-                              [`item.${item.id}.productName`]: "",
-                            }));
-                          }}
-                        />
+                        <Input variant="faded" placeholder="รุ่น / แบรนด์" value={item.productName} onChange={(e) => handleItemChange(item.id, "productName", e.target.value)} classNames={{ inputWrapper: "border-none bg-transparent hover:bg-white rounded-xl" }} />
                       </TableCell>
-
-                      {/* Category */}
                       <TableCell>
                         <Select
-                          items={[
-                            { key: "กล้อง", label: "กล้อง", icon: <Camera className="text-blue-500 " size={18} /> },
-                            { key: "เลนส์", label: "เลนส์", icon: <Aperture className="text-emerald-500" size={18} /> },
-                            { key: "ขาตั้งกล้อง", label: "ขาตั้งกล้อง", icon: <Video className="text-orange-500" size={18} /> },
-                            { key: "แบต", label: "แบต", icon: <BatteryMedium className="text-pink-500" size={18} /> },
-                            { key: "ฟิลม์", label: "ฟิลม์", icon: <Film className="text-purple-500" size={18} /> },
-                            { key: "อื่นๆ", label: "อื่นๆ", icon: <MoreHorizontal className="text-slate-400" size={18} /> },
-                          ]}
-                          placeholder="เลือก"
-                          variant="bordered"
-                          size="sm"
-                          className="min-w-[130px]"
-                          selectedKeys={item.category ? [item.category] : []}
-                          isInvalid={!!errors[`item.${item.id}.category`]}
-                          errorMessage={errors[`item.${item.id}.category`]}
-                          classNames={{
-                            trigger: "bg-white border border-slate-200 h-10 rounded-lg data-[hover=true]:border-slate-300 transition-all",
-                            value: "font-bold text-slate-700 text-sm",
-                            popoverContent: "rounded-xl shadow-xl w-[140px]",
-                          }}
-                          renderValue={(items) => {
-                            return items.map((item) => (
-                              <div key={item.key} className="flex items-center gap-2">
-                                {item.data?.icon}
-                                <span>{item.data?.label}</span>
-                              </div>
-                            ));
-                          }}
-                          onChange={(e) => {
-                            handleItemChange(item.id, "category", e.target.value);
-                            setErrors((prev) => ({
-                              ...prev,
-                              [`item.${item.id}.category`]: "",
-                            }));
-                          }}
+                          variant="faded" placeholder="หมวดหมู่" selectedKeys={item.category ? [item.category] : []}
+                          classNames={{ trigger: "bg-white border-none rounded-xl" }}
+                          onChange={(e) => handleItemChange(item.id, "category", e.target.value)}
                         >
-                          {(category) => (
-                            <SelectItem
-                              key={category.key}
-                              textValue={category.label}
-                              startContent={category.icon}
-                              className="bg-white text-slate-700 font-bold"
-                            >
-                              {category.label}
-                            </SelectItem>
-                          )}
+                          <SelectItem key="Camera">กล้อง</SelectItem>
+                          <SelectItem key="Lens">เลนส์</SelectItem>
+                          <SelectItem key="Tripod">ขาตั้งกล้อง</SelectItem>
+                          <SelectItem key="Other">อื่นๆ</SelectItem>
                         </Select>
                       </TableCell>
-
-                      {/* Year */}
                       <TableCell>
-                        <Input
-                          variant="faded"
-                          placeholder="ปีที่ผลิต"
-                          value={item.year}
-                          className="font-bold w-20"
-                          classNames={{
-                            input: "text-center",
-                            inputWrapper: "border-none bg-transparent hover:bg-white rounded-xl h-10 shadow-none",
-                          }}
-                          onChange={(e) => handleItemChange(item.id, "year", e.target.value)}
-                        />
+                        <Input variant="faded" value={item.year} className="w-20" onChange={(e) => handleItemChange(item.id, "year", e.target.value)} classNames={{ input: "text-center", inputWrapper: "border-none bg-transparent" }} />
                       </TableCell>
-
-                      {/* Estimated Cost */}
                       <TableCell>
-                        <div className="relative group/price">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">฿</span>
-                          <Input
-                            type="number"
-                            variant="faded"
-                            placeholder="0.00"
-                            value={item.confirmedPrice}
-                            className="font-black text-purple-600"
-                            isInvalid={!!errors[`item.${item.id}.confirmedPrice`]}
-                            errorMessage={errors[`item.${item.id}.confirmedPrice`]}
-                            classNames={{
-                              input: "text-right font-black text-purple-600 pr-1",
-                              inputWrapper: "border-none bg-slate-50 group-hover/price:bg-purple-50 transition-all rounded-xl pl-6",
-                            }}
-                            onChange={(e) => {
-                              handleItemChange(item.id, "confirmedPrice", e.target.value)
-                              setErrors((prev) => ({
-                                ...prev,
-                                [`item.${item.id}.confirmedPrice`]: "",
-                              }));
-                            }}
-                          />
-                        </div>
+                        <Input type="number" variant="faded" value={item.confirmedPrice} startContent={<span className="text-purple-400 font-bold">฿</span>} onChange={(e) => handleItemChange(item.id, "confirmedPrice", e.target.value)} classNames={{ input: "text-right font-black text-purple-600", inputWrapper: "border-none bg-slate-50" }} />
                       </TableCell>
-
-                      {/* Repair Status */}
-                      <TableCell>
-                        <RepairingHistoryStatus
-                          item={item}
-                          onItemChangeAction={handleItemChange}
-                        />
-                      </TableCell>
-
-                      {/* Product Status */}
-                      <TableCell>
-                        <ProductHistoryStatus
-                          item={item}
-                          onItemChangeAction={handleItemChange}
-                        />
-                      </TableCell>
-
-                      {/* Actions */}
+                      <TableCell><RepairingHistoryStatus item={item} onItemChangeAction={handleItemChange} /></TableCell>
+                      <TableCell><ProductHistoryStatus item={item} onItemChangeAction={handleItemChange} /></TableCell>
                       <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Tooltip content="ลบรายการนี้" color="danger">
-                            <Button
-                              isIconOnly
-                              color="danger"
-                              variant="light"
-                              size="md"
-                              radius="lg"
-                              className="hover:bg-red-50"
-                              onPress={() => handleRemoveItem(item.id)}
-                            >
-                              <Trash2 size={20} />
-                            </Button>
-                          </Tooltip>
-                        </div>
+                        <Button isIconOnly color="danger" variant="light" onPress={() => handleRemoveItem(item.id)}><Trash2 size={20} /></Button>
                       </TableCell>
                     </TableRow>
                   )}
@@ -743,46 +553,71 @@ export default function Projects() {
             </div>
           </Card>
 
-          {/* Empty State */}
-          {items.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-24 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-100">
-              <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 mb-6">
-                <Package size={40} />
-              </div>
-              <p className="text-xl font-bold text-slate-600">ยังไม่มีรายการสินค้า</p>
-              <p className="text-sm text-slate-400 mb-8 font-medium italic">กรุณากดปุ่มเพิ่มสินค้าใหม่เพื่อเริ่มบันทึกรายการ</p>
-              <Button
-                color="primary"
-                startContent={<Plus size={20} />}
-                onPress={handleAddItem}
-                className="bg-slate-900 font-bold px-10 rounded-2xl h-12"
-              >
-                เพิ่มสินค้ากระบอกแรก
-              </Button>
-            </div>
-          )}
+          {/* Mobile Card List */}
+          <div className="md:hidden space-y-4 pb-32">
+            {items.map((item, index) => (
+              <Card key={item.id} className="border-none shadow-md overflow-hidden bg-white rounded-[2rem]">
+                <CardBody className="p-6 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <span className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black">{index + 1}</span>
+                    <Button isIconOnly color="danger" variant="light" radius="full" onPress={() => handleRemoveItem(item.id)}><Trash2 size={18} /></Button>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="w-24 h-24 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden" onClick={() => document.getElementById(`mobile-file-${item.id}`)?.click()}>
+                      {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" /> : <ImageIcon size={24} className="text-slate-300" />}
+                      <input id={`mobile-file-${item.id}`} type="file" className="hidden" accept="image/*" onChange={(e) => handleItemImageUpload(item.id, e)} />
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <Input label="ชื่อสินค้า" variant="bordered" value={item.productName} onChange={(e) => handleItemChange(item.id, "productName", e.target.value)} classNames={{ inputWrapper: "h-12 rounded-xl" }} />
+                      <Select label="หมวดหมู่" variant="bordered" selectedKeys={item.category ? [item.category] : []} onChange={(e) => handleItemChange(item.id, "category", e.target.value)} classNames={{ trigger: "h-12 rounded-xl" }}>
+                        <SelectItem key="Camera">กล้อง</SelectItem>
+                        <SelectItem key="Lens">เลนส์</SelectItem>
+                        <SelectItem key="Other">อื่นๆ</SelectItem>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Estimated Cost</p>
+                      <Input type="number" variant="flat" value={item.confirmedPrice} startContent={<span className="text-purple-500 font-bold">฿</span>} onChange={(e) => handleItemChange(item.id, "confirmedPrice", e.target.value)} classNames={{ inputWrapper: "h-14 rounded-2xl bg-purple-50/50", input: "font-black text-purple-600 text-lg" }} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Repair Status</p>
+                      <RepairingHistoryStatus item={item} onItemChangeAction={handleItemChange} />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Status</p>
+                      <ProductHistoryStatus item={item} onItemChangeAction={handleItemChange} />
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            ))}
+          </div>
         </div>
 
-        {/* Action Buttons Section */}
-        <div className="flex justify-center flex-col md:flex-row items-center gap-4 py-12">
-          <Button
-            variant="flat"
-            startContent={<RotateCcw size={20} />}
-            onPress={handleClear}
-            className="bg-white border border-slate-200 font-bold text-slate-500 w-full md:w-auto px-10 h-14 rounded-[1.5rem] hover:bg-slate-50 transition-all"
-          >
+        {/* Mobile Sticky Actions */}
+        <div className="md:hidden fixed bottom-16 left-0 right-0 p-4 bg-white/90 backdrop-blur-xl border-t border-slate-100 flex gap-3 z-50">
+          <Button isIconOnly variant="flat" onPress={handleClear} className="w-14 h-14 bg-slate-100 rounded-2xl text-slate-600">
+            <RotateCcw size={24} />
+          </Button>
+          <Button color="primary" className="flex-1 h-14 rounded-2xl font-black text-lg bg-purple-600 shadow-xl shadow-purple-200" isLoading={loading} onPress={handleSubmit} startContent={!loading && <Save size={24} />}>
+            บันทึกรายการฝากซ่อม
+          </Button>
+        </div>
+
+        {/* Desktop Bottom Action Buttons */}
+        <div className="hidden md:flex justify-center flex-col md:flex-row items-center gap-4 py-12">
+          <Button variant="flat" startContent={<RotateCcw size={24} />} onPress={handleClear} className="bg-white border border-slate-200 font-bold text-slate-500 px-12 h-16 rounded-[1.5rem] hover:bg-slate-50">
             ล้างข้อมูลทั้งหมด
           </Button>
-          <Button
-            color="primary"
-            startContent={<Save size={20} />}
-            onPress={handleSubmit}
-            isLoading={loading}
-            className="bg-purple-600 font-black text-white w-full md:w-[400px] h-14 rounded-[1.5rem] shadow-2xl shadow-purple-200 transition-all active:scale-[0.98] text-lg"
-          >
+          <Button color="primary" startContent={<Save size={24} />} onPress={handleSubmit} isLoading={loading} className="bg-purple-600 font-black text-white w-[400px] h-16 rounded-[1.5rem] shadow-2xl shadow-purple-200 text-xl">
             ยืนยันการบันทึกรายการฝากซ่อม
           </Button>
         </div>
+
       </div>
     </div>
   );

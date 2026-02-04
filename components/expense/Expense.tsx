@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import {
   Button,
@@ -58,9 +58,12 @@ export default function PawnRecording() {
     consignorName: "",
     contactNumber: "",
     address: "",
-    totalPrice: "",
+    totalPrice: "0",
     images: [] as string[],
+    receiverId: "", // ID พนักงานผู้รับจำนำ
   });
+
+  const [employees, setEmployees] = useState<any[]>([]);
 
   const [items, setItems] = useState([
     {
@@ -75,6 +78,44 @@ export default function PawnRecording() {
       imageUrl: "",
     },
   ]);
+
+  // 🔥 Auto Generate Lot & Fetch Employees
+  useEffect(() => {
+    const fetchLot = async () => {
+      try {
+        const res = await axios.get("/api/pawn/lot");
+        if (res.data.lot) {
+          setFormData((prev) => ({ ...prev, lot: res.data.lot }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch lot:", error);
+      }
+    };
+
+    const fetchEmployees = async () => {
+      try {
+        const res = await axios.get("/api/employees");
+        setEmployees(res.data);
+      } catch (error) {
+        console.error("Failed to fetch employees:", error);
+      }
+    };
+
+    if (!formData.lot) fetchLot();
+    fetchEmployees();
+  }, []);
+
+  // 🔥 Auto Sum Total Price
+  useEffect(() => {
+    const total = items.reduce(
+      (sum, item) => sum + Number(item.confirmedPrice || 0),
+      0
+    );
+    setFormData((prev) => ({
+      ...prev,
+      totalPrice: total.toString()
+    }));
+  }, [items]);
 
   const handleAddItem = () => {
     setItems([
@@ -124,8 +165,9 @@ export default function PawnRecording() {
       consignorName: "",
       contactNumber: "",
       address: "",
-      totalPrice: "",
+      totalPrice: "0",
       images: [],
+      receiverId: "",
     });
     setItems([
       {
@@ -140,6 +182,19 @@ export default function PawnRecording() {
         imageUrl: "",
       },
     ]);
+
+    // Re-fetch lot after clear
+    const fetchLot = async () => {
+      try {
+        const res = await axios.get("/api/pawn/lot");
+        if (res.data.lot) {
+          setFormData((prev) => ({ ...prev, lot: res.data.lot }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch lot:", error);
+      }
+    };
+    fetchLot();
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -171,7 +226,8 @@ export default function PawnRecording() {
     // -------- Form หลัก --------
     if (!formData.date) newErrors.date = "กรุณาเลือกวันที่";
     if (!formData.endDate) newErrors.endDate = "กรุณาเลือกวันครบกำหนด";
-    if (!formData.lot) newErrors.lot = "กรุณากรอกชื่อผู้รับจำนำ";
+    if (!formData.lot) newErrors.lot = "กรุณารอสักครู่เพื่อสร้างเลขที่สัญญา";
+    if (!formData.receiverId) newErrors.receiverId = "กรุณาเลือกพนักงานผู้รับจำนำ";
     if (!formData.consignorName) newErrors.consignorName = "กรุณากรอกชื่อผู้นำมาจำนำ";
     if (!formData.contactNumber) newErrors.contactNumber = "กรุณากรอกเบอร์โทร";
     if (!formData.totalPrice) newErrors.totalPrice = "กรุณากรอกยอดรวม";
@@ -326,6 +382,24 @@ export default function PawnRecording() {
                   />
                 </div>
 
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-lg font-bold text-slate-700">เลขที่สัญญาจำนำ (LOT)</label>
+                  <Input
+                    placeholder="กำลังสร้างเลขที่สัญญา..."
+                    variant="bordered"
+                    labelPlacement="outside"
+                    value={formData.lot}
+                    readOnly
+                    isInvalid={!!errors.lot}
+                    errorMessage={errors.lot}
+                    startContent={<Hash className="text-slate-400" size={18} />}
+                    className="font-medium"
+                    classNames={{
+                      inputWrapper: "h-14 border-slate-100 bg-slate-100 rounded-2xl font-black text-slate-900 cursor-default select-none",
+                    }}
+                  />
+                </div>
+
                 <div className="space-y-1">
                   <label className="text-lg font-bold text-slate-700">ชื่อผู้นำมาจำนำ</label>
                   <Input
@@ -348,24 +422,31 @@ export default function PawnRecording() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-lg font-bold text-slate-700">ชื่อผู้รับจำนำ</label>
-                  <Input
-                    placeholder="กรอกชื่อพนักงานผู้รับจำนำ"
+                  <label className="text-lg font-bold text-slate-700">พนักงานผู้รับจำนำ</label>
+                  <Select
+                    placeholder="เลือกพนักงานผู้รับจำนำ"
                     variant="bordered"
                     labelPlacement="outside"
-                    value={formData.lot}
-                    isInvalid={!!errors.lot}
-                    errorMessage={errors.lot}
-                    startContent={<Hash className="text-slate-400" size={18} />}
+                    selectedKeys={formData.receiverId ? [formData.receiverId] : []}
+                    isInvalid={!!errors.receiverId}
+                    errorMessage={errors.receiverId}
+                    startContent={<UserIcon className="text-slate-400" size={18} />}
                     className="font-medium"
                     classNames={{
-                      inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-orange-500 transition-all group-data-[focus=true]:bg-white",
+                      trigger: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-orange-500 transition-all",
+                      value: "text-slate-700 font-bold"
                     }}
                     onChange={(e) => {
-                      setFormData({ ...formData, lot: e.target.value });
-                      setErrors((prev) => ({ ...prev, lot: "" }));
+                      setFormData({ ...formData, receiverId: e.target.value });
+                      setErrors((prev) => ({ ...prev, receiverId: "" }));
                     }}
-                  />
+                  >
+                    {employees.map((emp) => (
+                      <SelectItem key={emp.id} textValue={emp.name || emp.username}>
+                        {emp.name || emp.username} ({emp.role})
+                      </SelectItem>
+                    ))}
+                  </Select>
                 </div>
 
                 <div className="space-y-1">
@@ -418,10 +499,7 @@ export default function PawnRecording() {
                     placeholder="0.00"
                     className="bg-transparent text-4xl font-black text-right outline-none w-48 pl-8 placeholder:text-slate-700"
                     value={formData.totalPrice}
-                    onChange={(e) => {
-                      setFormData({ ...formData, totalPrice: e.target.value });
-                      setErrors((prev) => ({ ...prev, totalPrice: "" }));
-                    }}
+                    readOnly
                   />
                   {errors.totalPrice && (
                     <p className="text-red-500 text-xs font-semibold mt-2 flex items-center gap-1 absolute top-full right-0">

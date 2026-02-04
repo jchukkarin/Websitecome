@@ -19,6 +19,13 @@ export async function GET(
                         name: true,
                         email: true
                     }
+                },
+                receiver: {
+                    select: {
+                        id: true,
+                        name: true,
+                        role: true
+                    }
                 }
             }
         });
@@ -70,7 +77,8 @@ export async function PATCH(
                 address: body.address,
                 lot: body.lot,
                 date: body.date ? new Date(body.date) : undefined,
-                totalPrice: body.totalPrice
+                totalPrice: body.totalPrice,
+                receiverId: body.receiverId
             }
         });
 

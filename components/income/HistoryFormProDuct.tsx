@@ -44,6 +44,7 @@ export default function ConsignmentHistory() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string>("");
+    const [selectedStatus, setSelectedStatus] = useState<string>("");
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -81,9 +82,12 @@ export default function ConsignmentHistory() {
                 item.lot?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.consignorName?.toLowerCase().includes(searchQuery.toLowerCase());
             const matchesCategory = (selectedCategory === "" || selectedCategory === "all" || item.category === selectedCategory);
-            return matchesSearch && matchesCategory;
+            const matchesStatus = (selectedStatus === "" || selectedStatus === "all" ||
+                item.status === selectedStatus ||
+                (selectedStatus === "ขายได้" && item.status === "ready"));
+            return matchesSearch && matchesCategory && matchesStatus;
         });
-    }, [data, searchQuery, selectedCategory]);
+    }, [data, searchQuery, selectedCategory, selectedStatus]);
 
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
@@ -96,7 +100,7 @@ export default function ConsignmentHistory() {
     // ✅ Reset pagination when search or filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, selectedCategory]);
+    }, [searchQuery, selectedCategory, selectedStatus]);
 
     // ✅ Ensure currentPage doesn't exceed totalPages after filtering
     useEffect(() => {
@@ -196,6 +200,28 @@ export default function ConsignmentHistory() {
                                         >
                                             {category.label}
                                         </SelectItem>
+                                    )}
+                                </Select>
+
+                                <Select
+                                    items={[
+                                        { key: "all", label: "ทุกสถานะ" },
+                                        { key: "ขายได้", label: "ขายได้" },
+                                        { key: "ขายไม่ได้", label: "ขายไม่ได้" },
+
+                                    ]}
+                                    placeholder="สถานะสินค้า"
+                                    className="w-full lg:w-44"
+                                    selectedKeys={selectedStatus ? [selectedStatus] : []}
+                                    classNames={{
+                                        trigger: "h-14 bg-slate-50 border-none rounded-2xl data-[hover=true]:bg-slate-100 transition-all",
+                                        popoverContent: "rounded-2xl border border-slate-100 shadow-2xl",
+                                        value: "text-slate-700 font-bold",
+                                    }}
+                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                >
+                                    {(status) => (
+                                        <SelectItem key={status.key} textValue={status.label}>{status.label}</SelectItem>
                                     )}
                                 </Select>
 

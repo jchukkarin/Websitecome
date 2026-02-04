@@ -87,7 +87,7 @@ export default function DownloadExcelButton() {
       color="success"
       variant="shadow"
       startContent={!loading && <Download size={18} />}
-      className="font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+      className="font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl"
     >
       {loading ? "กำลังดาวน์โหลด..." : "ดาวน์โหลด Excel"}
     </Button>

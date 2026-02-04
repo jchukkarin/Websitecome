@@ -189,6 +189,7 @@ export default function UnifiedPersonView({
                         <TableColumn>รูปภาพ</TableColumn>
                         <TableColumn>ล็อตสินค้า</TableColumn>
                         <TableColumn>วันที่บันทึก</TableColumn>
+                        <TableColumn>พนักงานรับเรื่อง</TableColumn>
                         <TableColumn>ชื่อ{personLabel}</TableColumn>
                         <TableColumn>เบอร์ติดต่อ</TableColumn>
                         <TableColumn>ที่อยู่</TableColumn>
@@ -235,6 +236,18 @@ export default function UnifiedPersonView({
                                         </span>
                                         <span className="text-[10px] text-slate-400 uppercase font-black">
                                             {new Date(item.date).toLocaleTimeString("th-TH", { hour: '2-digit', minute: '2-digit' })} น.
+                                        </span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                        <Avatar
+                                            name={item.receiver?.name || item.receiver?.username || "A"}
+                                            size="sm"
+                                            className="bg-slate-100 text-slate-600 font-bold w-7 h-7"
+                                        />
+                                        <span className="text-slate-600 font-bold truncate max-w-[100px]">
+                                            {item.receiver?.name || item.receiver?.username || "ไม่ระบุ"}
                                         </span>
                                     </div>
                                 </TableCell>

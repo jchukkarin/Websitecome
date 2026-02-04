@@ -8,16 +8,18 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  name          String?
-  email         String         @unique
-  password      String?
-  createdAt     DateTime       @default(now())
-  image         String?
-  username      String?        @unique
-  role          Role           @default(EMPLOYEE)
-  consignments  Consignment[]
-  notifications Notification[]
+  id                   String         @id @default(uuid())
+  name                 String?
+  email                String         @unique
+  password             String?
+  createdAt            DateTime       @default(now())
+  image                String?
+  username             String?        @unique
+  role                 Role           @default(EMPLOYEE)
+  consignments         Consignment[]  @relation("Creator")
+  receivedConsignments Consignment[]  @relation("Receiver")
+  lots                 Lot[]
+  notifications        Notification[]
 }
 
 model Notification {
@@ -33,21 +35,41 @@ model Notification {
 }
 
 model Consignment {
-  id            String             @id @default(uuid())
+  id            String   @id @default(uuid())
   date          DateTime
   lot           String
   consignorName String
   contactNumber String
   address       String
   totalPrice    Float
-  createdAt     DateTime           @default(now())
-  type          String             @default("INCOME")
-  userId        String?
-  statusId      Int?
-  status        ConsignmentStatus? @relation(fields: [statusId], references: [id])
-  user          User?              @relation(fields: [userId], references: [id])
-  images        ConsignmentImage[]
-  items         ConsignmentItem[]
+  createdAt     DateTime @default(now())
+  type          String   @default("INCOME")
+
+  userId String?
+  user   User?   @relation("Creator", fields: [userId], references: [id])
+
+  receiverId String?
+  receiver   User?   @relation("Receiver", fields: [receiverId], references: [id])
+
+  endDate DateTime?
+
+  statusId Int?
+  status   ConsignmentStatus? @relation(fields: [statusId], references: [id])
+
+  images ConsignmentImage[]
+  items  ConsignmentItem[]
+
+  lotId       String?
+  lotRelation Lot?    @relation(fields: [lotId], references: [id])
+}
+
+model Lot {
+  id           String        @id @default(uuid())
+  lotNumber    String        @unique
+  consignments Consignment[]
+  userId       String?
+  user         User?         @relation(fields: [userId], references: [id])
+  createdAt    DateTime      @default(now())
 }
 
 model ConsignmentStatus {
@@ -81,9 +103,23 @@ model ConsignmentItem {
   reserveEndDate   String?
   reserveStartDate String?
   salesPrice       Float?      @default(0)
+  redemptionPrice  Float?      @default(0)
   repairEndDate    DateTime?
   repairStartDate  DateTime?
   consignment      Consignment @relation(fields: [consignmentId], references: [id])
+}
+
+model Counter {
+  id    String @id
+  value Int    @default(0)
+}
+
+model LotCounter {
+  id      Int @id @default(autoincrement())
+  year    Int
+  counter Int @default(0)
+
+  @@unique([year])
 }
 
 model ShopProfile {

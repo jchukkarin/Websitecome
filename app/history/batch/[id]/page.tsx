@@ -23,7 +23,9 @@ import {
     ModalFooter,
     useDisclosure,
     Input,
-    Textarea
+    Textarea,
+    Select,
+    SelectItem
 } from "@heroui/react";
 import {
     ArrowLeft,
@@ -38,7 +40,8 @@ import {
     Edit3,
     Save,
     Tag,
-    ChevronRight
+    ChevronRight,
+    Users
 } from "lucide-react";
 import axios from "axios";
 import { exportConsignmentPDF } from "@/lib/export/exportPDF";
@@ -54,6 +57,19 @@ export default function BatchDetailPage() {
     // Edit state
     const [editData, setEditData] = useState<any>({});
     const [saving, setSaving] = useState(false);
+    const [employees, setEmployees] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchEmployees = async () => {
+            try {
+                const res = await axios.get("/api/employees");
+                setEmployees(res.data);
+            } catch (error) {
+                console.error("Fetch employees failed", error);
+            }
+        };
+        fetchEmployees();
+    }, []);
 
     useEffect(() => {
         fetchBatch();
@@ -183,6 +199,16 @@ export default function BatchDetailPage() {
                                     <div className="space-y-0.5">
                                         <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-1">เบอร์โทรติดต่อ</p>
                                         <p className="text-xl font-black text-slate-800">{data.contactNumber}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-5">
+                                    <div className="w-14 h-14 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center shadow-sm">
+                                        <Users size={28} />
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-1">พนักงานรับเรื่อง</p>
+                                        <p className="text-xl font-black text-slate-800">{data.receiver?.name || data.receiver?.username || "ไม่ระบุ"}</p>
                                     </div>
                                 </div>
 
@@ -425,20 +451,40 @@ export default function BatchDetailPage() {
                                             }}
                                         />
                                     </div>
-                                    <Input
-                                        labelPlacement="outside"
-                                        type="number"
-                                        placeholder="ค่าประกันรวมของล็อต"
-                                        value={editData.totalPrice}
-                                        onChange={(e) => setEditData({ ...editData, totalPrice: parseFloat(e.target.value) })}
-                                        variant="bordered"
-                                        startContent={<span className="text-slate-400 font-bold">฿</span>}
-                                        classNames={{
-                                            label: "font-black text-slate-400 uppercase tracking-widest text-[10px]",
-                                            input: "font-black text-slate-900",
-                                            inputWrapper: "h-14 rounded-2xl bg-slate-50/50 border-slate-100 focus-within:border-slate-200 transition-all hover:bg-slate-50",
-                                        }}
-                                    />
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <Input
+                                            labelPlacement="outside"
+                                            type="number"
+                                            placeholder="ค่าประกันรวมของล็อต"
+                                            value={editData.totalPrice}
+                                            onChange={(e) => setEditData({ ...editData, totalPrice: parseFloat(e.target.value) })}
+                                            variant="bordered"
+                                            startContent={<span className="text-slate-400 font-bold">฿</span>}
+                                            classNames={{
+                                                label: "font-black text-slate-400 uppercase tracking-widest text-[10px]",
+                                                input: "font-black text-slate-900",
+                                                inputWrapper: "h-14 rounded-2xl bg-slate-50/50 border-slate-100 focus-within:border-slate-200 transition-all hover:bg-slate-50",
+                                            }}
+                                        />
+                                        <Select
+                                            labelPlacement="outside"
+                                            placeholder="เปลี่ยนพนักงานรับเรื่อง"
+                                            selectedKeys={editData.receiverId ? [editData.receiverId] : []}
+                                            onChange={(e) => setEditData({ ...editData, receiverId: e.target.value })}
+                                            variant="bordered"
+                                            classNames={{
+                                                label: "font-black text-slate-400 uppercase tracking-widest text-[10px]",
+                                                trigger: "h-14 rounded-2xl bg-slate-50/50 border-slate-100 focus-within:border-slate-200 transition-all hover:bg-slate-50",
+                                                value: "font-bold text-slate-700"
+                                            }}
+                                        >
+                                            {employees.map((emp) => (
+                                                <SelectItem key={emp.id} textValue={emp.name || emp.username}>
+                                                    {emp.name || emp.username}
+                                                </SelectItem>
+                                            ))}
+                                        </Select>
+                                    </div>
                                     <Textarea
                                         label="ข้อมูลที่อยู่"
                                         labelPlacement="outside"

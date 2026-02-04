@@ -45,6 +45,7 @@ export default function PawnHistory() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string>("");
     const [isMounted, setIsMounted] = useState(false);
+    const [selectedStatus, setSelectedStatus] = useState<string>("");
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -78,13 +79,15 @@ export default function PawnHistory() {
     };
 
     const filteredData = useMemo(() => {
-        return data.filter((item) =>
-            (item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        return data.filter((item) => {
+            const matchesSearch = item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.lot?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.consignorName?.toLowerCase().includes(searchQuery.toLowerCase())) &&
-            (selectedCategory === "" || selectedCategory === "all" || item.category === selectedCategory)
-        );
-    }, [data, searchQuery, selectedCategory]);
+                item.consignorName?.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesCategory = (selectedCategory === "" || selectedCategory === "all" || item.category === selectedCategory);
+            const matchesStatus = (selectedStatus === "" || selectedStatus === "all" || item.status.toLowerCase() === selectedStatus.toLowerCase());
+            return matchesSearch && matchesCategory && matchesStatus;
+        });
+    }, [data, searchQuery, selectedCategory, selectedStatus]);
 
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
@@ -97,7 +100,7 @@ export default function PawnHistory() {
     // ✅ Reset pagination when search or filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, selectedCategory]);
+    }, [searchQuery, selectedCategory, selectedStatus]);
 
     // ✅ Ensure currentPage doesn't exceed totalPages after filtering
     useEffect(() => {
@@ -203,6 +206,29 @@ export default function PawnHistory() {
                                 ) : (
                                     <div className="w-full lg:w-44 h-14 bg-slate-50 rounded-2xl animate-pulse" />
                                 )}
+
+                                <Select
+                                    items={[
+                                        { key: "all", label: "ทุกสถานะ" },
+                                        { key: "active", label: "ยังไม่ครบกำหนด" },
+                                        { key: "due", label: "ครบกำหนด" },
+                                        { key: "extended", label: "ต่อยอด" },
+                                        { key: "closed", label: "ปิดยอด" },
+                                    ]}
+                                    placeholder="สถานะสินค้า"
+                                    className="w-full lg:w-44"
+                                    selectedKeys={selectedStatus ? [selectedStatus] : []}
+                                    classNames={{
+                                        trigger: "h-14 bg-slate-50 border-none rounded-2xl data-[hover=true]:bg-slate-100 transition-all",
+                                        popoverContent: "rounded-2xl border border-slate-100 shadow-2xl",
+                                        value: "text-slate-700 font-bold",
+                                    }}
+                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                >
+                                    {(status) => (
+                                        <SelectItem key={status.key} textValue={status.label}>{status.label}</SelectItem>
+                                    )}
+                                </Select>
                                 <Button
                                     className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black shadow-lg shadow-slate-200 hover:scale-105 active:scale-95 transition-all"
                                     startContent={<FileSpreadsheet size={18} />}
@@ -227,13 +253,13 @@ export default function PawnHistory() {
                                 <TableHeader>
                                     <TableColumn>รูปภาพ</TableColumn>
                                     <TableColumn>รหัสสินค้า</TableColumn>
-                                    <TableColumn>ชื่อผู้รับจำนำ</TableColumn>
+                                    <TableColumn>ล็อตจำนำ</TableColumn>
                                     <TableColumn>วันที่รับจำนำ</TableColumn>
                                     <TableColumn>ชื่อสินค้า</TableColumn>
-                                    <TableColumn>ผู้นำมาจำนำ</TableColumn>
                                     <TableColumn>สถานะ</TableColumn>
                                     <TableColumn align="end">ยอดจำนำ (บาท)</TableColumn>
                                 </TableHeader>
+
                                 <TableBody
                                     items={paginatedData}
                                     loadingContent={<Spinner label="กำลังจัดเตรียมข้อมูล..." color="danger" />}
@@ -263,7 +289,9 @@ export default function PawnHistory() {
                                                 </span>
                                             </TableCell>
                                             <TableCell>
-                                                <span className="text-blue-600 font-black text-sm">{item.lot}</span>
+                                                <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-black tracking-wider border border-blue-100">
+                                                    {item.lot}
+                                                </span>
                                             </TableCell>
                                             <TableCell>
                                                 <span className="text-slate-900 font-bold whitespace-nowrap">
@@ -272,9 +300,6 @@ export default function PawnHistory() {
                                             </TableCell>
                                             <TableCell>
                                                 <span className="text-slate-900 font-black">{item.productName}</span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-slate-500 font-bold italic">{item.consignorName}</span>
                                             </TableCell>
                                             <TableCell>
                                                 <Chip

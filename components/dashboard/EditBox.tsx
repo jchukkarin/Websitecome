@@ -26,14 +26,15 @@ export default function EditBox({ isOpen, onOpenChange, selectedItem, onSave }: 
         <Modal
             isOpen={isOpen}
             onOpenChange={onOpenChange}
-            size="3xl"
+            size="5xl"
             radius="lg"
             backdrop="blur"
             classNames={{
-                header: "border-b border-gray-100 py-6 px-10",
-                body: "py-8 px-10",
+                base: "bg-white overflow-visible", // Allow close button to 'pop out'
+                header: "border-b border-gray-100 py-8 px-10 relative bg-slate-50/30",
+                body: "py-10 px-10",
                 footer: "border-t border-gray-100 py-6 px-10",
-                closeButton: "hover:bg-red-50 hover:text-red-500 transition-colors p-2 top-4 right-4 text-xl"
+                closeButton: "absolute -top-4 -right-4 z-50 bg-white shadow-2xl rounded-full p-3 border border-slate-100 hover:bg-red-50 hover:text-red-500 transition-all hover:scale-110 active:scale-95"
             }}
         >
             <ModalContent>

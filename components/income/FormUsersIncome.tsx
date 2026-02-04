@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import { useSession } from "next-auth/react";
 import {
   Button,
   Input,
@@ -64,8 +65,14 @@ export interface ConsignmentItem {
 }
 
 export default function ImportForm() {
+  const { data: session } = useSession();
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -99,6 +106,28 @@ export default function ImportForm() {
       imageUrl: "",
     },
   ]);
+
+  useEffect(() => {
+    fetchLot();
+  }, []);
+
+  const fetchLot = async () => {
+    try {
+      const res = await axios.get("/api/lots/generate");
+      setFormData(prev => ({
+        ...prev,
+        lot: res.data.lot
+      }));
+    } catch (error) {
+      console.error("Fetch LOT failed", error);
+      toast.error("ไม่สามารถสร้างรหัส LOT ได้อัตโนมัติ");
+    }
+  };
+
+  useEffect(() => {
+    const total = items.reduce((sum, item) => sum + (Number(item.confirmedPrice) || 0), 0);
+    setFormData(prev => ({ ...prev, totalPrice: total.toString() }));
+  }, [items]);
 
   const handleAddItem = () => {
     setItems([
@@ -237,7 +266,10 @@ export default function ImportForm() {
         imageUrl: "",
       },
     ]);
+    fetchLot();
   };
+
+  if (!mounted) return null;
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
@@ -268,33 +300,33 @@ export default function ImportForm() {
       <div className="max-w-[1600px] mx-auto space-y-8">
 
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
             <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-1">
               <span>Import Management</span>
               <span className="w-1 h-1 rounded-full bg-blue-200" />
               <span>Inventory Record</span>
             </nav>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
               บันทึกการนำเข้า
             </h1>
-            <p className="text-sm text-slate-500 font-medium">จัดการข้อมูลและรายละเอียดการนำเข้าสินค้าใหม่เข้าระบบ</p>
+            <p className="text-sm text-slate-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis">จัดการข้อมูลและรายละเอียดการนำเข้าสินค้าใหม่</p>
           </div>
-          <div className="flex gap-3">
+          <div className="hidden md:flex gap-3">
             <Button
               variant="flat"
-              startContent={<RotateCcw size={18} />}
+              startContent={<RotateCcw size={20} />}
               onPress={handleClear}
-              className="bg-white border border-slate-200 font-bold text-slate-600 h-12 px-6 rounded-2xl hover:bg-slate-50 transition-all"
+              className="bg-white border border-slate-200 font-bold text-slate-600 h-14 px-8 rounded-2xl hover:bg-slate-50 transition-all"
             >
               ล้างฟอร์ม
             </Button>
             <Button
               color="primary"
-              startContent={<Save size={18} />}
+              startContent={<Save size={20} />}
               onPress={handleSubmit}
               isLoading={loading}
-              className="bg-blue-600 font-black text-white h-12 px-10 rounded-2xl shadow-xl shadow-blue-100 transition-all active:scale-95"
+              className="bg-blue-600 font-black text-white h-14 px-12 rounded-2xl shadow-xl shadow-blue-100 transition-all active:scale-95"
             >
               บันทึกรายการ
             </Button>
@@ -341,25 +373,24 @@ export default function ImportForm() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-lg font-bold text-slate-700">รหัสล๊อตสินค้า</label>
+                  <label className="text-lg font-bold text-slate-700">รหัสล๊อตสินค้า (อัตโนมัติ)</label>
                   <Input
-                    placeholder="ระบุล๊อต (e.g. LOT-2024-001)"
+                    placeholder="LOT-YYYY-XXXX"
                     variant="bordered"
                     labelPlacement="outside"
                     value={formData.lot}
+                    isReadOnly
                     isInvalid={!!errors.lot}
                     errorMessage={errors.lot}
-                    startContent={<Hash className="text-slate-400" size={18} />}
+                    startContent={<Hash className="text-slate-400 font-black" size={18} />}
                     className="font-medium"
                     classNames={{
                       label: "font-bold text-slate-700",
-                      inputWrapper: "h-14 border-slate-100 bg-slate-50/50 rounded-2xl focus-within:!border-blue-500 transition-all group-data-[focus=true]:bg-white",
-                    }}
-                    onChange={(e) => {
-                      setFormData({ ...formData, lot: e.target.value });
-                      setErrors((prev) => ({ ...prev, lot: "" }));
+                      inputWrapper: "h-14 border-slate-100 bg-slate-100/50 rounded-2xl focus-within:!border-blue-500 transition-all cursor-not-allowed",
+                      input: "font-black text-blue-600"
                     }}
                   />
+                  <p className="text-[10px] text-blue-500 font-bold px-1 italic">เลขล็อตระบบ Gen ให้อัตโนมัติเพื่อป้องกันเลขอซ้ำ</p>
                 </div>
 
                 <div className="space-y-1">
@@ -433,18 +464,32 @@ export default function ImportForm() {
                   <input
                     type="number"
                     placeholder="0.00"
-                    className="bg-transparent text-4xl font-black text-right outline-none w-48 pl-6 placeholder:text-slate-700"
+                    readOnly
+                    className="bg-transparent text-4xl font-black text-right outline-none w-48 pl-6 placeholder:text-slate-700 cursor-default"
                     value={formData.totalPrice}
-                    onChange={(e) => {
-                      setFormData({ ...formData, totalPrice: e.target.value })
-                      setErrors((prev) => ({ ...prev, totalPrice: "" }));
-                    }}
                   />
                   {errors.totalPrice && (
                     <p className="text-red-500 text-xs font-semibold mt-2 flex items-center gap-1 absolute top-full right-0">
                       <AlertCircle size={14} /> {errors.totalPrice}
                     </p>
                   )}
+                </div>
+              </div>
+
+              {/* Recorder Display (Senior UX) */}
+              <div className="flex items-center gap-3 px-6 py-4 bg-blue-50/50 rounded-2xl border border-blue-100/50">
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                  <UserIcon size={14} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-blue-400 font-black uppercase tracking-widest">Recorded By (System Internal)</span>
+                  <span className="text-xs font-black text-slate-700">
+                    {(session as any)?.user?.name || "Initializing..."} ({(session as any)?.user?.role || "STAFF"})
+                  </span>
+                </div>
+                <div className="ml-auto flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[10px] font-black text-green-600 uppercase">Verified Session</span>
                 </div>
               </div>
             </CardBody>
@@ -537,15 +582,16 @@ export default function ImportForm() {
             <Button
               variant="shadow"
               color="primary"
-              startContent={<PlusCircle size={20} />}
+              startContent={<PlusCircle size={24} />}
               onPress={handleAddItem}
-              className="font-black h-12 px-8 rounded-2xl bg-slate-900 text-white shadow-xl shadow-slate-200"
+              className="font-black h-14 px-10 rounded-2xl bg-slate-900 text-white shadow-xl shadow-slate-200 w-full md:w-auto"
             >
               เพิ่มสินค้าใหม่
             </Button>
           </div>
 
-          <Card className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white overflow-hidden" radius="lg">
+          {/* Desktop Table: Hidden on Mobile */}
+          <Card className="hidden md:block border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white overflow-hidden" radius="lg">
             <div className="overflow-x-auto no-scrollbar w-full">
               <Table
                 aria-label="Items List"
@@ -758,6 +804,115 @@ export default function ImportForm() {
             </div>
           </Card>
 
+          {/* Mobile Card List: Hidden on Desktop */}
+          <div className="md:hidden space-y-4 pb-12">
+            {items.map((item, index) => (
+              <Card key={item.id} className="border-none shadow-md overflow-hidden bg-white rounded-[2rem]">
+                <CardBody className="p-6 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <span className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black">
+                      {index + 1}
+                    </span>
+                    <Button
+                      isIconOnly
+                      color="danger"
+                      variant="light"
+                      size="sm"
+                      radius="full"
+                      onPress={() => handleRemoveItem(item.id)}
+                    >
+                      <Trash2 size={18} />
+                    </Button>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div
+                      className="w-24 h-24 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-100 flex-shrink-0 flex items-center justify-center relative overflow-hidden"
+                      onClick={() => document.getElementById(`mobile-file-${item.id}`)?.click()}
+                    >
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} className="w-full h-full object-cover" alt="product" />
+                      ) : (
+                        <ImageIcon size={24} className="text-slate-300" />
+                      )}
+                      <input
+                        id={`mobile-file-${item.id}`}
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => handleItemImageUpload(item.id, e)}
+                      />
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <Input
+                        label="ชื่อสินค้า"
+                        placeholder="ระบุชื่อรุ่น/แบรนด์"
+                        variant="bordered"
+                        value={item.productName}
+                        onChange={(e) => handleItemChange(item.id, "productName", e.target.value)}
+                        classNames={{ inputWrapper: "h-12 rounded-xl" }}
+                      />
+                      <Select
+                        label="หมวดหมู่"
+                        placeholder="เลือก"
+                        variant="bordered"
+                        selectedKeys={item.category ? new Set([item.category]) : new Set()}
+                        onSelectionChange={(keys) => handleItemChange(item.id, "category", Array.from(keys)[0] as string)}
+                        classNames={{ trigger: "h-12 rounded-xl" }}
+                      >
+                        <SelectItem key="Camera">กล้อง</SelectItem>
+                        <SelectItem key="Lens">เลนส์</SelectItem>
+                        <SelectItem key="Tripod">ขาตั้งกล้อง</SelectItem>
+                        <SelectItem key="Battery">แบต</SelectItem>
+                        <SelectItem key="Film">ฟิลม์</SelectItem>
+                        <SelectItem key="Accessory">อุปกรณ์เสริม</SelectItem>
+                        <SelectItem key="Other">อื่นๆ</SelectItem>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 text-center">Cost Price</p>
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        variant="flat"
+                        value={item.confirmedPrice}
+                        startContent={<span className="text-blue-500 font-bold">฿</span>}
+                        onChange={(e) => handleItemChange(item.id, "confirmedPrice", e.target.value)}
+                        classNames={{ inputWrapper: "h-14 rounded-2xl bg-blue-50/50", input: "font-black text-blue-600 text-lg" }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 text-center">Sales Price</p>
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        variant="flat"
+                        value={item.salesPrice}
+                        startContent={<span className="text-green-500 font-bold">฿</span>}
+                        onChange={(e) => handleItemChange(item.id, "salesPrice", e.target.value)}
+                        classNames={{ inputWrapper: "h-14 rounded-2xl bg-green-50/50", input: "font-black text-green-600 text-lg" }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Status</p>
+                      <ProductStatusCell item={item} onItemChangeAction={handleItemChange} />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Repair</p>
+                      <RepairStatusCell item={item} onItemChangeAction={handleItemChange} />
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+
           {/* Empty State */}
           {items.length === 0 && (
             <div className="flex flex-col items-center justify-center py-24 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-100">
@@ -778,22 +933,43 @@ export default function ImportForm() {
           )}
         </div>
 
-        {/* Action Buttons Section */}
-        <div className="flex justify-center flex-col md:flex-row items-center gap-4 py-12">
+        {/* Mobile Sticky Actions */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-xl border-t border-slate-100 flex gap-3 z-[100] shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+          <Button
+            isIconOnly
+            variant="flat"
+            onPress={handleClear}
+            className="w-14 h-14 bg-slate-100 rounded-2xl text-slate-600"
+          >
+            <RotateCcw size={24} />
+          </Button>
+          <Button
+            color="primary"
+            className="flex-1 h-14 rounded-2xl font-black text-lg bg-blue-600 shadow-xl shadow-blue-200"
+            isLoading={loading}
+            onPress={handleSubmit}
+            startContent={!loading && <Save size={24} />}
+          >
+            บันทึกรายการนำเข้า
+          </Button>
+        </div>
+
+        {/* Desktop Bottom Action Buttons: Hidden on Mobile */}
+        <div className="hidden md:flex justify-center flex-col md:flex-row items-center gap-4 py-12">
           <Button
             variant="flat"
-            startContent={<RotateCcw size={20} />}
+            startContent={<RotateCcw size={24} />}
             onPress={handleClear}
-            className="bg-white border border-slate-200 font-bold text-slate-500 w-full md:w-auto px-10 h-14 rounded-[1.5rem] hover:bg-slate-50 transition-all"
+            className="bg-white border border-slate-200 font-bold text-slate-500 w-full md:w-auto px-10 h-16 rounded-[1.5rem] hover:bg-slate-50 transition-all"
           >
             ล้างข้อมูลทั้งหมด
           </Button>
           <Button
             color="primary"
-            startContent={<Save size={20} />}
+            startContent={<Save size={24} />}
             onPress={handleSubmit}
             isLoading={loading}
-            className="bg-blue-600 font-black text-white w-full md:w-[400px] h-14 rounded-[1.5rem] shadow-2xl shadow-blue-200 transition-all active:scale-[0.98] text-lg"
+            className="bg-blue-600 font-black text-white w-full md:w-[400px] h-16 rounded-[1.5rem] shadow-2xl shadow-blue-200 transition-all active:scale-[0.98] text-xl"
           >
             ยืนยันการบันทึกรายการนำเข้า
           </Button>

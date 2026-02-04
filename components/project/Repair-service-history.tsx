@@ -46,6 +46,7 @@ export default function RepairServiceHistory() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string>("");
+    const [selectedStatus, setSelectedStatus] = useState<string>("");
 
     const statusTranslation: Record<string, string> = {
         "ready": "พร้อมขาย",
@@ -78,7 +79,7 @@ export default function RepairServiceHistory() {
     // Reset pagination when search or filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, selectedCategory]);
+    }, [searchQuery, selectedCategory, selectedStatus]);
 
     const fetchData = async () => {
         if (!session) return;
@@ -117,9 +118,14 @@ export default function RepairServiceHistory() {
                 item.lot?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.consignorName?.toLowerCase().includes(searchQuery.toLowerCase());
             const matchesCategory = (selectedCategory === "" || selectedCategory === "all" || item.category === selectedCategory);
-            return matchesSearch && matchesCategory;
+            const matchesStatus = (selectedStatus === "" || selectedStatus === "all" ||
+                item.status === selectedStatus ||
+                (selectedStatus === "REPAIRED" && item.status === "REPAIR_DONE") ||
+                (selectedStatus === "REPAIRING" && item.status === "repairing")
+            );
+            return matchesSearch && matchesCategory && matchesStatus;
         });
-    }, [data, searchQuery, selectedCategory]);
+    }, [data, searchQuery, selectedCategory, selectedStatus]);
 
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
@@ -228,6 +234,28 @@ export default function RepairServiceHistory() {
                                         >
                                             {category.label}
                                         </SelectItem>
+                                    )}
+                                </Select>
+
+                                <Select
+                                    items={[
+                                        { key: "all", label: "ทุกสถานะ" },
+                                        { key: "REPAIRING", label: "กำลังซ่อม" },
+                                        { key: "REPAIRED", label: "ซ่อมเสร็จสิ้น" },
+                                        { key: "RETURN_CUSTOMER", label: "ส่งคืนลูกค้า" },
+                                    ]}
+                                    placeholder="สถานะสินค้า"
+                                    className="w-full lg:w-44"
+                                    selectedKeys={selectedStatus ? [selectedStatus] : []}
+                                    classNames={{
+                                        trigger: "h-14 bg-slate-50 border-none rounded-2xl data-[hover=true]:bg-slate-100 transition-all",
+                                        popoverContent: "rounded-2xl border border-slate-100 shadow-2xl",
+                                        value: "text-slate-700 font-bold",
+                                    }}
+                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                >
+                                    {(status) => (
+                                        <SelectItem key={status.key} textValue={status.label}>{status.label}</SelectItem>
                                     )}
                                 </Select>
 

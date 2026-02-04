@@ -108,23 +108,24 @@ export default function HistoryForm() {
     };
 
     return (
-        <div className="p-4 sm:p-8 bg-[#F8FAFC]">
-            <div className="w-full mx-auto">
-                <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="relative group">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-red-600 transition-colors" />
-                            <input
-                                type="text"
-                                placeholder="ค้นหาล็อตหรือชื่อ..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-red-600/5 focus:border-red-600 transition-all w-64 shadow-sm"
-                            />
-                        </div>
+        <div className="p-4 sm:p-8 bg-[#FAFBFC] min-h-screen">
+            <div className="w-full mx-auto space-y-8 animate-in fade-in duration-500">
+                {/* Filter Bar */}
+                <div className="flex flex-col lg:flex-row gap-4 items-center bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100 mb-8">
+                    <div className="relative flex-1 group w-full">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-red-500 transition-colors" />
+                        <input
+                            type="text"
+                            placeholder="ค้นหาล็อตหรือชื่อ..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-12 pr-4 h-14 bg-slate-50 border-none rounded-2xl text-slate-900 font-medium focus:ring-4 focus:ring-red-500/5 focus:bg-white transition-all outline-none"
+                        />
+                    </div>
+                    <div className="flex gap-3 w-full lg:w-auto">
                         <Button
                             variant="flat"
-                            className="rounded-2xl font-black px-6 h-11 bg-white border border-slate-200 text-slate-600"
+                            className="h-14 px-8 rounded-2xl bg-white text-slate-600 font-black border border-slate-200 transition-all active:scale-95 shadow-sm hover:bg-slate-50"
                             startContent={<FileSpreadsheet size={18} />}
                             onPress={handleExportFullExcel}
                         >

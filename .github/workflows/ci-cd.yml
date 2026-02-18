@@ -1,4 +1,4 @@
-name: Node.js Build & Deploy
+name: CI/CD - Build & Deploy to Vercel
 
 on:
   push:
@@ -6,53 +6,65 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
 jobs:
-  build_and_deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
+      # 1️⃣ Checkout
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Use Node.js 20
+      # 2️⃣ Setup Node
+      - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
-          cache: 'npm'
+          node-version: 20
+          cache: npm
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
-        # กลับมาใช้ npm ci ปกติ แต่ระบุ DATABASE_URL ไว้ให้พร้อม
         run: npm ci
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      # 4️⃣ Generate Prisma
       - name: Generate Prisma Client
-        # รันซ้ำเพื่อความมั่นใจ และข้ามการใช้ prisma.config.ts ถ้ามีปัญหา
-        run: |
-          [ -f prisma.config.ts ] && mv prisma.config.ts prisma.config.ts.bak || true
-          npx prisma generate
+        run: npx prisma generate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      # 5️⃣ Build (CI Validation)
       - name: Build project
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-          # 2. NextAuth (ต้องเพิ่ม!)
           NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-          
-          # 3. Supabase (ถ้าโค้ดมีการเรียกใช้ตอน Build)
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
-      - name: Run tests (Optional)
+      # 6️⃣ Run Tests
+      - name: Run tests
         run: npm test || echo "No tests found"
 
+      # 7️⃣ Install Vercel CLI
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      # 8️⃣ Pull Vercel Env
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      # 9️⃣ Deploy
       - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+          else
+            vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+          fi

@@ -32,6 +32,9 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      - name: Fail if vulnerable packages
+        run: npm audit --production --audit-level=moderate
+
       # 4️⃣ Generate Prisma
       - name: Generate Prisma Client
         run: npx prisma generate

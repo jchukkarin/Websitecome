@@ -149,12 +149,6 @@ export default function LoginPage() {
               <div className="flex items-center gap-2">
                 {/* Checkbox could go here if needed */}
               </div>
-              <Link
-                href="/forget-your-password"
-                className="text-sm font-bold text-red-600 hover:text-red-700 transition-colors"
-              >
-                ลืมรหัสผ่าน?
-              </Link>
             </div>
 
             <Button

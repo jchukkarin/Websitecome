@@ -4,12 +4,22 @@ import Credentials from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
 import { compare } from "bcryptjs"
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
+
+if (!googleClientId || !googleClientSecret) {
+    if (process.env.NODE_ENV === "production") {
+        console.warn("GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET is missing in production")
+    }
+}
+
 export const authOptions: AuthOptions = {
     providers: [
         GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            clientId: googleClientId ?? "",
+            clientSecret: googleClientSecret ?? "",
         }),
+
         Credentials({
             name: "credentials",
             credentials: {

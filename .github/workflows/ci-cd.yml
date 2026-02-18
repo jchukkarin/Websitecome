@@ -2,9 +2,9 @@ name: CI/CD - Build & Deploy to Vercel
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -42,7 +42,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       # 5️⃣ Build (CI Validation)
-      - name: Build project
+      - name: Build (CI Validation)
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
